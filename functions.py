@@ -191,15 +191,14 @@ def calculate_ep(data, combo):
     x = data.loc[data["month"].isin(combo), "flow"]
     y = x.sort_values(ascending=False)
     y = y.reset_index()
-    y["exceeded"] = (y.index.values + 1) / len(y)
+    y["exceeded"] = (y.index.values+1)/(len(y)+1)
     return (y)
-
 
 def summarize_ep(durflows, pcts):
     """
     Creates table using user defined pcts
     :param durflows: output from flowdur function (sorted "flow" with exceeded
-    :param pcts:
+    :param pcts: list, user supplied decimal pcts for calculation
     :return:
     """
     z = pd.DataFrame(index=pcts)
@@ -511,21 +510,21 @@ def analyze_voldur(data, dur):
     return (evs)
 
 
-def plot_voldur(data,site_dur,e,durations):
+def plot_voldur(data,wy,site_dur,durations):
     """
-    This function produces the duration plots for all events provided
-    :param data:
-    :param evs:
-    :param e:
-    :param durations:
-    :return:
+    This function produces the duration plots for all durations for WY provided
+    :param data: df, inflows including at least date, flow
+    :param wy: int, the event or wy index
+    :param site_dur: list,
+        contains dfs, output from analyze_voldur() for each duration listed in durations
+    :param durations: list, durations to plot
+    :return: figure
     """
-    wy = e
     for d in range(0,len(durations)):
         dur = durations[d]
         evs = site_dur[d]
         if dur=="WY":
-            if (e < 0) or (pd.isna(evs.loc[e, "count"])):
+            if (wy < 0) or (pd.isna(evs.loc[wy, "count"])):
                 return
             fig, ax = plt.subplots(figsize=(6, 4))
             plt.title(wy)
@@ -536,27 +535,25 @@ def plot_voldur(data,site_dur,e,durations):
             inflow = data.loc[dates,"flow"]
             plt.plot(dates, inflow, color='black',label="Daily Flow")
         else:
-            idx_s = evs.loc[e,"date"]
+            idx_s = evs.loc[wy,"date"]
             idx_e = idx_s+dt.timedelta(days=dur-1)
-            avg_flow = evs.loc[e,"avg_flow"]
+            avg_flow = evs.loc[wy,"avg_flow"]
             plt.plot([idx_s,idx_s,idx_e,idx_e],[0,avg_flow,avg_flow,0],label=f"{dur}-day Flow",alpha=0.75)
     plt.legend()
 
-def plot_wyvol(data,evs,wy_division):
+def plot_wyvol(data,evs,wy_division,sel_wy=None):
     """
-
-    :param data:
-    :param evs:
-    :param wy_division:
-    :param sel_wy:
-    :return:
+    This function produces a single plot of the WY with all WYs plotted as traces and the max, min, mean and median.
+    :param data: df, inflows including at least date, flow
+    :param evs: df, output from analyze_voldur() for WY
+    :param wy_division: str, "WY" or "CY"
+    :param sel_wy: list, selected WYs to plot colored traces for
+    :return: figure
     """
     fig, ax = plt.subplots(figsize=(6, 4))
     plt.ylabel('Flow ($ft^3$/s)')
-    plt.xlabel('Day of Year')
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     ax.set_yscale("log")
-    ax.set_ylim(1,1000000)
     if wy_division=="CY":
         ax.set_xticks([1,32,60,91,121,152,182,213,244,274,305,335])
         ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
@@ -579,16 +576,86 @@ def plot_wyvol(data,evs,wy_division):
     for d in doy_data.index:
         doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
         doy_data.loc[d, "median"] = doy_data.loc[d, WYs].median()
-    plt.plot(doy_data.index, doy_data["mean"], color="black", linestyle="solid", linewidth=2,label="Mean")
-    plt.plot(doy_data.index, doy_data["median"], color="black", linestyle="dashed",linewidth=2,label="Median")
 
     # Plot min and max year, volume
     minwy = evs["annual_volume"].idxmin()
-    plt.plot(doy_data.index,doy_data[minwy], color="red",label=f"Driest, {minwy}")
+    plt.plot(doy_data.index,doy_data[minwy], color="maroon",label=f"Driest, {minwy}")
     maxwy = evs["annual_volume"].idxmax()
-    plt.plot(doy_data.index, doy_data[2019], color="green", label=f"Wettest, {maxwy}")
+    plt.plot(doy_data.index, doy_data[2019], color="lime", label=f"Wettest, {maxwy}")
+
+    if sel_wy is not None:
+        sel_col = ["blue","orange","purple","cyan"]
+        for sel in range(0,len(sel_wy)):
+            plt.plot(doy_data.index, doy_data[sel_wy[sel]], color=sel_col[sel], linestyle="dashdot", label=f"{sel_wy[sel]}")
+
+    plt.plot(doy_data.index, doy_data["mean"], color="black", linestyle="dashed", linewidth=2,label="Mean")
+    plt.plot(doy_data.index, doy_data["median"], color="black", linestyle="solid",linewidth=2,label="Median")
 
     plt.xticks(rotation=90)
     plt.legend(prop={'size': 8})
 
     return(doy_data)
+
+def calc_pp(peaks,alpha=0):
+    """
+    This function calculates plotting positions
+    :param peaks: df, peaks with index defining year (or unique events)
+    :param alpha: float, value used in plotting positions
+    :return: df, pp and flow
+    """
+    peaks_clean = peaks.dropna()
+    peaks_sorted = peaks_clean.sort_values(ascending=False)
+    peaks_sorted = peaks_sorted.reset_index()
+    peaks_sorted["pp"] = (peaks_sorted.index+1-alpha)/(len(peaks_sorted)+1-2*alpha)
+    return(peaks_sorted)
+
+def plot_voldurpp(data,site_dur,durations,param,alpha=0):
+    """
+    This function produces the plots for all durations using plotting positions
+    :param data: df, inflows including at least date, flow
+    :param site_dur: list,
+        contains dfs, output from analyze_voldur() for each duration listed in durations
+    :param durations: list, durations to plot
+    :param param: str, parameter to plot (e.g., "avg_flow")
+    :param alpha: float, alpha value for plotting positions
+    :return: figure
+    """
+    if not os.path.isdir("plot"):
+        os.mkdir("plot")
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    plt.get_cmap("viridis")
+    plt.ylabel('Flow ($ft^3/s$)')
+    plt.xlabel('Exceedance Probability')
+    plt.yscale('log')
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    ax.set_xscale('prob')
+    plt.xlim(0.01, 99.99)
+    plt.xticks(rotation=90)
+    plt.gca().invert_xaxis()
+    ax.grid()
+    ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
+
+    minp = 1000000
+    maxp = 0
+
+    for d in range(0,len(durations)):
+        dur = durations[d]
+        evs = site_dur[d]
+
+
+        # calculate plotting positions
+        if dur=="WY":
+            continue
+        else:
+            peaks_sorted = calc_pp(evs[param],alpha)
+            peaks_sorted.to_csv(f"plot/{dur}_pp.csv")
+            plt.scatter(peaks_sorted.index,peaks_sorted[param],label=f"{dur}-day Flow")
+
+            if peaks_sorted[param].min() < minp:
+                minp = peaks_sorted[param].min()
+            if peaks_sorted[param].max() > maxp:
+                maxp = peaks_sorted[param].max()
+
+    plt.ylim(minp,maxp)
+    plt.legend()

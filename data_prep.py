@@ -3,7 +3,7 @@
 Data Preparation Script
 @author: tclarkin (USBR 2021)
 
-This script takes user supplied USGS gage or other data in .csv format and compresses into a contious timeseries
+This script takes user supplied USGS gage or other data in .csv format and compresses into a continuous timeseries
 for use in flow, critical and volume duration analyses
 
 """

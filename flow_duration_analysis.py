@@ -4,8 +4,8 @@ Created on Tue May 08 2020
 Flow Duration Script  (v1)
 @author: tjclarkin (USBR 2020)
 
-This script takes a user supplied daily inflows and user specified seasons and
-conducts a flow duration analysis, exporting tables and figures. Uses the equation:
+This script takes a user supplied daily inflows and user specified seasons and conducts a flow duration analysis,
+exporting tables and figures. Uses the equation:
     
     EP = M/n1
     

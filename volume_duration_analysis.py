@@ -23,7 +23,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from functions import analyze_voldur,plot_voldur,plot_wyvol
+from functions import analyze_voldur,plot_voldur,plot_wyvol,plot_voldurpp
 
 ### Begin User Input ###
 os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
@@ -35,6 +35,8 @@ wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duratino
 plot = True  # Will each WY with all durations
 wyplot = True   # Will create a plot with each WY traced over the same dates
+ppplot = True   # Will create a plot with all durations plotted with plotting positions
+alpha = 0       # alpha for plotting positions
 
 ### Begin Script ###
 # Load inflows
@@ -77,9 +79,9 @@ for dur in durations:
 
 if (plot) & ("WY" in durations):
     print("Plotting WYs")
-    for e in df_dur.index:
-        plot_voldur(data,site_dur,e,durations)
-        plt.savefig(f"volume/{site}_{e}.jpg", bbox_inches="tight", dpi=300)
+    for wy in df_dur.index:
+        plot_voldur(data,wy,site_dur,durations)
+        plt.savefig(f"volume/{site}_{wy}.jpg", bbox_inches="tight", dpi=300)
 
 if (wyplot) & ("WY" in durations):
     print("Plotting WY traces")
@@ -87,3 +89,8 @@ if (wyplot) & ("WY" in durations):
     plt.savefig(f"volume/{site}_WY_plot.jpg", bbox_inches="tight", dpi=300)
 
     doy_data.to_csv(f"volume/{site}_doy.csv")
+
+if ppplot:
+    print("Plotting with plotting positions")
+    plot_voldurpp(data,site_dur,durations,"avg_flow",alpha)
+    plt.savefig(f"plot/{site}_pp_plot.jpg", bbox_inches="tight", dpi=300)
