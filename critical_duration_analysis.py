@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar 17 14:40:54 2020
+Created on May 25 2021
 Critical Duration Script  (v4)
-@author: tjclarkin (USBR 2020)
+@author: tclarkin (USBR 2021)
 
 This script analyzes user supplied continuous daily inflows (Ifile) using a
 user supplied threshold (event_thresh). The threshold is used to define a 
@@ -44,7 +44,7 @@ os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_a
 # Site information and user selections
 site = "TRD" # site or dam name
 event_thresh = 11657    # threshold flow for defining flood events
-plot_events = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+plot_events = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 check_annual_pattern = True
 min_dur = 0        # minumum duration acceptable for analysis
 min_peak = 30000   # minumum duration acceptable for analysis

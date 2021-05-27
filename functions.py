@@ -6,7 +6,7 @@ Duration Analyses Functions
 This script contains all of the functions and pre-defined variables used in the duration analyses
 
 """
-
+import os
 import dataretrieval.nwis as nwis
 import pandas as pd
 import numpy as np
@@ -93,11 +93,12 @@ def nwis_import(site, dtype, start=None, end=None, wy="WY"):
         start = data.index.min()
 
     if dtype == "dv":
-        date_index = pd.date_range(start, end, freq="D", tz='UTC')
+        date_index = pd.date_range(start, end, freq="D")#, tz='UTC')
     elif dtype == "iv":
-        date_index = pd.date_range(start, end, freq="15T", tz='UTC')
+        date_index = pd.date_range(start, end, freq="15T")#, tz='UTC')
 
     out = pd.DataFrame(index=date_index)
+    out = out.tz_localize(None)
     out["flow"] = out.merge(data[parameter], left_index=True, right_index=True, how="left")
 
     out.loc[out["flow"]==-999999,"flow"] = np.nan
@@ -225,6 +226,30 @@ def plot_flowdur():
     plt.gca().invert_xaxis()
     ax.grid()
     ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
+
+def plot_monthlyflowdur(flowdurtable,combos):
+    """
+    Initializes flow duration plot
+    :return:
+    """
+    fig, ax = plt.subplots(figsize=(8, 6))
+    plt.get_cmap("viridis")
+    plt.ylabel('Flow ($ft^3/s$)')
+    plt.xlabel('Month')
+    plt.yscale('log')
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    ax.set_xticks([1,2,3,4,5,6,7,8,9,10,11,12])
+    ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
+    ax.grid()
+    ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
+
+    pcts = [0.01,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.99]
+    for p in pcts:
+        if pd.isna(flowdurtable.loc[p,:]).all():
+            plt.plot(list(combos.values()), flowdurtable.loc[p,:], linestyle="dashed", label=f"{p} (zero)")
+        else:
+            plt.plot(list(combos.values()),flowdurtable.loc[p,:],label=p)
+    plt.legend(title="Exceedance Prob.")
 
 def analyze_flowdur(data,combos,pcts):
     """
@@ -650,7 +675,7 @@ def plot_voldurpp(data,site_dur,durations,param,alpha=0):
         else:
             peaks_sorted = calc_pp(evs[param],alpha)
             peaks_sorted.to_csv(f"plot/{dur}_pp.csv")
-            plt.scatter(peaks_sorted.index,peaks_sorted[param],label=f"{dur}-day Flow")
+            plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[param],label=f"{dur}-day Flow")
 
             if peaks_sorted[param].min() < minp:
                 minp = peaks_sorted[param].min()

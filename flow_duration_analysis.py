@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 08 2020
-Flow Duration Script  (v1)
-@author: tjclarkin (USBR 2020)
+Created on May 25 2021
+Flow Duration Script  (v2)
+@author: tclarkin (USBR 2021)
 
 This script takes a user supplied daily inflows and user specified seasons and conducts a flow duration analysis,
 exporting tables and figures. Uses the equation:
@@ -23,7 +23,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from functions import annualcombos,monthcombos,allcombos,standard
-from functions import analyze_flowdur
+from functions import analyze_flowdur,plot_monthlyflowdur
 
 ### Begin User Input ###
 os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
@@ -34,8 +34,8 @@ analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" 
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
 # If custcomb == True...define combos: {"Name":[months],etc.}
-custcombos = {"Flood Season (Nov-Mar)":[1,2,3,11,12],
-              "Non-Flood Season (Apr-Oct)":[4,5,6,7,8,9,10]}
+custcombos = {"Flood Season (Dec-Apr)":[1,2,3,4,12],
+              "Non-Flood Season (May-Nov)":[5,6,7,8,9,10,11]}
 
 ### Begin Script ###
 # Load inflows
@@ -47,10 +47,12 @@ if not os.path.isdir("flow"):
 
 # Now, conduct duration analyses for selected combinations:
 for a in analyze:
+    monthplot = False
     if a =="annual":
         combos = annualcombos
     if a =="monthly":
         combos = monthcombos
+        monthplot = True
     if a =="custom":
         combos = custcombos
     if a =="all":
@@ -59,3 +61,6 @@ for a in analyze:
     flowdurtable = analyze_flowdur(data,combos,pcts)
     flowdurtable.to_csv(f"flow/{site}_{a}.csv",index=True,header=True)
     plt.savefig(f"flow/{site}_{a}_plot.jpg".format(site),bbox_inches='tight',dpi=300)
+    if monthplot == True:
+        plot_monthlyflowdur(flowdurtable,combos)
+        plt.savefig(f"flow/{site}_{a}_monthly_plot.jpg".format(site),bbox_inches='tight',dpi=300)

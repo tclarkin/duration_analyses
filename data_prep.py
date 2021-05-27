@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+Created on May 25 2021
 Data Preparation Script
 @author: tclarkin (USBR 2021)
 
@@ -61,6 +62,7 @@ if deregulate:
             site_dereg = site_data["flow"] + dereg_data["flow"]
         if sign == "minus":
             site_dereg = site_data["flow"] - dereg_data["flow"]
+        site_dereg.loc[site_dereg["flow"]<0,"flow"] = 0
         site_data["flow"] = site_dereg
         site_data = site_data.dropna()
     else:

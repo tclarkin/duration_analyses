@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Feb 17 2021
-Critical Duration Script  (v3)
-@author: tjclarkin (USBR 2020)
+Created on May 25 2021
+Critical Duration Script  (v1)
+@author: tclarkin (USBR 2021)
 
 This script aids in volume frequency analysis by using user supplied continuous
 daily inflows (Ifile) and identifying annual maximum average flows for periods
 specified. Additionally, the user may...
 
 This script requires:
-    Ifile = continuous record of mean daily flows.
+    data = continuous record of mean daily flows (produced by data_prep.py)
 
 The user must:
     - Identify the working directory
@@ -33,8 +33,8 @@ site = "TRD"
 durations = [1,3,4,5,7] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duratino
-plot = True  # Will each WY with all durations
-wyplot = True   # Will create a plot with each WY traced over the same dates
+plot = False  # Will each WY with all durations
+wyplot = False   # Will create a plot with each WY traced over the same dates
 ppplot = True   # Will create a plot with all durations plotted with plotting positions
 alpha = 0       # alpha for plotting positions
 
