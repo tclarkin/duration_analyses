@@ -191,6 +191,7 @@ def calculate_ep(data, combo):
     :return: df, sorted values with exceedance probability
     """
     x = data.loc[data["month"].isin(combo), "flow"]
+    x = x.dropna()
     y = x.sort_values(ascending=False)
     y = y.reset_index()
     y["exceeded"] = (y.index.values+1)/(len(y)+1)
