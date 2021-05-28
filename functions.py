@@ -89,13 +89,14 @@ def nwis_import(site, dtype, start=None, end=None, wy="WY"):
                 except ValueError:
                     data["flow"] = np.nan
 
+        data = data.tz_localize(None)
         end = data.index.max()
         start = data.index.min()
 
     if dtype == "dv":
-        date_index = pd.date_range(start, end, freq="D")#, tz='UTC')
+        date_index = pd.date_range(start, end, freq="D")
     elif dtype == "iv":
-        date_index = pd.date_range(start, end, freq="15T")#, tz='UTC')
+        date_index = pd.date_range(start, end, freq="15T")
 
     out = pd.DataFrame(index=date_index)
     out = out.tz_localize(None)

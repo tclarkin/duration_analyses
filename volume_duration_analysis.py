@@ -33,8 +33,8 @@ site = "TRD"
 durations = [1,3,4,5,7] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duratino
-plot = False  # Will each WY with all durations
-wyplot = False   # Will create a plot with each WY traced over the same dates
+plot = True  # Will each WY with all durations
+wyplot = True   # Will create a plot with each WY traced over the same dates
 ppplot = True   # Will create a plot with all durations plotted with plotting positions
 alpha = 0       # alpha for plotting positions
 

@@ -9,6 +9,8 @@ for use in flow, critical and volume duration analyses
 
 """
 import os
+import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from functions import nwis_import,flowcsv_import
@@ -21,6 +23,7 @@ site = 'TRD'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
 site_source = "file" # "usgs" or "file"
 site_file = "daily_out.csv" # usgs site number (e.g., "09445000") or .csv data file
+clean = True # remove any WYs with less than 300 days of data
 
 # Deregulation of at-site data
 deregulate = False
@@ -43,6 +46,12 @@ if site_source=="usgs":
         site_data = nwis_import(site=site_file,dtype="dv",wy=wy_division)
 else:
     site_data = flowcsv_import(site_file,wy=wy_division)
+
+if clean:
+    for wy in site_data["wy"].unique():
+        if pd.isna(site_data.loc[site_data["wy"] == wy, "flow"]).sum() > 65:
+            site_data.loc[site_data["wy"] == wy, "flow"] = np.nan
+
 site_data.to_csv(f"{site}_site_data.csv")
 fig, ax = plt.subplots(figsize=(8, 6))
 plt.plot(site_data.index,site_data.flow,label="Site Data")
@@ -82,7 +91,7 @@ if move:
     move_data.to_csv(f"{site}_move_data.csv")
     plt.plot(site_data.index, site_data.flow,linestyle="dashed",label="MOVE Data")
 
-plt.legend()
+#plt.legend()
 plt.ylabel('Flow ($ft^3/s$)')
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-plt.savefig(f"{site}_site_data.jpg")
+plt.savefig(f"{site}_site_data.jpg",bbox_inches='tight',dpi=300)
