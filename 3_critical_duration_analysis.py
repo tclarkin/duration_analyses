@@ -4,32 +4,22 @@ Created on May 25 2021
 Critical Duration Script  (v4)
 @author: tclarkin (USBR 2021)
 
-This script analyzes user supplied continuous daily inflows (Ifile) using a
-user supplied threshold (event_thresh). The threshold is used to define a 
-partial duration series (PDS) and calculate durations (time above the 
-threshold). Critical duration is then estimated as the peak weighted and 
-arithmetic average of the durations from the PDS. The user also has the option 
-to specify duration or peak limits (min_dur and min_peak, respectively), if it 
-is desired to screen out events below the specified limits:
+This script analyzes user supplied continuous daily inflows using a user supplied threshold (event_thresh). The
+threshold is used to define a partial duration series (PDS) and calculate durations (time above the threshold).
+Critical duration is then estimated as the peak weighted, arithmetic, and geometric average of the durations from the
+PDS. The user also has the option to specify duration or peak limits (min_dur and min_peak, respectively), if it is
+desired to screen out events below the specified limits:
 
-- If no limits are set, the peak weighted and arithmetic averages of duration 
-will be calculated on the full population of events
-- If a duration and/or peak limit is set, the peak weighted and arithmetic 
-averages of duration will be calculated on the screened population
+- If no limits are set, the peak weighted and arithmetic averages of duration will be calculated on the full PDS
+- If a duration and/or peak limit is set, the averages will be calculated on the screened population
 
-The user can specify if they want individual events plotted (plot_event). If 
-selected, a duration plot will be created for each screened event. If not
-selected, only the very first event will be plotted, but not saved.
+The user can specify if they want individual events plotted (plot_event). If selected, a duration plot will be created
+for each screened event. If not selected, only the very first event will be plotted, but not saved.
 
-The user can specify if they want to check the annual pattern (check_annual_pattern).
-If selected, all events (regardless of user specified limits) will be plotted
-by month.
+The user can specify if they want to check the annual pattern (check_annual_pattern). If selected, all events
+(regardless of user specified limits) will be plotted by month.
 
-The user must:
-    - Identify the current directory
-    - Provide the dam name (dam)
-    - Define the following: event_thresh (num), plot_event (bool), 
-    check_annual_pattern (bool), min_dur (int) and min_peak (num)
+This script should be run individually for each site being analyzed--should be iterative.
 
 """
 import os
@@ -51,12 +41,12 @@ min_peak = 30000   # minumum duration acceptable for analysis
 plot_max = 0       # maximum duration to show in peak vs duration plot (will use max if 0)
 
 ### Begin Script ###
-# Load inflows
-data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
-
 # Check for output directory
 if not os.path.isdir("critical"):
     os.mkdir("critical")
+
+# Load inflows
+data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
 
 # Determine flows in excess of event threshold
 print('Analyzing critical duration for events above {} ft^3/s.'.format(event_thresh))

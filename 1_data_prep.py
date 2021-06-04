@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on May 25 2021
-Data Preparation Script
+Data Preparation Script (v1)
 @author: tclarkin (USBR 2021)
 
 This script takes user supplied USGS gage or other data in .csv format and compresses into a continuous timeseries
-for use in flow, critical and volume duration analyses
+for use in flow, critical and volume duration analyses. Option to "clean" data, by removing WYs with less than 300 days
+
+This script should be run once for each site being analyzed
 
 """
 import os
@@ -53,7 +55,7 @@ if clean:
             site_data.loc[site_data["wy"] == wy, "flow"] = np.nan
 
 site_data.to_csv(f"{site}_site_data.csv")
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(6.25, 4))
 plt.plot(site_data.index,site_data.flow,label="Site Data")
 
 # Deregulate (if applicable)

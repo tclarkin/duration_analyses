@@ -216,7 +216,7 @@ def plot_flowdur():
     Initializes flow duration plot
     :return:
     """
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.ylabel('Flow ($ft^3/s$)')
     plt.xlabel('Exceedance Probability')
@@ -234,7 +234,7 @@ def plot_monthlyflowdur(flowdurtable,combos):
     Initializes flow duration plot
     :return:
     """
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.ylabel('Flow ($ft^3/s$)')
     plt.xlabel('Month')
@@ -265,17 +265,20 @@ def analyze_flowdur(data,combos,pcts):
     plot_flowdur()
 
     b = -1
+
+    all_durflows = list()
     for key in combos:
         b += 1
         print(key)
         combo = combos[key]
         durflows = calculate_ep(data, combo)
+        all_durflows.append(durflows)
         table = summarize_ep(durflows, pcts)
         full_table.loc[:, key] = table["flow"]
         plt.plot(durflows["exceeded"] * 100, durflows["flow"], label=key)
 
     plt.legend()
-    return (full_table)
+    return (full_table,all_durflows)
 
 ### CRITICAL DURATION FUNCTIONS ###
 def countdur(data, thresh):
@@ -317,7 +320,7 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
     :return: figure
     """
     # PLot peaks vs durations
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.title("Peak Flow vs Duration (n=" + str(len(evs)) + ")")
     plt.ylabel('Peak Flow ($ft^3$/s)')
     if plot_max == 0:
@@ -392,7 +395,7 @@ def analyze_monthlydur(evs):
         stats.loc[m, "fraction"] = stats.loc[m, "count"] / len(evs)
 
         # PLot durations vs month
-    fig = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.title("Durations vs Month (n=" + str(len(evs)) + ")")
     plt.ylabel('Duration (days)')
     x_ticks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -431,7 +434,7 @@ def analyze_monthlypeak(evs):
         stats.loc[m, "fraction"] = stats.loc[m, "count"] / len(evs)
 
         # PLot durations vs month
-    fig = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.title("Peaks vs Month (n=" + str(len(evs)) + ")")
     plt.ylabel('Peaks (ft$^3$/s)')
     x_ticks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -485,7 +488,7 @@ def durationplot(data, evs, e, thresh):
             cum_outflow[s] = cum_outflow[s + dt.timedelta(days=1)] - thresh
 
     plot_dur = range(0, evs.loc[e, "duration"] + 2)
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.title("Event Beginning " + evs.loc[e, "start_idx"].strftime("%d-%b-%Y") + " | Duration: " + str(
         evs.loc[e, "duration"]))
     plt.ylabel('Cumulative Flow / Flow ($ft^3$/s)')
@@ -493,10 +496,10 @@ def durationplot(data, evs, e, thresh):
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     plt.xlabel('Duration (days)')
     plt.xlim(min(plot_dur), max(plot_dur))
-    plt.plot(plot_dur, inflow, 'blue')
-    plt.plot(plot_dur, cum_inflow, "black")
-    plt.plot(plot_dur, cum_outflow, 'r--')
-    plt.legend(["Inflow", "Cum. Inflow", "Cum. Release"])
+    plt.plot(plot_dur, inflow, 'blue',label="Inflow")
+    plt.plot(plot_dur, cum_inflow, "black",label="Cum. Inflow")
+    plt.plot(plot_dur, cum_outflow, 'r--',label="Cum. Outflow")
+    plt.legend()
 
 ### VOLUME DURATION FUNCTIONS
 def analyze_voldur(data, dur):
@@ -553,7 +556,7 @@ def plot_voldur(data,wy,site_dur,durations):
         if dur=="WY":
             if (wy < 0) or (pd.isna(evs.loc[wy, "count"])):
                 return
-            fig, ax = plt.subplots(figsize=(6, 4))
+            fig, ax = plt.subplots(figsize=(6.25, 4))
             plt.title(wy)
             plt.ylabel('Flow ($ft^3$/s)')
             ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
@@ -577,7 +580,7 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None):
     :param sel_wy: list, selected WYs to plot colored traces for
     :return: figure
     """
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.ylabel('Flow ($ft^3$/s)')
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     ax.set_yscale("log")
@@ -623,6 +626,8 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None):
 
     return(doy_data)
 
+### PLOT VOLUME DURATION FUNCTIONS ###
+
 def calc_pp(peaks,alpha=0):
     """
     This function calculates plotting positions
@@ -636,7 +641,7 @@ def calc_pp(peaks,alpha=0):
     peaks_sorted["pp"] = (peaks_sorted.index+1-alpha)/(len(peaks_sorted)+1-2*alpha)
     return(peaks_sorted)
 
-def plot_voldurpp(data,site_dur,durations,param,alpha=0):
+def plot_voldurpp(site_dur,durations,param,alpha=0):
     """
     This function produces the plots for all durations using plotting positions
     :param data: df, inflows including at least date, flow
@@ -650,7 +655,7 @@ def plot_voldurpp(data,site_dur,durations,param,alpha=0):
     if not os.path.isdir("plot"):
         os.mkdir("plot")
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.ylabel('Flow ($ft^3/s$)')
     plt.xlabel('Exceedance Probability')
@@ -685,4 +690,77 @@ def plot_voldurpp(data,site_dur,durations,param,alpha=0):
                 maxp = peaks_sorted[param].max()
 
     plt.ylim(minp,maxp)
+    plt.legend()
+
+def plot_voldurpdf(site_dur, durations, param):
+    """
+    This function produces the pdf plots for all durations
+    :param site_dur: list,
+        contains dfs, output from analyze_voldur() for each duration listed in durations
+    :param durations: list, durations to plot
+    :param param: str, parameter to plot (e.g., "avg_flow")
+    :return: figure
+    """
+    if not os.path.isdir("plot"):
+        os.mkdir("plot")
+
+    names = list()
+    dat = list()
+    for d in range(0, len(durations)):
+        dur = durations[d]
+        if dur == "WY":
+            continue
+        names.append(f"{durations[d]} {param}")
+        dat.append(np.log10(site_dur[d][param]))
+
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+    plt.get_cmap("viridis")
+    plt.ylabel('Probability')
+    plt.xlabel('Log10(Flow)')
+    plt.hist(dat,density=True,label=names)
+    plt.legend()
+
+def plot_voldurmonth(site_dur, durations, param, stat,wy_division="WY"):
+    """
+    This function produces the pdf plots for all durations
+    :param site_dur: list,
+        contains dfs, output from analyze_voldur() for each duration listed in durations
+    :param durations: list, durations to plot
+    :param param: str, parameter to plot (e.g., "avg_flow")
+    :return: figure
+    """
+    if not os.path.isdir("plot"):
+        os.mkdir("plot")
+
+    width = 0.8/len(durations)
+
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+    plt.get_cmap("viridis")
+    plt.ylabel(f"{stat} peaks")
+    plt.xlabel('Month')
+
+    for d in range(0, len(durations)):
+        dur = durations[d]
+        if dur == "WY":
+            continue
+        name = f"{durations[d]} {param}"
+        data = site_dur[d]
+        data = data.dropna()
+        data.index = pd.to_datetime(data["date"])
+        if stat=="count":
+            summary = pd.DataFrame(data.groupby([data.index.month],sort=False).count().eval('avg_flow'))
+        if stat=="mean":
+            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).mean().eval('avg_flow'))
+        if stat=="max":
+            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).max().eval('avg_flow'))
+        if wy_division=="WY":
+            summary.loc[summary.index >= 10,"plot"] = summary.loc[summary.index >= 10].index - 9
+            summary.loc[summary.index < 10,"plot"] = summary.loc[summary.index < 10].index + 3
+        plt.bar(summary["plot"]+0.1+width*d,summary[0],width=width,label=name)
+
+    if wy_division=="WY":
+        month_names = ["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"]
+    else:
+        month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    plt.xticks([1,2,3,4,5,6,7,8,9,10,11,12],month_names)
     plt.legend()
