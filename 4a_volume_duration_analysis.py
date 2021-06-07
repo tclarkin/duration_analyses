@@ -21,7 +21,7 @@ os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_a
 
 # Site information and user selections
 sites = ["TRD"] # list, site or dam names
-durations = [1,3,4,5,7] # Duration in days
+durations = [1,4,10] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duration
 plot = True  # Will plot each WY with all durations

@@ -14,6 +14,10 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import probscale
 import datetime as dt
+from scipy.stats import mannwhitneyu
+from scipy.stats import kendalltau
+from scipy.stats.mstats import theilslopes
+from scipy.stats import norm
 
 ### DATA PREP FUNCTIONS ###
 def flowcsv_import(filename,wy="WY"):
@@ -245,13 +249,15 @@ def plot_monthlyflowdur(flowdurtable,combos):
     ax.grid()
     ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
 
-    pcts = [0.01,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.99]
+    pcts = [0.001,0.01,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.99,0.999]
     for p in pcts:
         if pd.isna(flowdurtable.loc[p,:]).all():
             plt.plot(list(combos.values()), flowdurtable.loc[p,:], linestyle="dashed", label=f"{p} (zero)")
         else:
             plt.plot(list(combos.values()),flowdurtable.loc[p,:],label=p)
-    plt.legend(title="Exceedance Prob.")
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+    plt.legend(title="Ex. Prob.",bbox_to_anchor=(1, 0.5), loc='center left',prop={'size': 10})
 
 def analyze_flowdur(data,combos,pcts):
     """
@@ -277,7 +283,10 @@ def analyze_flowdur(data,combos,pcts):
         full_table.loc[:, key] = table["flow"]
         plt.plot(durflows["exceeded"] * 100, durflows["flow"], label=key)
 
-    plt.legend()
+    if len(combos) > 4:
+        plt.legend(prop={'size': 8})
+    else:
+        plt.legend()
     return (full_table,all_durflows)
 
 ### CRITICAL DURATION FUNCTIONS ###
@@ -628,6 +637,68 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None):
 
 ### PLOT VOLUME DURATION FUNCTIONS ###
 
+def plot_trendsshifts(evs,dur,param):
+    """
+    This function produces the plots for all durations using plotting positions
+    :param evs: df, output from analyze_voldur() for duration
+    :param dur: str, duration being plotted
+    :param param: str, parameter to plot (e.g., "avg_flow")
+    :return: figure
+    """
+    # calculate plotting positions
+    if dur=="WY":
+        return
+    else:
+        fig, ax = plt.subplots(figsize=(6.25, 4))
+        plt.get_cmap("viridis")
+        plt.ylabel('Flow ($ft^3/s$)')
+        plt.xlabel('Year')
+        ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+        ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
+        plt.scatter(evs.index,evs[param],label=f"{dur}-day AMS")
+
+        # Theil Slope
+        theil = theilslopes(evs[param],evs.index)
+        kendall = kendalltau(evs[param],evs.index)
+        plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {int(theil[0])} ft$^3$/s \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
+
+        for i in evs.index[::10]:
+            if i>max(evs.index)-20:
+                continue
+            print(f'{i}-{i+10} vs {i+11}-{i+21}')
+            mw = mannwhitneyu(evs.loc[i:i+10,param],evs.loc[i+11:i+21,param])
+            print(mw)
+
+        plt.legend()
+
+def plot_normality(evs,dur,param):
+    """
+    This function produces the plots for all durations using plotting positions
+    :param evs: df, output from analyze_voldur() for duration
+    :param dur: str, duration being plotted
+    :param param: str, parameter to plot (e.g., "avg_flow")
+    :return: figure
+    """
+    # calculate plotting positions
+    if dur=="WY":
+        return
+    else:
+        fig, ax = plt.subplots(figsize=(6.25, 4))
+        plt.get_cmap("viridis")
+        plt.ylabel('Log Flow')
+        plt.xlabel('Normal Quantile')
+        ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+        ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
+
+        peaks_sorted = calc_pp(evs[param], 0)
+        peaks_sorted["log"] = np.log10(peaks_sorted[param])
+        peaks_sorted["norm"] = norm.ppf(1-peaks_sorted["pp"])
+        plt.scatter(peaks_sorted["norm"],peaks_sorted["log"],label=f"{dur}-day AMS (n = {len(peaks_sorted)})")
+        ols = np.polyfit(peaks_sorted["norm"],peaks_sorted["log"],deg=1)
+        corr = np.corrcoef(peaks_sorted["log"],peaks_sorted["norm"]*ols[0]+ols[1])
+        plt.plot(peaks_sorted["norm"],peaks_sorted["norm"]*ols[0]+ols[1],"r--",label=f"OLS fit (R={round(corr[0][1],3)})")
+        plt.legend()
+
 def calc_pp(peaks,alpha=0):
     """
     This function calculates plotting positions
@@ -743,16 +814,16 @@ def plot_voldurmonth(site_dur, durations, param, stat,wy_division="WY"):
         dur = durations[d]
         if dur == "WY":
             continue
-        name = f"{durations[d]} {param}"
+        name = f"{durations[d]}"
         data = site_dur[d]
         data = data.dropna()
         data.index = pd.to_datetime(data["date"])
         if stat=="count":
-            summary = pd.DataFrame(data.groupby([data.index.month],sort=False).count().eval('avg_flow'))
+            summary = pd.DataFrame(data.groupby([data.index.month],sort=False).count().eval(param))
         if stat=="mean":
-            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).mean().eval('avg_flow'))
+            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).mean().eval(param))
         if stat=="max":
-            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).max().eval('avg_flow'))
+            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).max().eval(param))
         if wy_division=="WY":
             summary.loc[summary.index >= 10,"plot"] = summary.loc[summary.index >= 10].index - 9
             summary.loc[summary.index < 10,"plot"] = summary.loc[summary.index < 10].index + 3
