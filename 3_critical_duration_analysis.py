@@ -34,7 +34,7 @@ os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_a
 # Site information and user selections
 site = "TRD" # site or dam name
 event_thresh = 11657    # threshold flow for defining flood events
-plot_events = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+plot_events = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 check_annual_pattern = True
 min_dur = 0        # minumum duration acceptable for analysis
 min_peak = 30000   # minumum duration acceptable for analysis

@@ -333,9 +333,9 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
     plt.title("Peak Flow vs Duration (n=" + str(len(evs)) + ")")
     plt.ylabel('Peak Flow ($ft^3$/s)')
     if plot_max == 0:
-        plt.xlim(0, max(evs.duration))
+        plt.xlim(0.5, max(evs.duration)+0.5)
     else:
-        plt.xlim(0, plot_max)
+        plt.xlim(0.5, plot_max)
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     plt.xlabel('Duration (days)')
     # Plot all data
@@ -359,7 +359,7 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
     if (min_peak > 0) & (min_dur == 0):
         col = "blue"
         scatter_label = "Screened Events"
-        plt.plot((0, max(evs_lim["duration"])), (min_peak, min_peak), 'b--', label="Peak Limit")
+        plt.plot((0, max(evs_lim["duration"])+1), (min_peak, min_peak), 'b--', label="Peak Limit")
     if (min_peak > 0) & (min_dur > 0):
         col = "black"
         scatter_label = "Screened Events"
@@ -493,21 +493,26 @@ def durationplot(data, evs, e, thresh):
             cum_outflow[s] = cum_inflow[evs.loc[e, "end_idx"]] + thresh
         if s == evs.loc[e, "end_idx"]:
             cum_outflow[s] = cum_inflow[s]
+            tangency = cum_inflow[s]
         elif s < evs.loc[e, "end_idx"]:
             cum_outflow[s] = cum_outflow[s + dt.timedelta(days=1)] - thresh
 
     plot_dur = range(0, evs.loc[e, "duration"] + 2)
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.title("Event Beginning " + evs.loc[e, "start_idx"].strftime("%d-%b-%Y") + " | Duration: " + str(
-        evs.loc[e, "duration"]))
-    plt.ylabel('Cumulative Flow / Flow ($ft^3$/s)')
+        evs.loc[e, "duration"]) + " days")
+    plt.ylabel('Flow ($ft^3$/s) | Cumulative Flow ($ft^3$/s days) ')
     plt.ylim(0, round(max(cum_outflow), -4) + 10000)
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     plt.xlabel('Duration (days)')
     plt.xlim(min(plot_dur), max(plot_dur))
-    plt.plot(plot_dur, inflow, 'blue',label="Inflow")
-    plt.plot(plot_dur, cum_inflow, "black",label="Cum. Inflow")
-    plt.plot(plot_dur, cum_outflow, 'r--',label="Cum. Outflow")
+
+
+    plt.plot(plot_dur, inflow, 'blue',label="Flow")
+    plt.plot(plot_dur, cum_inflow, "black",label="Cum. Flow")
+    plt.plot(plot_dur, [thresh]*len(plot_dur),'red', label="Event Threshold")
+    plt.plot(plot_dur, cum_outflow, color='maroon',linestyle="dashed",label="Cum. Threshold Flow")
+    plt.plot(evs.loc[e, "duration"],tangency,"rx",label="Point of Tangency")
     plt.legend()
 
 ### VOLUME DURATION FUNCTIONS
