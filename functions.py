@@ -306,7 +306,10 @@ def countdur(data, thresh):
             ex += 1
             dur = 0
             evs.loc[ex, "start_idx"] = l
-            evs.loc[ex, "month"] = data.loc[l,"month"]
+            if "month" not in data.columns:
+                evs.loc[ex, "month"] = data.loc[l].name.month
+            else:
+                evs.loc[ex, "month"] = data.loc[l,"month"]
         if data.loc[l,"flow"] <= thresh and ev == True:
             ev = False
             evs.loc[ex, "end_idx"] = l - dt.timedelta(days=1)
