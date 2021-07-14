@@ -17,12 +17,13 @@ import matplotlib.pyplot as plt
 from functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldurpdf,plot_voldurmonth
 from statsmodels.graphics import tsaplots
 
+
 ### Begin User Input ###
 os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
 
 # Site information and user selections
 sites = ["TRD"] # list, site or dam names
-durations = [1,4,10] # Duration in days
+durations = ["peak",1,4,10] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots (NOT DEVELOPED YET!)
 ppplot = True       # Will create a plot with all durations plotted with plotting positions
@@ -43,11 +44,25 @@ if not os.path.isdir("plot"):
 for site in sites:
     print(f"Analyzing {site}")
     site_dur = list()
+    site_sum = pd.DataFrame()
+
     for dur in durations:
         df_dur = pd.read_csv(f"volume/{site}_{dur}.csv",index_col=0)
         df_dur["date"] = pd.to_datetime(df_dur["date"])
         df_dur = df_dur.dropna()
         site_dur.append(df_dur)
+
+        site_sum.loc[dur,"N"] = len(df_dur)
+        site_sum.loc[dur, "mean"] = df_dur.avg_flow.mean()
+        site_sum.loc[dur, "median"] = df_dur.avg_flow.median()
+        site_sum.loc[dur, "sd"] = df_dur.avg_flow.std()
+        site_sum.loc[dur, "skew"] = df_dur.avg_flow.skew()
+        site_sum.loc[dur, "log_mean"] = np.log10(df_dur.avg_flow).mean()
+        site_sum.loc[dur, "log_median"] = np.log10(df_dur.avg_flow).median()
+        site_sum.loc[dur, "log_sd"] = np.log10(df_dur.avg_flow).std()
+        site_sum.loc[dur, "log_skew"] = np.log10(df_dur.avg_flow).skew()
+
+    site_sum.to_csv(f"volume/{site}_stats_summary.csv")
 
     # Plot data
     if idaplot:
