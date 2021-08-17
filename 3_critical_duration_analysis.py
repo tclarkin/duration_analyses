@@ -29,15 +29,15 @@ from functions import countdur,analyze_critdur,analyze_monthlydur,analyze_monthl
     
 ### Begin User Input ### 
 # Set Working Directory
-os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
+#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-site = "TRD" # site or dam name
-event_thresh = 11657    # threshold flow for defining flood events
+site = "ARD" # site or dam name
+event_thresh = 500    # threshold flow for defining flood events
 plot_events = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 check_annual_pattern = True
 min_dur = 0        # minumum duration acceptable for analysis
-min_peak = 30000   # minumum duration acceptable for analysis
+min_peak = 2000    # minumum duration acceptable for analysis
 plot_max = 0       # maximum duration to show in peak vs duration plot (will use max if 0)
 
 ### Begin Script ###

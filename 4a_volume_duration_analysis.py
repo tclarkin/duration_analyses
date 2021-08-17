@@ -17,14 +17,14 @@ import matplotlib.pyplot as plt
 from functions import analyze_voldur,plot_voldur,plot_wyvol
 
 ### Begin User Input ###
-os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
+#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["TRD"] # list, site or dam names
-durations = [1,4,10] # Duration in days
+sites = ["ARD","ARD_USGS"] # list, site or dam names
+durations = [1,7,60,120] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duration
-plot = True  # Will plot each WY with all durations
+plot = False  # Will plot each WY with all durations
 wyplot = True   # Will create a plot with each WY traced over the same dates
 
 ### Begin Script ###

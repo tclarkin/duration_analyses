@@ -21,16 +21,17 @@ from functions import annualcombos,monthcombos,allcombos,standard
 from functions import analyze_flowdur,plot_monthlyflowdur
 
 ### Begin User Input ###
-os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
+#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["TRD"] # list, site or dam names
+sites = ["ARD","ARD_USGS"] # list, site or dam names
 analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
 # If custcomb == True...define combos: {"Name":[months],etc.}
-custcombos = {"Flood Season (Dec-Apr)":[1,2,3,4,12],
-              "Non-Flood Season (May-Nov)":[5,6,7,8,9,10,11]}
+custcombos = {"Winter Season (Nov-Jan)":[1,11,12],
+              "Spring Season (Feb-Jun)":[2,3,4,5,6],
+              "Late-Summer Season (Jul-Sep)":[7,8,9]}
 
 ### Begin Script ###
 # Check for output directory

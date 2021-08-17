@@ -18,13 +18,13 @@ import matplotlib as mpl
 from functions import nwis_import,flowcsv_import
 
 ### User Input ###
-os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
+#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'TRD'  # site or dam name
+site = 'ARD'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
 site_source = "file" # "usgs" or "file"
-site_file = "daily_out.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_file = "daily_flow.csv" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
 
 # Deregulation of at-site data
@@ -50,8 +50,14 @@ else:
     site_data = flowcsv_import(site_file,wy=wy_division)
 
 if clean:
+    # Remove negative flows
+    site_data.loc[site_data["flow"] < 0, "flow"] = 0
+
+    # Remove WYs with less than 300 days of data or if last month is lower than September
     for wy in site_data["wy"].unique():
         if pd.isna(site_data.loc[site_data["wy"] == wy, "flow"]).sum() > 65:
+            site_data.loc[site_data["wy"] == wy, "flow"] = np.nan
+        if site_data.loc[site_data["wy"]==wy].tail(1).month.item()<9:
             site_data.loc[site_data["wy"] == wy, "flow"] = np.nan
 
 site_data.to_csv(f"{site}_site_data.csv")

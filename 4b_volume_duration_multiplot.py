@@ -19,17 +19,17 @@ from statsmodels.graphics import tsaplots
 
 
 ### Begin User Input ###
-os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
+#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["TRD"] # list, site or dam names
-durations = ["peak",1,4,10] # Duration in days
+sites = ["ARD_USGS","ARD"] # list, site or dam names
+durations = [1,7,60,120] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots (NOT DEVELOPED YET!)
 ppplot = True       # Will create a plot with all durations plotted with plotting positions
 pdfplot = True      # Plot probability density function of data
 monthplot = True    # Plot monthly distribution of annual peaks
-mixed = True        # Attempt to split mixed population with gaussian mixture
+mixed = False       # Attempt to split mixed population with gaussian mixture
 alpha = 0           # alpha for plotting positions
 
 ### Begin Script ###

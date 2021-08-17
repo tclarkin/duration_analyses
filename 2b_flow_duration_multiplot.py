@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 from functions import plot_flowdur
 
 ### Begin User Input ###
-os.chdir("C://Users//tclarkin//Documents//Projects//Roosevelt_Dam_IE//duration_analyses//")
+#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["TRD","TRD"] # list, site or dam names
-labels = ["Segment 1","Segment 2"] # labels for sites
+sites = ["ARD","ARD_USGS"] # list, site or dam names
+labels = ["Hydromet","USGS"] # labels for sites
 
 ### Begin Script ###
 # Check for output directory

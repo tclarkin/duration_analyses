@@ -511,6 +511,7 @@ def durationplot(data, evs, e, thresh):
     plt.xlim(min(plot_dur), max(plot_dur))
 
 
+    plt.bar(plot_dur, inflow, width=1,color='blue',alpha=0.5,label="_nolegend_")
     plt.plot(plot_dur, inflow, 'blue',label="Flow")
     plt.plot(plot_dur, cum_inflow, "black",label="Cum. Flow")
     plt.plot(plot_dur, [thresh]*len(plot_dur),'red', label="Event Threshold")
@@ -530,22 +531,24 @@ def analyze_voldur(data, dur):
     evs = pd.DataFrame(index=WYs)
     if dur=="WY":
         print('Analyzing by WY')
-    else:
-        dur_flows = data["flow"].rolling(dur).mean()
-        max_flows = data["flow"].rolling(dur).max()
-    for wy in WYs:
-        if sum(pd.isna(data.loc[data["wy"]==wy,"flow"]))>50:
-            continue
-        else:
-            if dur=="WY":
-                max_idx = data.loc[data["wy"]==wy,"flow"].idxmax()
-                evs.loc[wy, "date"] = max_idx
-                evs.loc[wy, "annual_volume"] = round(data.loc[data["wy"]==wy, "flow"].sum()*86400/43560, 0)
-                evs.loc[wy, "peak"] = round(data.loc[max_idx, "flow"].max(), 0)
-                evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, "flow"])
+        for wy in WYs:
+            if sum(pd.isna(data.loc[data["wy"] == wy, "flow"])) > 365*0.1:
+                continue
             else:
+                if dur == "WY":
+                    max_idx = data.loc[data["wy"] == wy, "flow"].idxmax()
+                    evs.loc[wy, "date"] = max_idx
+                    evs.loc[wy, "annual_volume"] = round(data.loc[data["wy"] == wy, "flow"].sum() * 86400 / 43560, 0)
+                    evs.loc[wy, "peak"] = round(data.loc[max_idx, "flow"].max(), 0)
+                    evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, "flow"])
+    else:
+        dur_flows = data["flow"].rolling(dur,min_periods=int(np.ceil(dur*0.90))).mean()
+        max_flows = data["flow"].rolling(dur,min_periods=int(np.ceil(dur*0.90))).max()
+        data["wy_shift"] = data["wy"].shift(+(dur-1))
+
+        for wy in WYs:
                 try:
-                    max_idx = dur_flows.loc[data["wy"]==wy].idxmax()
+                    max_idx = dur_flows.loc[data["wy_shift"]==wy].idxmax()
                 except ValueError:
                     continue
                 if pd.isna(max_idx):
@@ -553,6 +556,7 @@ def analyze_voldur(data, dur):
                 evs.loc[wy,"date"] = max_idx-dt.timedelta(days=dur-1)
                 evs.loc[wy,"avg_flow"] = round(dur_flows[max_idx],0)
                 evs.loc[wy,"peak"] = round(max_flows[max_idx],0)
+                evs.loc[wy, "count"] = len(data.loc[data["wy"] == wy, "flow"])
 
     return (evs)
 
@@ -619,7 +623,7 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None):
         doy = range(1,wy_len+1)
         doy_flow = data.loc[data["wy"]==wy,"flow"]
         doy_data.loc[doy,wy] = doy_flow.values
-        plt.plot(doy, doy_flow, color="grey",alpha=0.5)
+        plt.plot(doy, doy_flow, color="grey",alpha=0.2)
     for d in doy_data.index:
         doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
         doy_data.loc[d, "median"] = doy_data.loc[d, WYs].median()
@@ -628,7 +632,7 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None):
     minwy = evs["annual_volume"].idxmin()
     plt.plot(doy_data.index,doy_data[minwy], color="maroon",label=f"Driest, {minwy}")
     maxwy = evs["annual_volume"].idxmax()
-    plt.plot(doy_data.index, doy_data[2019], color="lime", label=f"Wettest, {maxwy}")
+    plt.plot(doy_data.index, doy_data[maxwy], color="lime", label=f"Wettest, {maxwy}")
 
     if sel_wy is not None:
         sel_col = ["blue","orange","purple","cyan"]
