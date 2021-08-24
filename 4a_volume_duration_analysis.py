@@ -26,6 +26,7 @@ wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duration
 plot = False  # Will plot each WY with all durations
 wyplot = True   # Will create a plot with each WY traced over the same dates
+log = True      # Use log scale for wy plot
 
 ### Begin Script ###
 # Check for output directory
@@ -76,7 +77,7 @@ for site in sites:
 
     if (wyplot) & ("WY" in durations):
         print("Plotting WY traces")
-        doy_data = plot_wyvol(data, site_dur[0], wy_division)
+        doy_data = plot_wyvol(data, site_dur[0], wy_division, log=log)
         plt.savefig(f"volume/{site}_WY_plot.jpg", bbox_inches="tight", dpi=300)
 
         doy_data.to_csv(f"volume/{site}_doy.csv")

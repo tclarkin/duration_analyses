@@ -42,6 +42,7 @@ if not os.path.isdir("flow"):
 for site in sites:
     # Load inflows
     data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
+    data = data.dropna() # Drop any missing flows
 
     # Now, conduct duration analyses for selected combinations:
     for a in analyze:

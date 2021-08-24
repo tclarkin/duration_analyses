@@ -592,7 +592,7 @@ def plot_voldur(data,wy,site_dur,durations):
             plt.plot([idx_s,idx_s,idx_e,idx_e],[0,avg_flow,avg_flow,0],label=f"{dur}-day Flow",alpha=0.75)
     plt.legend()
 
-def plot_wyvol(data,evs,wy_division,sel_wy=None):
+def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
     """
     This function produces a single plot of the WY with all WYs plotted as traces and the max, min, mean and median.
     :param data: df, inflows including at least date, flow
@@ -602,15 +602,20 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None):
     :return: figure
     """
     fig, ax = plt.subplots(figsize=(6.25, 4))
-    plt.ylabel('Flow ($ft^3$/s)')
+
+    if log:
+        ax.set_yscale("log")
+        plt.ylim(1,10**np.ceil(np.log10(data.flow.max())))
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-    ax.set_yscale("log")
+    plt.ylabel('Flow ($ft^3$/s)')
+
     if wy_division=="CY":
         ax.set_xticks([1,32,60,91,121,152,182,213,244,274,305,335])
         ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
     else:
         ax.set_xticks([1,32,62,93,124,153,184,214,245,275,306,337])
         ax.set_xticklabels(["O","N","D","J","F","M","A","M","J","J","A","S"])
+    plt.xlim(1,366)
 
     WYs = data["wy"].unique().astype(int)
     i=-1

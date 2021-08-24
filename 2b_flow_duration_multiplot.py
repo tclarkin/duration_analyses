@@ -32,4 +32,4 @@ for site,label in zip(sites,labels):
     data = pd.read_csv(f"flow/{site}_annual_raw.csv",parse_dates=True,index_col=0)
     plt.plot(data.exceeded*100,data.flow,label=label)
     plt.legend()
-    plt.savefig(f"flow/{site}_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
+plt.savefig(f"flow/all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
