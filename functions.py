@@ -603,19 +603,12 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
     """
     fig, ax = plt.subplots(figsize=(6.25, 4))
 
-    if log:
-        ax.set_yscale("log")
-        plt.ylim(1,10**np.ceil(np.log10(data.flow.max())))
-    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-    plt.ylabel('Flow ($ft^3$/s)')
-
     if wy_division=="CY":
         ax.set_xticks([1,32,60,91,121,152,182,213,244,274,305,335])
         ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
     else:
         ax.set_xticks([1,32,62,93,124,153,184,214,245,275,306,337])
         ax.set_xticklabels(["O","N","D","J","F","M","A","M","J","J","A","S"])
-    plt.xlim(1,366)
 
     WYs = data["wy"].unique().astype(int)
     i=-1
@@ -647,7 +640,15 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
     plt.plot(doy_data.index, doy_data["mean"], color="black", linestyle="dashed", linewidth=2,label="Mean")
     plt.plot(doy_data.index, doy_data["median"], color="black", linestyle="solid",linewidth=2,label="Median")
 
+    plt.xlim(1,366)
     plt.xticks(rotation=90)
+    if log:
+        ax.set_yscale("log")
+        if ax.get_ylim()[0]<1:
+            ax.set_ylim(bottom = 1)
+        ax.set_ylim(top = data.flow.max()*1.01)
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    plt.ylabel('Flow ($ft^3$/s)')
     plt.legend(prop={'size': 8})
 
     return(doy_data)
