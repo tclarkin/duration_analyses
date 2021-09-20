@@ -22,15 +22,15 @@ from statsmodels.graphics import tsaplots
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado_Stage"] # list, site or dam names
-durations = [1] # Duration in days
+sites = ["ElVado"] # list, site or dam names
+durations = ["peak",1,15,91] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-idaplot = True      # Will create initial data analysis plots (NOT DEVELOPED YET!)
-ppplot = True       # Will create a plot with all durations plotted with plotting positions
+idaplot = True      # Will create initial data analysis plots
+ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
+alpha = 0           # alpha for plotting positions
 pdfplot = True      # Plot probability density function of data
 monthplot = True    # Plot monthly distribution of annual peaks
 mixed = False       # Attempt to split mixed population with gaussian mixture
-alpha = 0           # alpha for plotting positions
 
 ### Begin Script ###
 
@@ -45,24 +45,42 @@ for site in sites:
     print(f"Analyzing {site}")
     site_dur = list()
     site_sum = pd.DataFrame()
-    data = pd.read_csv(f"{site}_site_data.csv", parse_dates=True, index_col=0)
-    var = data.columns[0]
+    data = pd.read_csv(f"{site}_site_daily.csv", parse_dates=True, index_col=0)
+
+    if "peak" in durations:
+        peaks = True
+        durations.remove("peak")
+        durations.append("peak")
 
     for dur in durations:
-        df_dur = pd.read_csv(f"volume/{site}_{dur}.csv",index_col=0)
-        df_dur["date"] = pd.to_datetime(df_dur["date"])
+        if dur == "peak":
+            pfile = False
+            if (peaks) and (os.path.isfile(f"{site}_site_peak.csv")):
+                df_dur = pd.read_csv(f"{site}_site_peak.csv",index_col=0)
+                df_dur["date"] = pd.to_datetime(df_dur["date"])
+                pfile = True
+            else:
+                durations.remove("peak")
+                peaks = False
+                continue
+
+        else:
+            df_dur = pd.read_csv(f"volume/{site}_{dur}.csv",index_col=0)
+            df_dur["date"] = pd.to_datetime(df_dur["date"])
+
         df_dur = df_dur.dropna()
         site_dur.append(df_dur)
+        var = df_dur.columns[1]
 
         site_sum.loc[dur,"N"] = len(df_dur)
-        site_sum.loc[dur, "mean"] = df_dur["avg"].mean()
-        site_sum.loc[dur, "median"] = df_dur["avg"].median()
-        site_sum.loc[dur, "sd"] = df_dur["avg"].std()
-        site_sum.loc[dur, "skew"] = df_dur["avg"].skew()
-        site_sum.loc[dur, "log_mean"] = np.log10(df_dur["avg"]).mean()
-        site_sum.loc[dur, "log_median"] = np.log10(df_dur["avg"]).median()
-        site_sum.loc[dur, "log_sd"] = np.log10(df_dur["avg"]).std()
-        site_sum.loc[dur, "log_skew"] = np.log10(df_dur["avg"]).skew()
+        site_sum.loc[dur, "mean"] = df_dur[var].mean()
+        site_sum.loc[dur, "median"] = df_dur[var].median()
+        site_sum.loc[dur, "sd"] = df_dur[var].std()
+        site_sum.loc[dur, "skew"] = df_dur[var].skew()
+        site_sum.loc[dur, "log_mean"] = np.log10(df_dur[var]).mean()
+        site_sum.loc[dur, "log_median"] = np.log10(df_dur[var]).median()
+        site_sum.loc[dur, "log_sd"] = np.log10(df_dur[var]).std()
+        site_sum.loc[dur, "log_skew"] = np.log10(df_dur[var]).skew()
 
     site_sum.to_csv(f"volume/{site}_stats_summary.csv")
 
@@ -75,42 +93,43 @@ for site in sites:
         for d in range(0,len(durations)):
             evs = site_dur[d]
             dur = durations[d]
+            var = evs.columns[1]
             print(f'{dur}...')
 
             # Check for trends and shifts
-            plot_trendsshifts(evs,dur,var,"avg")
+            plot_trendsshifts(evs,dur,var)
             plt.savefig(f"ida/{site}_{dur}_trends&shifts_plot.jpg", bbox_inches="tight", dpi=300)
 
             # Check for autocorrelation
-            fig = tsaplots.plot_acf(evs["avg"], lags=20)
+            fig = tsaplots.plot_acf(evs[var], lags=20)
             fig.set_size_inches(6.25, 4)
             plt.ylabel("Autocorrelation")
             plt.xlabel("Lag K, in years")
             plt.savefig(f"ida/{site}_{dur}_acf_plot.jpg", bbox_inches="tight", dpi=300)
 
             # Check for normality
-            plot_normality(evs,dur,var,"avg")
+            plot_normality(evs,dur,var)
             plt.savefig(f"ida/{site}_{dur}_normality_plot.jpg", bbox_inches="tight", dpi=300)
 
     if ppplot:
         print("Plotting with plotting positions")
-        plot_voldurpp(site_dur,durations,var,"avg",alpha)
+        plot_voldurpp(site,site_dur,durations,alpha)
         plt.savefig(f"plot/{site}_pp_plot.jpg", bbox_inches="tight", dpi=300)
 
     if pdfplot:
         print("Plotting with probability density function")
-        plot_voldurpdf(site_dur,durations,var,"avg")
+        plot_voldurpdf(site_dur,durations)
         plt.savefig(f"plot/{site}_pdf_plot.jpg", bbox_inches="tight", dpi=300)
 
     if monthplot:
         print("Plotting with monthly distributions")
-        plot_voldurmonth(site_dur,durations,var,"avg","count",wy_division)
+        plot_voldurmonth(site_dur,durations,"count",wy_division)
         plt.savefig(f"plot/{site}_month_count_plot.jpg", bbox_inches="tight", dpi=300)
 
-        plot_voldurmonth(site_dur,durations,var,"avg","mean",wy_division)
+        plot_voldurmonth(site_dur,durations,"mean",wy_division)
         plt.savefig(f"plot/{site}_month_mean_plot.jpg", bbox_inches="tight", dpi=300)
 
-        plot_voldurmonth(site_dur,durations,var,"avg","max",wy_division)
+        plot_voldurmonth(site_dur,durations,"max",wy_division)
         plt.savefig(f"plot/{site}_month_max_plot.jpg", bbox_inches="tight", dpi=300)
 
     if mixed:
@@ -136,7 +155,7 @@ for site in sites:
 
         for dur, dat in zip(durations, site_dur):
             print(dur)
-            x = np.reshape(dat["avg"].values, (len(dat), 1))
+            x = np.reshape(dat[var].values, (len(dat), 1))
             sklearn_forecasts, posterior_sklearn = GMM_sklearn(x)
 
             dat["forecast"] = sklearn_forecasts

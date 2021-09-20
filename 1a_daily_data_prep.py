@@ -15,16 +15,16 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from functions import nwis_import,csv_import
+from functions import nwis_daily_import,csv_daily_import
 
 ### User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'ElVado_SWE'  # site or dam name
+site = 'ElVado'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
 site_source = "file" # "usgs" or "file"
-site_file = "431.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_file = "ElVadoInflows.csv" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
 
 # Deregulation of at-site data
@@ -45,26 +45,26 @@ if site_source=="usgs":
     if len(site_file) != 8:
         print("Must provide valid USGS site number (8-digit string) for at-site data")
     else:
-        site_data = nwis_import(site=site_file,dtype="dv",wy=wy_division)
+        site_daily = nwis_daily_import(site=site_file,dtype="dv",wy=wy_division)
         var = "flow"
 else:
-    site_data = csv_import(site_file,wy=wy_division)
-    var = site_data.columns[0]
+    site_daily = csv_daily_import(site_file,wy=wy_division)
+    var = site_daily.columns[0]
 
 if clean:
     # Remove negative values
-    site_data.loc[site_data[var] < 0, var] = 0
+    site_daily.loc[site_daily[var] < 0, var] = 0
 
     # Remove WYs with less than 300 days of data or if last month is lower than September
-    for wy in site_data["wy"].unique():
-        if pd.isna(site_data.loc[site_data["wy"] == wy, var]).sum() > 65:
-            site_data.loc[site_data["wy"] == wy, var] = np.nan
-        if site_data.loc[site_data["wy"]==wy].tail(1).month.item()<9:
-            site_data.loc[site_data["wy"] == wy, var] = np.nan
+    for wy in site_daily["wy"].unique():
+        if pd.isna(site_daily.loc[site_daily["wy"] == wy, var]).sum() > 65:
+            site_daily.loc[site_daily["wy"] == wy, var] = np.nan
+        if site_daily.loc[site_daily["wy"]==wy].tail(1).month.item()<9:
+            site_daily.loc[site_daily["wy"] == wy, var] = np.nan
 
-site_data.to_csv(f"{site}_site_data.csv")
+site_daily.to_csv(f"{site}_site_daily.csv")
 fig, ax = plt.subplots(figsize=(6.25, 4))
-plt.plot(site_data.index,site_data[var],label="Site Data")
+plt.plot(site_daily.index,site_daily[var],label="Site Data")
 
 # Deregulate (if applicable)
 if deregulate:
@@ -72,22 +72,25 @@ if deregulate:
         if len(dereg_file) != 8:
             print("Must provide valid USGS site number (8-digit string) for dereg data")
         else:
-            dereg_data = nwis_import(site=dereg_file,dtype="dv",wy=wy_division)
+            dereg_daily = nwis_daily_import(site=dereg_file,dtype="dv",wy=wy_division)
+            dvar = "flow"
     else:
-        dereg_data = flowcsv_import(dereg_file, wy=wy_division)
+        dereg_daily = csv_daily_import(dereg_file, wy=wy_division)
+        dvar = dereg_daily.columns[0]
 
-    if "dereg_data" is not None:
+    if "dereg_daily" is not None:
         if sign == "plus":
-            site_dereg = site_data[var] + dereg_data[var]
+            site_dereg = pd.DataFrame(site_daily[var] + dereg_daily[dvar])
         if sign == "minus":
-            site_dereg = site_data[var] - dereg_data[var]
+            site_dereg = pd.DataFrame(site_daily[var] - dereg_daily[dvar])
+        site_dereg.columns=[var]
         site_dereg.loc[site_dereg[var]<0,var] = 0
-        site_data[var] = site_dereg
-        site_data = site_data.dropna()
+        site_daily[var] = site_dereg
+        site_daily = site_daily.dropna()
     else:
         print("Failed to deregulate.")
-    site_data.to_csv(f"{site}_site_data.csv")
-    plt.plot(site_data.index, site_data[var],label="Dereg Site Data")
+    site_daily.to_csv(f"{site}_site_daily.csv")
+    plt.plot(site_daily.index, site_daily[var],label="Dereg Site Data")
 
 # MOVE (if applicable)
 if move:
@@ -95,12 +98,15 @@ if move:
         if len(move_file) != 8:
             print("Must provide valid USGS site number (8-digit string) for at-site data")
         else:
-            move_data = nwis_import(site=move_file, dtype="dv", wy=wy_division)
+            move_daily = nwis_daily_import(site=move_file, dtype="dv", wy=wy_division)
+            mvar = "flow"
     else:
-        move_data = flowcsv_import(move_file,wy=wy_division)
-    move_data.to_csv(f"{site}_move_data.csv")
-    plt.plot(site_data.index, site_data[var],linestyle="dashed",label="MOVE Data")
+        move_daily = csv_daily_import(move_file,wy=wy_division)
+        mvar = move_daily.columns[0]
+    move_daily.to_csv(f"{site}_move_daily.csv")
+    plt.plot(move_daily.index, move_daily[mvar],linestyle="dashed",label="MOVE Data")
 
 plt.ylabel(var)
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-plt.savefig(f"{site}_site_data.jpg",bbox_inches='tight',dpi=300)
+plt.legend()
+plt.savefig(f"{site}_site_daily.jpg",bbox_inches='tight',dpi=300)

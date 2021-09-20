@@ -24,7 +24,7 @@ from functions import analyze_dur,plot_monthly_dur_ep
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado_SWE"] # list, site or dam names
+sites = ["ElVado"] # list, site or dam names
 analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
@@ -44,7 +44,7 @@ if not os.path.isdir("duration"):
 # Loop through sites
 for site in sites:
     # Load data
-    data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
+    data = pd.read_csv(f"{site}_site_daily.csv",parse_dates=True,index_col=0)
     data = data.dropna()
 
     # Now, conduct duration analyses for selected combinations:

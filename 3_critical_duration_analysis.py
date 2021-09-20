@@ -46,7 +46,7 @@ if not os.path.isdir("critical"):
     os.mkdir("critical")
 
 # Load data
-data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
+data = pd.read_csv(f"{site}_site_daily.csv",parse_dates=True,index_col=0)
 
 # Determine periods in excess of event threshold
 print('Analyzing critical duration for events above {} ft^3/s.'.format(event_thresh))

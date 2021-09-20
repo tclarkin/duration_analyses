@@ -20,11 +20,11 @@ from functions import analyze_voldur,plot_voldur,plot_wyvol
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado_SWE"] # list, site or dam names
-durations = [1] # Duration in days
+sites = ["ElVado"] # list, site or dam names
+durations = ["peak",1,15,91] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duration
-plot = False  # Will plot each WY with all durations
+plot = True  # Will plot each WY with all durations
 wyplot = True   # Will create a plot with each WY traced over the same dates
 
 ### Begin Script ###
@@ -35,7 +35,7 @@ if not os.path.isdir("volume"):
 # Loop through sites
 for site in sites:
     # Load data
-    data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
+    data = pd.read_csv(f"{site}_site_daily.csv",parse_dates=True,index_col=0)
 
     # Create list to store all duration data
     site_dur = list()
@@ -43,8 +43,14 @@ for site in sites:
         move_dur = list()
 
     # Loop through durations and analyze
+    if "peak" in durations:
+        peaks = True
+        durations.remove("peak")
+
     durations.insert(0,"WY")
     for dur in durations:
+        if dur=="peak":
+            continue
         print(f'Analyzing duration for {dur} days')
         df_dur = analyze_voldur(data,dur)
         site_dur.append(df_dur)
@@ -52,7 +58,7 @@ for site in sites:
 
         if move:
             print('Analyzing duration for move...')
-            move_data = pd.read_csv(f"{site}_move_data.csv", parse_dates=True, index_col=0)
+            move_data = pd.read_csv(f"{site}_move_daily.csv", parse_dates=True, index_col=0)
             df_movedur = analyze_voldur(move_data,dur)
             df_movedur.to_csv(f"volume/{site}_{dur}_move.csv")
 
@@ -68,13 +74,25 @@ for site in sites:
             df_move.to_csv(f"volume/{site}_{dur}_move_input.txt",sep=" ",index_label="WY")
             move_dur.append(df_move)
 
-    if (plot) & ("WY" in durations):
+    if (plot):
         print("Plotting WYs")
+        pfile = False
+        if (peaks) and (os.path.isfile(f"{site}_site_peak.csv")):
+            site_peaks = pd.read_csv(f"{site}_site_peak.csv", index_col=0)
+            site_peaks["date"] = pd.to_datetime(df_dur["date"])
+            pfile = True
+
         for wy in df_dur.index:
+            # plot flows and durations
             plot_voldur(data,wy,site_dur,durations)
+
+            # plot peaks
+            if (peaks) and (wy in site_peaks.index) and (pfile):
+                plt.plot(site_peaks.loc[wy,"date"],site_peaks.loc[wy,"peak"],marker="x",linewidth=0,label="Peak")
+            plt.legend()
             plt.savefig(f"volume/{site}_{wy}.jpg", bbox_inches="tight", dpi=300)
 
-    if (wyplot) & ("WY" in durations):
+    if (wyplot):
         print("Plotting WY traces")
         doy_data = plot_wyvol(data, site_dur[0], wy_division)
         plt.savefig(f"volume/{site}_WY_plot.jpg", bbox_inches="tight", dpi=300)

@@ -20,7 +20,7 @@ from scipy.stats.mstats import theilslopes
 from scipy.stats import norm
 
 ### DATA PREP FUNCTIONS ###
-def csv_import(filename,wy="WY"):
+def csv_daily_import(filename,wy="WY"):
     """
     Imports data in a .csv files with two columns: date, variable (user specified)
     :param filename: str, filename or file path
@@ -56,7 +56,7 @@ def csv_import(filename,wy="WY"):
 
     return(out)
 
-def nwis_import(site, dtype, start=None, end=None, wy="WY"):
+def nwis_daily_import(site, dtype, start=None, end=None, wy="WY"):
     """
     Imports flows from NWIS site
     :param site: str, USGS site number
@@ -115,6 +115,66 @@ def nwis_import(site, dtype, start=None, end=None, wy="WY"):
     out["wy"] = out["year"]
     if wy=="WY":
         out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
+
+    return(out)
+
+def csv_peak_import(filename):
+    """
+    Imports data in a .csv files with two columns: wy, date, variable (user specified)
+    :param filename: str, filename or file path
+    :return: dataframe with date index, dates, (user specified), month, year and water year
+    """
+    data = pd.read_csv(filename,index_col=0)
+    var = data.columns[len(data.columns)-1]
+    data.columns = ["date",var]
+    # Remove blank spaces...replace with nan, convert to float
+    data.loc[data[var] == ' ', var] = np.nan
+    data = data.dropna(how="all")
+    data[var] = data[var].astype('float')
+
+    # Convert first column to dates
+    data["date"] = pd.to_datetime(data["date"], errors='coerce')
+    out = data
+
+    if type(data.index) != pd.core.indexes.numeric.Int64Index:
+        # Add year, month and wy
+        out["year"] = pd.DatetimeIndex(out.index).year
+        out["month"] = pd.DatetimeIndex(out.index).month
+        out["wy"] = out["year"]
+        if wy == "WY":
+            out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
+
+        out = out.reset_index(drop=False)
+        out.index = out.wy
+        out = out.drop(["year", "month", "wy"], axis=1)
+
+    return(out)
+
+def nwis_peak_import(site):
+    """
+    Imports flows from NWIS site
+    :param site: str, USGS site number
+    :return: dataframe with date index, dates, flows, month, year and water year
+    """
+    parameter = "00060"
+    dtype = "peaks"
+
+    data = nwis.get_record(sites=site, service=dtype, parameterCd=parameter)
+
+    out = pd.DataFrame(index=data.index)
+    out["peak"] = data.peak_va
+
+    # Add year, month and wy
+    out["year"] = pd.DatetimeIndex(out.index).year
+    out["month"] = pd.DatetimeIndex(out.index).month
+    out["wy"] = out["year"]
+    out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
+
+    out = out.reset_index(drop=False)
+    out.index = out.wy
+
+    out = out.drop(["year","month","wy"],axis=1)
+    out.columns = ["date","peak"]
 
     return(out)
 
@@ -560,13 +620,12 @@ def analyze_voldur(data, dur):
                     continue
                 if pd.isna(max_idx):
                     continue
-                evs.loc[wy,"date"] = max_idx-dt.timedelta(days=int(dur/2))
+                evs.loc[wy,"date"] = max_idx-dt.timedelta(days=int(dur/2)) # place date as middle of window
                 evs.loc[wy,"avg"] = round(dur_data[max_idx],0)
                 evs.loc[wy,"peak"] = round(max_data[max_idx],0)
                 evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
 
     return (evs)
-
 
 def plot_voldur(data,wy,site_dur,durations):
     """
@@ -594,11 +653,10 @@ def plot_voldur(data,wy,site_dur,durations):
             inflow = data.loc[dates,var]
             plt.plot(dates, inflow, color='black',label=var)
         else:
-            idx_s = evs.loc[wy,"date"]
-            idx_e = idx_s+dt.timedelta(days=dur-1)
+            idx_s = evs.loc[wy,"date"]-dt.timedelta(days=int(dur/2))
+            idx_e = idx_s+dt.timedelta(days=int(dur))
             avg_val = evs.loc[wy,"avg"]
             plt.plot([idx_s,idx_s,idx_e,idx_e],[0,avg_val,avg_val,0],label=f"{dur}-day {var}",alpha=0.75)
-    plt.legend()
 
 def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
     """
@@ -663,14 +721,13 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
 
     return(doy_data)
 
-### PLOT VOLUME DURATION FUNCTIONS ###
+### PLOT VOLUME DURATION MULTIPLOT FUNCTIONS ###
 
-def plot_trendsshifts(evs,dur,var,param):
+def plot_trendsshifts(evs,dur,param):
     """
     This function produces the plots for all durations using plotting positions
     :param evs: df, output from analyze_voldur() for duration
     :param dur: str, duration being plotted
-    :param var: str, the variable being plotted
     :param param: str, parameter to plot (e.g., "avg")
     :return: figure
     """
@@ -680,7 +737,7 @@ def plot_trendsshifts(evs,dur,var,param):
     else:
         fig, ax = plt.subplots(figsize=(6.25, 4))
         plt.get_cmap("viridis")
-        plt.ylabel(var)
+        plt.ylabel(param)
         plt.xlabel('Year')
         ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
         ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
@@ -700,7 +757,7 @@ def plot_trendsshifts(evs,dur,var,param):
 
         plt.legend()
 
-def plot_normality(evs,dur,var,param):
+def plot_normality(evs,dur,param):
     """
     This function produces the plots for all durations using plotting positions
     :param evs: df, output from analyze_voldur() for duration
@@ -715,7 +772,7 @@ def plot_normality(evs,dur,var,param):
     else:
         fig, ax = plt.subplots(figsize=(6.25, 4))
         plt.get_cmap("viridis")
-        plt.ylabel(f'Log10 {var}')
+        plt.ylabel(f'Log10 {param}')
         plt.xlabel('Normal Quantile')
         ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
         ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
@@ -742,15 +799,13 @@ def calc_pp(peaks,alpha=0):
     peaks_sorted["pp"] = (peaks_sorted.index+1-alpha)/(len(peaks_sorted)+1-2*alpha)
     return(peaks_sorted)
 
-def plot_voldurpp(site_dur,durations,var,param,alpha=0):
+def plot_voldurpp(site,site_dur,durations,alpha=0):
     """
     This function produces the plots for all durations using plotting positions
     :param data: df, inflows including at least date, variable
     :param site_dur: list,
         contains dfs, output from analyze_voldur() for each duration listed in durations
     :param durations: list, durations to plot
-    :param var: str, the variable being plotted
-    :param param: str, parameter to plot (e.g., "avg_flow")
     :param alpha: float, alpha value for plotting positions
     :return: figure
     """
@@ -759,7 +814,6 @@ def plot_voldurpp(site_dur,durations,var,param,alpha=0):
 
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
-    plt.ylabel(var)
     plt.xlabel('Exceedance Probability')
     plt.yscale('log')
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
@@ -776,61 +830,55 @@ def plot_voldurpp(site_dur,durations,var,param,alpha=0):
     for d in range(0,len(durations)):
         dur = durations[d]
         evs = site_dur[d]
-
+        var = evs.columns[1]
 
         # calculate plotting positions
         if dur=="WY":
             continue
         else:
-            peaks_sorted = calc_pp(evs[param],alpha)
-            peaks_sorted.to_csv(f"plot/{dur}_pp.csv")
-            plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[param],label=f"{dur}-day Flow")
+            peaks_sorted = calc_pp(evs[var],alpha)
+            peaks_sorted.to_csv(f"plot/{site}_{dur}_pp.csv")
+            plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[var],label=f"{dur}-day Flow")
 
-            if peaks_sorted[param].min() < minp:
-                minp = peaks_sorted[param].min()
-            if peaks_sorted[param].max() > maxp:
-                maxp = peaks_sorted[param].max()
+            if peaks_sorted[var].min() < minp:
+                minp = peaks_sorted[var].min()
+            if peaks_sorted[var].max() > maxp:
+                maxp = peaks_sorted[var].max()
 
     plt.ylim(minp,maxp)
     plt.legend()
 
-def plot_voldurpdf(site_dur, durations, var,param):
+def plot_voldurpdf(site_dur,durations):
     """
     This function produces the pdf plots for all durations
     :param site_dur: list,
         contains dfs, output from analyze_voldur() for each duration listed in durations
     :param durations: list, durations to plot
-    :param var: str, the variable being plotted
-    :param param: str, parameter to plot (e.g., "avg")
     :return: figure
     """
     if not os.path.isdir("plot"):
         os.mkdir("plot")
 
-    names = list()
     dat = list()
     for d in range(0, len(durations)):
         dur = durations[d]
         if dur == "WY":
             continue
-        names.append(f"{durations[d]} {param}")
-        dat.append(np.log10(site_dur[d][param]))
+        dat.append(np.log10(site_dur[d].iloc[:,1]))
 
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.ylabel('Probability')
-    plt.xlabel(f'Log10 {var}')
-    plt.hist(dat,density=True,label=names)
+    plt.xlabel(f'Log10')
+    plt.hist(dat,density=True,label=durations)
     plt.legend()
 
-def plot_voldurmonth(site_dur, durations, var, param, stat,wy_division="WY"):
+def plot_voldurmonth(site_dur, durations, stat,wy_division="WY"):
     """
     This function produces the pdf plots for all durations
     :param site_dur: list,
         contains dfs, output from analyze_voldur() for each duration listed in durations
     :param durations: list, durations to plot
-    :param var: str, the variable being plotted
-    :param param: str, parameter to plot (e.g., "avg")
     :return: figure
     """
     if not os.path.isdir("plot"):
@@ -840,7 +888,7 @@ def plot_voldurmonth(site_dur, durations, var, param, stat,wy_division="WY"):
 
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
-    plt.ylabel(f"{stat} peak {var}")
+    plt.ylabel(f"{stat}")
     plt.xlabel('Month')
 
     for d in range(0, len(durations)):
@@ -851,12 +899,14 @@ def plot_voldurmonth(site_dur, durations, var, param, stat,wy_division="WY"):
         data = site_dur[d]
         data = data.dropna()
         data.index = pd.to_datetime(data["date"])
+        var = data.columns[1]
+
         if stat=="count":
-            summary = pd.DataFrame(data.groupby([data.index.month],sort=False).count().eval(param))
+            summary = pd.DataFrame(data.groupby([data.index.month],sort=False).count().eval(var))
         if stat=="mean":
-            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).mean().eval(param))
+            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).mean().eval(var))
         if stat=="max":
-            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).max().eval(param))
+            summary = pd.DataFrame(data.groupby([data.index.month], sort=False).max().eval(var))
         if wy_division=="WY":
             summary.loc[summary.index >= 10,"plot"] = summary.loc[summary.index >= 10].index - 9
             summary.loc[summary.index < 10,"plot"] = summary.loc[summary.index < 10].index + 3

@@ -16,8 +16,8 @@ from functions import plot_dur_ep
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado_Stage","ElVado"] # list, site or dam names
-labels = ["Stage","Flow"] # labels for sites
+sites = ["ElVado"] # list, site or dam names
+labels = ["Flow"] # labels for sites
 
 ### Begin Script ###
 # Check for output directory
