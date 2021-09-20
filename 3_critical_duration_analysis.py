@@ -4,7 +4,7 @@ Created on May 25 2021
 Critical Duration Script  (v4)
 @author: tclarkin (USBR 2021)
 
-This script analyzes user supplied continuous daily inflows using a user supplied threshold (event_thresh). The
+This script analyzes user supplied continuous daily records using a user supplied threshold (event_thresh). The
 threshold is used to define a partial duration series (PDS) and calculate durations (time above the threshold).
 Critical duration is then estimated as the peak weighted, arithmetic, and geometric average of the durations from the
 PDS. The user also has the option to specify duration or peak limits (min_dur and min_peak, respectively), if it is
@@ -32,12 +32,12 @@ from functions import countdur,analyze_critdur,analyze_monthlydur,analyze_monthl
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-site = "ARD" # site or dam name
-event_thresh = 500    # threshold flow for defining flood events
+site = "ElVado" # site or dam name
+event_thresh = 400    # threshold for defining events
 plot_events = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 check_annual_pattern = True
-min_dur = 0        # minumum duration acceptable for analysis
-min_peak = 2000    # minumum duration acceptable for analysis
+min_dur = 0        # minimum duration acceptable for analysis
+min_peak = 4000    # minimum duration acceptable for analysis
 plot_max = 0       # maximum duration to show in peak vs duration plot (will use max if 0)
 
 ### Begin Script ###
@@ -45,10 +45,10 @@ plot_max = 0       # maximum duration to show in peak vs duration plot (will use
 if not os.path.isdir("critical"):
     os.mkdir("critical")
 
-# Load inflows
+# Load data
 data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
 
-# Determine flows in excess of event threshold
+# Determine periods in excess of event threshold
 print('Analyzing critical duration for events above {} ft^3/s.'.format(event_thresh))
 evs = countdur(data,event_thresh)
 analyze_critdur(evs,min_dur,min_peak,plot_max)

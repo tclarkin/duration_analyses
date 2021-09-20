@@ -4,8 +4,8 @@ Created on May 25 2021
 Volume Duration Script  (v1)
 @author: tclarkin (USBR 2021)
 
-This script aids in volume frequency analysis by using user supplied continuous daily inflows and identifying annual
-maximum average flows for periods specified (WY always added by default). Additionally, the user may have individual
+This script aids in volume frequency analysis by using user supplied continuous daily data and identifying annual
+maximum average values for periods specified (WY always added by default). Additionally, the user may have individual
 traces of the WY plotted together.
 
 This script can be run for all sites simultaneously
@@ -20,13 +20,12 @@ from functions import analyze_voldur,plot_voldur,plot_wyvol
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ARD","ARD_USGS"] # list, site or dam names
-durations = [1,7,60,120] # Duration in days
+sites = ["ElVado_SWE"] # list, site or dam names
+durations = [1] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duration
 plot = False  # Will plot each WY with all durations
 wyplot = True   # Will create a plot with each WY traced over the same dates
-log = True      # Use log scale for wy plot
 
 ### Begin Script ###
 # Check for output directory
@@ -35,7 +34,7 @@ if not os.path.isdir("volume"):
 
 # Loop through sites
 for site in sites:
-    # Load inflows
+    # Load data
     data = pd.read_csv(f"{site}_site_data.csv",parse_dates=True,index_col=0)
 
     # Create list to store all duration data
@@ -46,21 +45,21 @@ for site in sites:
     # Loop through durations and analyze
     durations.insert(0,"WY")
     for dur in durations:
-        print(f'Analyzing duration flows for {dur} days')
+        print(f'Analyzing duration for {dur} days')
         df_dur = analyze_voldur(data,dur)
         site_dur.append(df_dur)
         df_dur.to_csv(f"volume/{site}_{dur}.csv")
 
         if move:
-            print('Analyzing duration flows for move...')
+            print('Analyzing duration for move...')
             move_data = pd.read_csv(f"{site}_move_data.csv", parse_dates=True, index_col=0)
             df_movedur = analyze_voldur(move_data,dur)
             df_movedur.to_csv(f"volume/{site}_{dur}_move.csv")
 
             if dur=="WY":
-                var = "annual_volume"
+                var = "annual_sum"
             else:
-                var = "avg_flow"
+                var = "avg"
             df_move = pd.DataFrame(index=df_movedur.index)
             df_move[var+"_x"] = df_movedur[var]
             df_move = df_move.dropna(how="any")
@@ -77,7 +76,7 @@ for site in sites:
 
     if (wyplot) & ("WY" in durations):
         print("Plotting WY traces")
-        doy_data = plot_wyvol(data, site_dur[0], wy_division, log=log)
+        doy_data = plot_wyvol(data, site_dur[0], wy_division)
         plt.savefig(f"volume/{site}_WY_plot.jpg", bbox_inches="tight", dpi=300)
 
         doy_data.to_csv(f"volume/{site}_doy.csv")

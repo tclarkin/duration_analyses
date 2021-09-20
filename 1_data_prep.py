@@ -15,16 +15,16 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from functions import nwis_import,flowcsv_import
+from functions import nwis_import,csv_import
 
 ### User Input ###
-#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
+#os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'ARD'  # site or dam name
+site = 'ElVado_SWE'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
 site_source = "file" # "usgs" or "file"
-site_file = "daily_flow.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_file = "431.csv" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
 
 # Deregulation of at-site data
@@ -46,23 +46,25 @@ if site_source=="usgs":
         print("Must provide valid USGS site number (8-digit string) for at-site data")
     else:
         site_data = nwis_import(site=site_file,dtype="dv",wy=wy_division)
+        var = "flow"
 else:
-    site_data = flowcsv_import(site_file,wy=wy_division)
+    site_data = csv_import(site_file,wy=wy_division)
+    var = site_data.columns[0]
 
 if clean:
-    # Remove negative flows
-    site_data.loc[site_data["flow"] < 0, "flow"] = 0
+    # Remove negative values
+    site_data.loc[site_data[var] < 0, var] = 0
 
     # Remove WYs with less than 300 days of data or if last month is lower than September
     for wy in site_data["wy"].unique():
-        if pd.isna(site_data.loc[site_data["wy"] == wy, "flow"]).sum() > 65:
-            site_data.loc[site_data["wy"] == wy, "flow"] = np.nan
+        if pd.isna(site_data.loc[site_data["wy"] == wy, var]).sum() > 65:
+            site_data.loc[site_data["wy"] == wy, var] = np.nan
         if site_data.loc[site_data["wy"]==wy].tail(1).month.item()<9:
-            site_data.loc[site_data["wy"] == wy, "flow"] = np.nan
+            site_data.loc[site_data["wy"] == wy, var] = np.nan
 
 site_data.to_csv(f"{site}_site_data.csv")
 fig, ax = plt.subplots(figsize=(6.25, 4))
-plt.plot(site_data.index,site_data.flow,label="Site Data")
+plt.plot(site_data.index,site_data[var],label="Site Data")
 
 # Deregulate (if applicable)
 if deregulate:
@@ -76,16 +78,16 @@ if deregulate:
 
     if "dereg_data" is not None:
         if sign == "plus":
-            site_dereg = site_data["flow"] + dereg_data["flow"]
+            site_dereg = site_data[var] + dereg_data[var]
         if sign == "minus":
-            site_dereg = site_data["flow"] - dereg_data["flow"]
-        site_dereg.loc[site_dereg["flow"]<0,"flow"] = 0
-        site_data["flow"] = site_dereg
+            site_dereg = site_data[var] - dereg_data[var]
+        site_dereg.loc[site_dereg[var]<0,var] = 0
+        site_data[var] = site_dereg
         site_data = site_data.dropna()
     else:
         print("Failed to deregulate.")
     site_data.to_csv(f"{site}_site_data.csv")
-    plt.plot(site_data.index, site_data.flow,label="Dereg Site Data")
+    plt.plot(site_data.index, site_data[var],label="Dereg Site Data")
 
 # MOVE (if applicable)
 if move:
@@ -97,9 +99,8 @@ if move:
     else:
         move_data = flowcsv_import(move_file,wy=wy_division)
     move_data.to_csv(f"{site}_move_data.csv")
-    plt.plot(site_data.index, site_data.flow,linestyle="dashed",label="MOVE Data")
+    plt.plot(site_data.index, site_data[var],linestyle="dashed",label="MOVE Data")
 
-#plt.legend()
-plt.ylabel('Flow ($ft^3/s$)')
+plt.ylabel(var)
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 plt.savefig(f"{site}_site_data.jpg",bbox_inches='tight',dpi=300)

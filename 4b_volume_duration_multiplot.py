@@ -22,8 +22,8 @@ from statsmodels.graphics import tsaplots
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ARD_USGS","ARD"] # list, site or dam names
-durations = [1,7,60,120] # Duration in days
+sites = ["ElVado_Stage"] # list, site or dam names
+durations = [1] # Duration in days
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots (NOT DEVELOPED YET!)
 ppplot = True       # Will create a plot with all durations plotted with plotting positions
@@ -45,6 +45,8 @@ for site in sites:
     print(f"Analyzing {site}")
     site_dur = list()
     site_sum = pd.DataFrame()
+    data = pd.read_csv(f"{site}_site_data.csv", parse_dates=True, index_col=0)
+    var = data.columns[0]
 
     for dur in durations:
         df_dur = pd.read_csv(f"volume/{site}_{dur}.csv",index_col=0)
@@ -53,14 +55,14 @@ for site in sites:
         site_dur.append(df_dur)
 
         site_sum.loc[dur,"N"] = len(df_dur)
-        site_sum.loc[dur, "mean"] = df_dur.avg_flow.mean()
-        site_sum.loc[dur, "median"] = df_dur.avg_flow.median()
-        site_sum.loc[dur, "sd"] = df_dur.avg_flow.std()
-        site_sum.loc[dur, "skew"] = df_dur.avg_flow.skew()
-        site_sum.loc[dur, "log_mean"] = np.log10(df_dur.avg_flow).mean()
-        site_sum.loc[dur, "log_median"] = np.log10(df_dur.avg_flow).median()
-        site_sum.loc[dur, "log_sd"] = np.log10(df_dur.avg_flow).std()
-        site_sum.loc[dur, "log_skew"] = np.log10(df_dur.avg_flow).skew()
+        site_sum.loc[dur, "mean"] = df_dur["avg"].mean()
+        site_sum.loc[dur, "median"] = df_dur["avg"].median()
+        site_sum.loc[dur, "sd"] = df_dur["avg"].std()
+        site_sum.loc[dur, "skew"] = df_dur["avg"].skew()
+        site_sum.loc[dur, "log_mean"] = np.log10(df_dur["avg"]).mean()
+        site_sum.loc[dur, "log_median"] = np.log10(df_dur["avg"]).median()
+        site_sum.loc[dur, "log_sd"] = np.log10(df_dur["avg"]).std()
+        site_sum.loc[dur, "log_skew"] = np.log10(df_dur["avg"]).skew()
 
     site_sum.to_csv(f"volume/{site}_stats_summary.csv")
 
@@ -76,39 +78,39 @@ for site in sites:
             print(f'{dur}...')
 
             # Check for trends and shifts
-            plot_trendsshifts(evs,dur,"avg_flow")
+            plot_trendsshifts(evs,dur,var,"avg")
             plt.savefig(f"ida/{site}_{dur}_trends&shifts_plot.jpg", bbox_inches="tight", dpi=300)
 
             # Check for autocorrelation
-            fig = tsaplots.plot_acf(evs["avg_flow"], lags=20)
+            fig = tsaplots.plot_acf(evs["avg"], lags=20)
             fig.set_size_inches(6.25, 4)
             plt.ylabel("Autocorrelation")
             plt.xlabel("Lag K, in years")
             plt.savefig(f"ida/{site}_{dur}_acf_plot.jpg", bbox_inches="tight", dpi=300)
 
             # Check for normality
-            plot_normality(evs,dur,"avg_flow")
+            plot_normality(evs,dur,var,"avg")
             plt.savefig(f"ida/{site}_{dur}_normality_plot.jpg", bbox_inches="tight", dpi=300)
 
     if ppplot:
         print("Plotting with plotting positions")
-        plot_voldurpp(site_dur,durations,"avg_flow",alpha)
+        plot_voldurpp(site_dur,durations,var,"avg",alpha)
         plt.savefig(f"plot/{site}_pp_plot.jpg", bbox_inches="tight", dpi=300)
 
     if pdfplot:
         print("Plotting with probability density function")
-        plot_voldurpdf(site_dur,durations,"avg_flow")
+        plot_voldurpdf(site_dur,durations,var,"avg")
         plt.savefig(f"plot/{site}_pdf_plot.jpg", bbox_inches="tight", dpi=300)
 
     if monthplot:
         print("Plotting with monthly distributions")
-        plot_voldurmonth(site_dur,durations,"avg_flow","count",wy_division)
+        plot_voldurmonth(site_dur,durations,var,"avg","count",wy_division)
         plt.savefig(f"plot/{site}_month_count_plot.jpg", bbox_inches="tight", dpi=300)
 
-        plot_voldurmonth(site_dur,durations,"avg_flow","mean",wy_division)
+        plot_voldurmonth(site_dur,durations,var,"avg","mean",wy_division)
         plt.savefig(f"plot/{site}_month_mean_plot.jpg", bbox_inches="tight", dpi=300)
 
-        plot_voldurmonth(site_dur,durations,"avg_flow","max",wy_division)
+        plot_voldurmonth(site_dur,durations,var,"avg","max",wy_division)
         plt.savefig(f"plot/{site}_month_max_plot.jpg", bbox_inches="tight", dpi=300)
 
     if mixed:
@@ -134,7 +136,7 @@ for site in sites:
 
         for dur, dat in zip(durations, site_dur):
             print(dur)
-            x = np.reshape(dat.avg_flow.values, (len(dat), 1))
+            x = np.reshape(dat["avg"].values, (len(dat), 1))
             sklearn_forecasts, posterior_sklearn = GMM_sklearn(x)
 
             dat["forecast"] = sklearn_forecasts
