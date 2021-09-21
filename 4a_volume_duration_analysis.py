@@ -20,11 +20,11 @@ from functions import analyze_voldur,plot_voldur,plot_wyvol
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado"] # list, site or dam names
+sites = ["ElVado","ElVado_Stage","ElVado_SWE"] # list, site or dam names
 durations = ["peak",1,15,91] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 move = False  # Will prepare MOVE3 input files for each duration
-plot = True  # Will plot each WY with all durations
+plot = False  # Will plot each WY with all durations
 wyplot = True   # Will create a plot with each WY traced over the same dates
 
 ### Begin Script ###

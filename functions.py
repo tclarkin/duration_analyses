@@ -295,7 +295,7 @@ def plot_dur_ep():
     ax.grid()
     ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
 
-def plot_monthly_dur_ep(durtable,combos):
+def plot_monthly_dur_ep(durtable,combos,var):
     """
     Initializes monthly duration plot
     :return:
@@ -303,6 +303,7 @@ def plot_monthly_dur_ep(durtable,combos):
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.xlabel('Month')
+    plt.ylabel(get_varlabel(var))
     plt.yscale('log')
     ax.set_xticks([1,2,3,4,5,6,7,8,9,10,11,12])
     ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
@@ -320,16 +321,15 @@ def plot_monthly_dur_ep(durtable,combos):
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
     plt.legend(title="Ex. Prob.",bbox_to_anchor=(1, 0.5), loc='center left',prop={'size': 10})
 
-def analyze_dur(data,combos,pcts):
+def analyze_dur(data,combos,pcts,var):
     """
     Conducts flow duration analysis
     :param data: df, raw data with at least date, month, flow
     :param combos: list, months being analyzed
     :param pcts: list, decimal exceedance probabilities included
+    :param var: str, variable name
     :return: df, table of results
     """
-    var = data.columns[0]
-
     full_table = pd.DataFrame(index=pcts)
     plot_dur_ep()
 
@@ -345,7 +345,7 @@ def analyze_dur(data,combos,pcts):
         table = summarize_ep(dur_ep, pcts)
         full_table.loc[:, key] = table[var]
         plt.plot(dur_ep["exceeded"] * 100, dur_ep[var], label=key)
-        plt.ylabel(var)
+        plt.ylabel(get_varlabel(var))
 
     if len(combos) > 4:
         plt.legend(prop={'size': 8})
@@ -398,8 +398,8 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
     """
     # PLot peaks vs durations
     fig, ax = plt.subplots(figsize=(6.25, 4))
-    plt.title("Peak vs Duration (n=" + str(len(evs)) + ")")
-    plt.ylabel('Peak ($ft^3$/s)')
+    plt.title("Flow vs Duration (n=" + str(len(evs)) + ")")
+    plt.ylabel('Flow ($ft^3$/s)')
     if plot_max == 0:
         plt.xlim(0.5, max(evs.duration)+0.5)
     else:
@@ -605,8 +605,9 @@ def analyze_voldur(data, dur):
                 if dur == "WY":
                     max_idx = data.loc[data["wy"] == wy, var].idxmax()
                     evs.loc[wy, "date"] = max_idx
-                    evs.loc[wy, "annual_sum"] = round(data.loc[data["wy"] == wy, var].sum() * 86400 / 43560, 0)
-                    evs.loc[wy, "peak"] = round(data.loc[max_idx, var].max(), 0)
+                    evs.loc[wy, "annual_sum"] = round(data.loc[data["wy"] == wy, var].sum(), 0)
+                    evs.loc[wy, "annual_acft"] = round(data.loc[data["wy"] == wy, var].sum() * 86400 / 43560, 0)
+                    evs.loc[wy, "max"] = round(data.loc[max_idx, var].max(), 0)
                     evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, var])
     else:
         dur_data = data[var].rolling(dur,min_periods=int(np.ceil(dur*0.90))).mean()
@@ -621,8 +622,8 @@ def analyze_voldur(data, dur):
                 if pd.isna(max_idx):
                     continue
                 evs.loc[wy,"date"] = max_idx-dt.timedelta(days=int(dur/2)) # place date as middle of window
-                evs.loc[wy,"avg"] = round(dur_data[max_idx],0)
-                evs.loc[wy,"peak"] = round(max_data[max_idx],0)
+                evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
+                evs.loc[wy,f"max_{var}"] = round(max_data[max_idx],0)
                 evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
 
     return (evs)
@@ -646,7 +647,7 @@ def plot_voldur(data,wy,site_dur,durations):
                 return
             fig, ax = plt.subplots(figsize=(6.25, 4))
             plt.title(wy)
-            plt.ylabel(var)
+            plt.ylabel(get_varlabel(var))
             ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
             plt.xticks(rotation=90)
             dates = data.index[data["wy"]==wy]
@@ -655,7 +656,7 @@ def plot_voldur(data,wy,site_dur,durations):
         else:
             idx_s = evs.loc[wy,"date"]-dt.timedelta(days=int(dur/2))
             idx_e = idx_s+dt.timedelta(days=int(dur))
-            avg_val = evs.loc[wy,"avg"]
+            avg_val = evs.loc[wy,f"avg_{var}"]
             plt.plot([idx_s,idx_s,idx_e,idx_e],[0,avg_val,avg_val,0],label=f"{dur}-day {var}",alpha=0.75)
 
 def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
@@ -716,19 +717,19 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
             ax.set_ylim(bottom = 1)
         ax.set_ylim(top = data[var].max()*1.01)
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-    plt.ylabel(var)
+    plt.ylabel(get_varlabel(var))
     plt.legend(prop={'size': 8})
 
     return(doy_data)
 
 ### PLOT VOLUME DURATION MULTIPLOT FUNCTIONS ###
 
-def plot_trendsshifts(evs,dur,param):
+def plot_trendsshifts(evs,dur,var):
     """
     This function produces the plots for all durations using plotting positions
     :param evs: df, output from analyze_voldur() for duration
     :param dur: str, duration being plotted
-    :param param: str, parameter to plot (e.g., "avg")
+    :param var: str, parameter to plot (e.g., "avg_{parameter}")
     :return: figure
     """
     # calculate plotting positions
@@ -737,33 +738,33 @@ def plot_trendsshifts(evs,dur,param):
     else:
         fig, ax = plt.subplots(figsize=(6.25, 4))
         plt.get_cmap("viridis")
-        plt.ylabel(param)
+        plt.ylabel(get_varlabel(var))
         plt.xlabel('Year')
         ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
         ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
-        plt.scatter(evs.index,evs[param],label=f"{dur}-day AMS")
+        plt.scatter(evs.index,evs[var],label=f"{dur}-day AMS")
 
         # Theil Slope
-        theil = theilslopes(evs[param],evs.index)
-        kendall = kendalltau(evs[param],evs.index)
+        theil = theilslopes(evs[var],evs.index)
+        kendall = kendalltau(evs[var],evs.index)
         plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {int(theil[0])} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
 
         for i in evs.index[::10]:
             if i>max(evs.index)-20:
                 continue
             print(f'{i}-{i+10} vs {i+11}-{i+21}')
-            mw = mannwhitneyu(evs.loc[i:i+10,param],evs.loc[i+11:i+21,param])
+            mw = mannwhitneyu(evs.loc[i:i+10,var],evs.loc[i+11:i+21,var])
             print(mw)
 
         plt.legend()
 
-def plot_normality(evs,dur,param):
+def plot_normality(evs,dur,var):
     """
     This function produces the plots for all durations using plotting positions
     :param evs: df, output from analyze_voldur() for duration
     :param dur: str, duration being plotted
     :param var: str, the variable being plotted
-    :param param: str, parameter to plot (e.g., "avg")
+    :param var: str, parameter to plot (e.g., "avg_{parameter}")
     :return: figure
     """
     # calculate plotting positions
@@ -772,13 +773,13 @@ def plot_normality(evs,dur,param):
     else:
         fig, ax = plt.subplots(figsize=(6.25, 4))
         plt.get_cmap("viridis")
-        plt.ylabel(f'Log10 {param}')
+        plt.ylabel(f'Log10 {get_varlabel(var)}')
         plt.xlabel('Normal Quantile')
         ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
         ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
 
-        peaks_sorted = calc_pp(evs[param], 0)
-        peaks_sorted["log"] = np.log10(peaks_sorted[param])
+        peaks_sorted = calc_pp(evs[var], 0)
+        peaks_sorted["log"] = np.log10(peaks_sorted[var])
         peaks_sorted["norm"] = norm.ppf(1-peaks_sorted["pp"])
         plt.scatter(peaks_sorted["norm"],peaks_sorted["log"],label=f"{dur}-day AMS (n = {len(peaks_sorted)})")
         ols = np.polyfit(peaks_sorted["norm"],peaks_sorted["log"],deg=1)
@@ -859,17 +860,21 @@ def plot_voldurpdf(site_dur,durations):
     if not os.path.isdir("plot"):
         os.mkdir("plot")
 
+    var = site_dur[0].columns[1]
+
     dat = list()
     for d in range(0, len(durations)):
         dur = durations[d]
         if dur == "WY":
             continue
-        dat.append(np.log10(site_dur[d].iloc[:,1]))
+        data = site_dur[d].iloc[:,1]
+        data = data[data>0]
+        dat.append(np.log10(data))
 
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.ylabel('Probability')
-    plt.xlabel(f'Log10')
+    plt.xlabel(f'Log10 {get_varlabel(var)}')
     plt.hist(dat,density=True,label=durations)
     plt.legend()
 
@@ -884,11 +889,13 @@ def plot_voldurmonth(site_dur, durations, stat,wy_division="WY"):
     if not os.path.isdir("plot"):
         os.mkdir("plot")
 
+    var = site_dur[0].columns[1]
+
     width = 0.8/len(durations)
 
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
-    plt.ylabel(f"{stat}")
+    plt.ylabel(f"{stat} {get_varlabel(var)}")
     plt.xlabel('Month')
 
     for d in range(0, len(durations)):
@@ -918,3 +925,16 @@ def plot_voldurmonth(site_dur, durations, stat,wy_division="WY"):
         month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
     plt.xticks([1,2,3,4,5,6,7,8,9,10,11,12],month_names)
     plt.legend()
+
+def get_varlabel(var):
+    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","cfs","CFS"]:
+        lab = "Flow (ft$^3$/s)"
+    elif var in ["peak", "Peak", "peaks", "Peaks"]:
+        lab = "Peak Flow (ft$^3$/s)"
+    elif var in ["stage","Stage","feet","Feet","FT","ft","pool_elevation","elevation","Elevation","elev","Elev"]:
+        lab = "Stage (ft)"
+    elif var in ["SWE","swe","snowpack","snowdepth","snow","SNWD","WTEQ"]:
+        lab = "SWE (in)"
+    else:
+        lab = var
+    return lab

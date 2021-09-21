@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Created on May 25 2021
-Data Preparation Script (v1)
+Peak Data Preparation Script (v1)
 @author: tclarkin (USBR 2021)
 
 This script takes user supplied USGS gage or other peak data in .csv format and compresses into a summary of annual
 peaks for use scripts 4a and 4b only
 
-This script should be run once for each site being analyzed
+This script should be run once for each site being analyzed. If input csv files are used, suggest having three columns:
+wy: (yyyy)
+date: (dd-mmm-yyyy)
+"peak"
 
 """
 import os
@@ -15,7 +18,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from functions import nwis_peak_import,csv_peak_import
+from functions import nwis_peak_import,csv_peak_import,get_varlabel
 
 ### User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
@@ -61,7 +64,7 @@ if move:
     move_peaks.to_csv(f"{site}_move_peak.csv")
     plt.plot(move_peaks.index, move_peaks[mvar],marker="x",linewidth=0,label="MOVE Peaks")
 
-plt.ylabel(var)
+plt.ylabel(get_varlabel(var))
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 plt.legend()
 plt.savefig(f"{site}_site_peak.jpg",bbox_inches='tight',dpi=300)

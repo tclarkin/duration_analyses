@@ -10,14 +10,14 @@ This script allows the user to plot multiple annual duration curves
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from functions import plot_dur_ep
+from functions import plot_dur_ep,get_varlabel
 
 ### Begin User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado"] # list, site or dam names
-labels = ["Flow"] # labels for sites
+sites = ["ElVado","ElVado_Stage","ElVado_SWE"] # list, site or dam names
+labels = ["Flow","Stage","SWE"] # labels for sites
 
 ### Begin Script ###
 # Check for output directory
@@ -33,11 +33,11 @@ for site,label in zip(sites,labels):
     data = pd.read_csv(f"duration/{site}_annual_raw.csv",parse_dates=True,index_col=0)
     if var is None:
         var = data.columns[1]
-        var_label = var
+        var_label = get_varlabel(var)
     else:
         if data.columns[1]!=var:
             var = data.columns[1]
-            var_label = f"{var_label} | {var}"
+            var_label = f"{var_label} | {get_varlabel(var)}"
     plt.plot(data.exceeded*100,data[var],label=label)
 plt.ylabel(var_label)
 plt.legend()

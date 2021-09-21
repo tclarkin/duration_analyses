@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 Created on May 25 2021
-Data Preparation Script (v1)
+Daily Data Preparation Script (v1)
 @author: tclarkin (USBR 2021)
 
 This script takes user supplied USGS gage or other data in .csv format and compresses into a continuous timeseries
 for use in flow, critical and volume duration analyses. Option to "clean" data, by removing WYs with less than 300 days
 
-This script should be run once for each site being analyzed
+This script should be run once for each site being analyzed. If input csv files are used, suggest having two columns:
+date: (dd-mmm-yyyy)
+variable, where variable is "flow", "swe", or "stage" (no spaces)
 
 """
 import os
@@ -15,16 +17,16 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from functions import nwis_daily_import,csv_daily_import
+from functions import nwis_daily_import,csv_daily_import,get_varlabel
 
 ### User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'ElVado'  # site or dam name
+site = 'ElVado_Stage'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
 site_source = "file" # "usgs" or "file"
-site_file = "ElVadoInflows.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_file = "49.csv" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
 
 # Deregulation of at-site data
@@ -106,7 +108,7 @@ if move:
     move_daily.to_csv(f"{site}_move_daily.csv")
     plt.plot(move_daily.index, move_daily[mvar],linestyle="dashed",label="MOVE Data")
 
-plt.ylabel(var)
+plt.ylabel(get_varlabel(var))
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 plt.legend()
 plt.savefig(f"{site}_site_daily.jpg",bbox_inches='tight',dpi=300)

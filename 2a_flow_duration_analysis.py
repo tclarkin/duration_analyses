@@ -24,7 +24,7 @@ from functions import analyze_dur,plot_monthly_dur_ep
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado"] # list, site or dam names
+sites = ["ElVado","ElVado_Stage","ElVado_SWE"] # list, site or dam names
 analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
@@ -46,6 +46,7 @@ for site in sites:
     # Load data
     data = pd.read_csv(f"{site}_site_daily.csv",parse_dates=True,index_col=0)
     data = data.dropna()
+    var = data.columns[0]
 
     # Now, conduct duration analyses for selected combinations:
     for a in analyze:
@@ -60,11 +61,11 @@ for site in sites:
         if a =="all":
             combos = allcombos
 
-        durtable,durraw = analyze_dur(data,combos,pcts)
+        durtable,durraw = analyze_dur(data,combos,pcts,var)
         durtable.to_csv(f"duration/{site}_{a}.csv",index=True,header=True)
         if a=="annual":
             durraw[0].to_csv(f"duration/{site}_{a}_raw.csv",index=True,header=True)
         plt.savefig(f"duration/{site}_{a}_plot.jpg",bbox_inches='tight',dpi=300)
         if monthplot == True:
-            plot_monthly_dur_ep(durtable,combos)
+            plot_monthly_dur_ep(durtable,combos,var)
             plt.savefig(f"duration/{site}_{a}_monthly_plot.jpg",bbox_inches='tight',dpi=300)

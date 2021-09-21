@@ -22,10 +22,10 @@ from statsmodels.graphics import tsaplots
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado"] # list, site or dam names
+sites = ["ElVado","ElVado_Stage","ElVado_SWE"] # list, site or dam names
 durations = ["peak",1,15,91] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-idaplot = True      # Will create initial data analysis plots
+idaplot = False      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
 pdfplot = True      # Plot probability density function of data
@@ -48,22 +48,23 @@ for site in sites:
     data = pd.read_csv(f"{site}_site_daily.csv", parse_dates=True, index_col=0)
 
     if "peak" in durations:
-        peaks = True
-        durations.remove("peak")
-        durations.append("peak")
+        if os.path.isfile(f"{site}_site_peak.csv"):
+            peaks = True
+            durations_sel = durations
+            durations_sel.remove("peak")
+            durations_sel.append("peak")
+        else:
+            peaks = False
+            durations_sel = durations
+            durations_sel.remove("peak")
+    else:
+        peaks = False
+        durations_sel = durations
 
-    for dur in durations:
+    for dur in durations_sel:
         if dur == "peak":
-            pfile = False
-            if (peaks) and (os.path.isfile(f"{site}_site_peak.csv")):
-                df_dur = pd.read_csv(f"{site}_site_peak.csv",index_col=0)
-                df_dur["date"] = pd.to_datetime(df_dur["date"])
-                pfile = True
-            else:
-                durations.remove("peak")
-                peaks = False
-                continue
-
+            df_dur = pd.read_csv(f"{site}_site_peak.csv",index_col=0)
+            df_dur["date"] = pd.to_datetime(df_dur["date"])
         else:
             df_dur = pd.read_csv(f"volume/{site}_{dur}.csv",index_col=0)
             df_dur["date"] = pd.to_datetime(df_dur["date"])
@@ -90,9 +91,9 @@ for site in sites:
         # Check for output directory
         if not os.path.isdir("ida"):
             os.mkdir("ida")
-        for d in range(0,len(durations)):
+        for d in range(0,len(durations_sel)):
             evs = site_dur[d]
-            dur = durations[d]
+            dur = durations_sel[d]
             var = evs.columns[1]
             print(f'{dur}...')
 
@@ -113,25 +114,26 @@ for site in sites:
 
     if ppplot:
         print("Plotting with plotting positions")
-        plot_voldurpp(site,site_dur,durations,alpha)
+        plot_voldurpp(site,site_dur,durations_sel,alpha)
         plt.savefig(f"plot/{site}_pp_plot.jpg", bbox_inches="tight", dpi=300)
 
     if pdfplot:
         print("Plotting with probability density function")
-        plot_voldurpdf(site_dur,durations)
+        plot_voldurpdf(site_dur,durations_sel)
         plt.savefig(f"plot/{site}_pdf_plot.jpg", bbox_inches="tight", dpi=300)
 
     if monthplot:
         print("Plotting with monthly distributions")
-        plot_voldurmonth(site_dur,durations,"count",wy_division)
+        plot_voldurmonth(site_dur,durations_sel,"count",wy_division)
         plt.savefig(f"plot/{site}_month_count_plot.jpg", bbox_inches="tight", dpi=300)
 
-        plot_voldurmonth(site_dur,durations,"mean",wy_division)
+        plot_voldurmonth(site_dur,durations_sel,"mean",wy_division)
         plt.savefig(f"plot/{site}_month_mean_plot.jpg", bbox_inches="tight", dpi=300)
 
-        plot_voldurmonth(site_dur,durations,"max",wy_division)
+        plot_voldurmonth(site_dur,durations_sel,"max",wy_division)
         plt.savefig(f"plot/{site}_month_max_plot.jpg", bbox_inches="tight", dpi=300)
 
+# INCOMPLETE.
     if mixed:
         if not os.path.isdir("mixed"):
             os.mkdir("mixed")
@@ -153,7 +155,7 @@ for site in sites:
             return model.predict(x), model.predict_proba(x)[:, 1]
 
 
-        for dur, dat in zip(durations, site_dur):
+        for dur, dat in zip(durations_sel, site_dur):
             print(dur)
             x = np.reshape(dat[var].values, (len(dat), 1))
             sklearn_forecasts, posterior_sklearn = GMM_sklearn(x)
