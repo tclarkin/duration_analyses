@@ -44,11 +44,20 @@ for site in sites:
 
     # Loop through durations and analyze
     if "peak" in durations:
-        peaks = True
-        durations.remove("peak")
+        if os.path.isfile(f"{site}_site_peak.csv"):
+            peaks = True
+            durations_sel = durations
+            durations_sel.remove("peak")
+        else:
+            peaks = False
+            durations_sel = durations
+    else:
+        peaks = False
+        durations_sel = durations
 
-    durations.insert(0,"WY")
-    for dur in durations:
+    durations_sel.insert(0,"WY")
+
+    for dur in durations_sel:
         if dur=="peak":
             continue
         print(f'Analyzing duration for {dur} days')
@@ -76,18 +85,18 @@ for site in sites:
 
     if (plot):
         print("Plotting WYs")
-        pfile = False
-        if (peaks) and (os.path.isfile(f"{site}_site_peak.csv")):
+        if (peaks):
             site_peaks = pd.read_csv(f"{site}_site_peak.csv", index_col=0)
             site_peaks["date"] = pd.to_datetime(df_dur["date"])
-            pfile = True
 
         for wy in df_dur.index:
             # plot flows and durations
-            plot_voldur(data,wy,site_dur,durations)
+            plot_voldur(data,wy,site_dur,durations_sel)
 
             # plot peaks
-            if (peaks) and (wy in site_peaks.index) and (pfile):
+            if (peaks):
+                if (wy not in site_peaks.index) or (pd.isnull(site_peaks.loc[wy, "date"])):
+                    continue
                 plt.plot(site_peaks.loc[wy,"date"],site_peaks.loc[wy,"peak"],marker="x",linewidth=0,label="Peak")
             plt.legend()
             plt.savefig(f"volume/{site}_{wy}.jpg", bbox_inches="tight", dpi=300)
