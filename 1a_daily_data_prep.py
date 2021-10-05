@@ -23,16 +23,16 @@ from functions import nwis_daily_import,csv_daily_import,get_varlabel
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'ElVado_Stage'  # site or dam name
+site = 'coolidge'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "file" # "usgs" or "file"
-site_file = "49.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_source = "usgs" # "usgs" or "file"
+site_file = "09466500" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
 
 # Deregulation of at-site data
-deregulate = False
+deregulate = True
 dereg_source = "usgs" # "usgs" or "file"
-dereg_file = "08073700" # usgs site number (e.g., "09445000") or .csv data file
+dereg_file = "09468500" # usgs site number (e.g., "09445000") or .csv data file
 dereg_shift = 0 # days to shift (+ forward, - backward)
 sign = "plus" # "plus" or "minus"
 

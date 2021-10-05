@@ -686,11 +686,13 @@ def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
 
     for wy in WYs:
         i=+1
-        wy_len = len(data[data["wy"] == wy])
-        doy = range(1,wy_len+1)
         doy_flow = data.loc[data["wy"]==wy,var]
-        doy_data.loc[doy,wy] = doy_flow.values
-        plt.plot(doy, doy_flow, color="grey",alpha=0.2)
+        doy_idx = np.array(data.loc[data["wy"]==wy].index.dayofyear)
+        if wy_division=="WY":
+            doy_idx = doy_idx + 92
+            doy_idx[0:92] = np.where(doy_idx[0:92]>365,doy_idx[0:92]-365,doy_idx[0:92])
+        doy_data.loc[doy_idx,wy] = doy_flow.values
+        plt.plot(doy_idx, doy_flow, color="grey",alpha=0.2)
     for d in doy_data.index:
         doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
         doy_data.loc[d, "median"] = doy_data.loc[d, WYs].median()

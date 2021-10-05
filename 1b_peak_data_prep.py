@@ -24,13 +24,13 @@ from functions import nwis_peak_import,csv_peak_import,get_varlabel
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'ElVado'  # site or dam name
+site = 'coolidge'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
 site_source = "usgs" # "usgs" or "file"
-site_file = "08284100" # usgs site number (e.g., "09445000") or .csv data file
+site_file = "09469499" # usgs site number (e.g., "09445000") or .csv data file
 
 # MOVE data prep
-move = True
+move = False
 move_source = "file" # "usgs" or "file"
 move_file = 'ElVado_site_peak_x.csv' # usgs site number (e.g., "09445000") or .csv data file
 

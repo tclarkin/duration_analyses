@@ -22,10 +22,10 @@ from statsmodels.graphics import tsaplots
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado","ElVado_Stage","ElVado_SWE"] # list, site or dam names
-durations = ["peak",1,15,91] # Duration in days ("peak" can also be included)
+sites = ["coolidge"] # list, site or dam names
+durations = ["peak",1,7,15] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-idaplot = False      # Will create initial data analysis plots
+idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
 pdfplot = True      # Plot probability density function of data
