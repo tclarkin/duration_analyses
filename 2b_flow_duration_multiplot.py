@@ -16,8 +16,8 @@ from functions import plot_dur_ep,get_varlabel
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado","ElVado_Stage","ElVado_SWE"] # list, site or dam names
-labels = ["Flow","Stage","SWE"] # labels for sites
+sites = ["ARD","ARD_USGS"] # list, site or dam names
+labels = ["Flow","Flow (USGS)"] # labels for sites
 
 ### Begin Script ###
 # Check for output directory
@@ -41,4 +41,4 @@ for site,label in zip(sites,labels):
     plt.plot(data.exceeded*100,data[var],label=label)
 plt.ylabel(var_label)
 plt.legend()
-plt.savefig(f"duration/all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
+plt.savefig(f"duration/all_annual_multiplot.jpg",bbox_inches='tight',dpi=600)

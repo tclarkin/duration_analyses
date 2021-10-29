@@ -18,23 +18,24 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from functions import annualcombos,monthcombos,allcombos,standard
-from functions import analyze_dur,plot_monthly_dur_ep
+from functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces
 
 ### Begin User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ElVado","ElVado_Stage","ElVado_SWE"] # list, site or dam names
+sites = ["ARD"] # list, site or dam names
 analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
 # If custcomb == True...define combos: {"Name":[months],etc.}
-custcombos = {"February":[2],
-              "March":[3],
-              "April":[4],
-              "Early-Spring Season (Feb-Apr)":[2,3,4],
-              "Late-Spring Season (May-Jul)":[5,6,7],
-              "Other":[1,8,9,10,11,12]}
+custcombos = {"Winter Season (Nov-Feb)":[1,2,11,12],
+              "Spring Season (Mar-Jul)":[3,4,5,6,7],
+              "Fall Season (Aug-Oct)":[8,9,10]}
+
+# Plot water year traces?
+wytrace = True
+wy_division = "WY" # "WY" or "CY"
 
 ### Begin Script ###
 # Check for output directory
@@ -44,7 +45,7 @@ if not os.path.isdir("duration"):
 # Loop through sites
 for site in sites:
     # Load data
-    data = pd.read_csv(f"{site}_site_daily.csv",parse_dates=True,index_col=0)
+    data = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
     data = data.dropna()
     var = data.columns[0]
 
@@ -65,7 +66,15 @@ for site in sites:
         durtable.to_csv(f"duration/{site}_{a}.csv",index=True,header=True)
         if a=="annual":
             durraw[0].to_csv(f"duration/{site}_{a}_raw.csv",index=True,header=True)
-        plt.savefig(f"duration/{site}_{a}_plot.jpg",bbox_inches='tight',dpi=300)
+        plt.savefig(f"duration/{site}_{a}_plot.jpg",bbox_inches='tight',dpi=600)
         if monthplot == True:
             plot_monthly_dur_ep(durtable,combos,var)
-            plt.savefig(f"duration/{site}_{a}_monthly_plot.jpg",bbox_inches='tight',dpi=300)
+            plt.savefig(f"duration/{site}_{a}_monthly_plot.jpg",bbox_inches='tight',dpi=600)
+
+# If selected, plot water year traces
+if wytrace:
+    print("Plotting WY traces")
+    doy_data = plot_wytraces(data, wy_division)
+    plt.savefig(f"duration/{site}_WY_plot.jpg", bbox_inches="tight", dpi=600)
+
+    doy_data.to_csv(f"duration/{site}_doy.csv")

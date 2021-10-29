@@ -18,19 +18,22 @@ from functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldur
 from statsmodels.graphics import tsaplots
 
 
+
 ### Begin User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["coolidge"] # list, site or dam names
-durations = ["peak",1,7,15] # Duration in days ("peak" can also be included)
+sites = ["ARD"] # list, site or dam names
+durations = ["peak"] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
 pdfplot = True      # Plot probability density function of data
 monthplot = True    # Plot monthly distribution of annual peaks
-mixed = False       # Attempt to split mixed population with gaussian mixture
+
+date !?!?
+#TODO make user selection
 
 ### Begin Script ###
 
@@ -99,66 +102,37 @@ for site in sites:
 
             # Check for trends and shifts
             plot_trendsshifts(evs,dur,var)
-            plt.savefig(f"ida/{site}_{dur}_trends&shifts_plot.jpg", bbox_inches="tight", dpi=300)
+            plt.savefig(f"ida/{site}_{dur}_trends&shifts_plot.jpg", bbox_inches="tight", dpi=600)
 
             # Check for autocorrelation
             fig = tsaplots.plot_acf(evs[var], lags=20)
             fig.set_size_inches(6.25, 4)
             plt.ylabel("Autocorrelation")
             plt.xlabel("Lag K, in years")
-            plt.savefig(f"ida/{site}_{dur}_acf_plot.jpg", bbox_inches="tight", dpi=300)
+            plt.savefig(f"ida/{site}_{dur}_acf_plot.jpg", bbox_inches="tight", dpi=600)
 
             # Check for normality
             plot_normality(evs,dur,var)
-            plt.savefig(f"ida/{site}_{dur}_normality_plot.jpg", bbox_inches="tight", dpi=300)
+            plt.savefig(f"ida/{site}_{dur}_normality_plot.jpg", bbox_inches="tight", dpi=600)
 
     if ppplot:
         print("Plotting with plotting positions")
         plot_voldurpp(site,site_dur,durations_sel,alpha)
-        plt.savefig(f"plot/{site}_pp_plot.jpg", bbox_inches="tight", dpi=300)
+        plt.savefig(f"plot/{site}_pp_plot.jpg", bbox_inches="tight", dpi=600)
 
     if pdfplot:
         print("Plotting with probability density function")
         plot_voldurpdf(site_dur,durations_sel)
-        plt.savefig(f"plot/{site}_pdf_plot.jpg", bbox_inches="tight", dpi=300)
+        plt.savefig(f"plot/{site}_pdf_plot.jpg", bbox_inches="tight", dpi=600)
 
     if monthplot:
         print("Plotting with monthly distributions")
         plot_voldurmonth(site_dur,durations_sel,"count",wy_division)
-        plt.savefig(f"plot/{site}_month_count_plot.jpg", bbox_inches="tight", dpi=300)
+        plt.savefig(f"plot/{site}_month_count_plot.jpg", bbox_inches="tight", dpi=600)
 
         plot_voldurmonth(site_dur,durations_sel,"mean",wy_division)
-        plt.savefig(f"plot/{site}_month_mean_plot.jpg", bbox_inches="tight", dpi=300)
+        plt.savefig(f"plot/{site}_month_mean_plot.jpg", bbox_inches="tight", dpi=600)
 
         plot_voldurmonth(site_dur,durations_sel,"max",wy_division)
-        plt.savefig(f"plot/{site}_month_max_plot.jpg", bbox_inches="tight", dpi=300)
+        plt.savefig(f"plot/{site}_month_max_plot.jpg", bbox_inches="tight", dpi=600)
 
-# INCOMPLETE.
-    if mixed:
-        if not os.path.isdir("mixed"):
-            os.mkdir("mixed")
-
-        from sklearn.mixture import GaussianMixture
-
-        def GMM_sklearn(x, weights=None, means=None, covariances=None):
-            model = GaussianMixture(n_components=2,
-                                    covariance_type='full',
-                                    tol=0.01,
-                                    max_iter=1000,
-                                    weights_init=weights,
-                                    means_init=means,
-                                    precisions_init=covariances)
-            model.fit(x)
-            print("\nscikit learn:\n\tphi: %s\n\tmu_0: %s\n\tmu_1: %s\n\tsigma_0: %s\n\tsigma_1: %s"
-                  % (model.weights_[1], model.means_[0, :], model.means_[1, :], model.covariances_[0, :],
-                     model.covariances_[1, :]))
-            return model.predict(x), model.predict_proba(x)[:, 1]
-
-
-        for dur, dat in zip(durations_sel, site_dur):
-            print(dur)
-            x = np.reshape(dat[var].values, (len(dat), 1))
-            sklearn_forecasts, posterior_sklearn = GMM_sklearn(x)
-
-            dat["forecast"] = sklearn_forecasts
-            dat.to_csv(f"mixed/{site}_{dur}_forecast.csv")

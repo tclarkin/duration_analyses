@@ -39,7 +39,10 @@ def csv_daily_import(filename,wy="WY"):
     data[var] = data[var].astype('float')
 
     # Convert first column to dates
-    data["date"] = pd.to_datetime(data["date"], errors='coerce')
+    data["date"] = pd.to_datetime(data["date"])
+    if data["date"].max().year>dt.date.today().year:
+        print("Dates exceed current date. Please check dates are correct and in dd-mmm-yyyy format.")
+        return
     data.index = data.date
 
     # Create date index and out dataframe
@@ -134,6 +137,9 @@ def csv_peak_import(filename):
 
     # Convert first column to dates
     data["date"] = pd.to_datetime(data["date"], errors='coerce')
+    if data["date"].max().year>dt.date.today().year:
+        print("Dates exceed current date. Please check dates are correct and in dd-mmm-yyyy format.")
+        return
     out = data
 
     if type(data.index) != pd.core.indexes.numeric.Int64Index:
@@ -353,6 +359,73 @@ def analyze_dur(data,combos,pcts,var):
         plt.legend()
     return (full_table,all_durflows)
 
+def plot_wytraces(data,wy_division,sel_wy=None,log=True):
+    """
+    This function produces a single plot of the WY with all WYs plotted as traces and the max, min, mean and median.
+    :param data: df, inflows including at least date, flow
+    :param evs: df, output from analyze_voldur() for WY
+    :param wy_division: str, "WY" or "CY"
+    :param sel_wy: list, selected WYs to plot colored traces for
+    :return: figure
+    """
+    var = data.columns[0]
+
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+
+    if wy_division=="CY":
+        ax.set_xticks([1,32,60,91,121,152,182,213,244,274,305,335])
+        ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
+    else:
+        ax.set_xticks([1,32,62,93,124,153,184,214,245,275,306,337])
+        ax.set_xticklabels(["O","N","D","J","F","M","A","M","J","J","A","S"])
+
+    WYs = data["wy"].unique().astype(int)
+    i=-1
+    doy_data = pd.DataFrame(index=range(1,367),columns=WYs)
+    dates = pd.date_range("2020-01-01", "2020-12-31", freq="D", tz='UTC')
+
+    for wy in WYs:
+        i=+1
+        doy_flow = data.loc[data["wy"]==wy,var]
+        doy_idx = np.array(data.loc[data["wy"]==wy].index.dayofyear)
+        if wy_division=="WY":
+            doy_idx = doy_idx + 92
+            doy_idx[0:92] = np.where(doy_idx[0:92]>365,doy_idx[0:92]-365,doy_idx[0:92])
+        doy_data.loc[doy_idx,wy] = doy_flow.values
+        plt.plot(doy_idx, doy_flow, color="grey",alpha=0.2)
+    for d in doy_data.index:
+        doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
+        doy_data.loc[d, "median"] = doy_data.loc[d, WYs].median()
+
+    # Plot min and max year, volume
+    annual_vol = doy_data.sum().sort_values()
+    annual_vol = annual_vol[annual_vol.values>0]
+    minwy = annual_vol.index[0]
+    maxwy = annual_vol.index[len(annual_vol)-1]
+    plt.plot(doy_data.index,doy_data[minwy], color="maroon",label=f"Driest, {minwy}")
+    plt.plot(doy_data.index, doy_data[maxwy], color="lime", label=f"Wettest, {maxwy}")
+
+    if sel_wy is not None:
+        sel_col = ["blue","orange","purple","cyan"]
+        for sel in range(0,len(sel_wy)):
+            plt.plot(doy_data.index, doy_data[sel_wy[sel]], color=sel_col[sel], linestyle="dashdot", label=f"{sel_wy[sel]}")
+
+    plt.plot(doy_data.index, doy_data["mean"], color="black", linestyle="dashed", linewidth=2,label="Mean")
+    plt.plot(doy_data.index, doy_data["median"], color="black", linestyle="solid",linewidth=2,label="Median")
+
+    plt.xlim(1,366)
+    plt.xticks(rotation=90)
+    if log:
+        ax.set_yscale("log")
+        if ax.get_ylim()[0]<1:
+            ax.set_ylim(bottom = 1)
+        ax.set_ylim(top = data[var].max()*1.01)
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    plt.ylabel(get_varlabel(var))
+    plt.legend(prop={'size': 8})
+
+    return(doy_data)
+
 ### CRITICAL DURATION FUNCTIONS ###
 def countdur(data, thresh):
     """
@@ -456,84 +529,6 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
 
     plt.legend(loc="best", prop={'size': 9})
 
-def analyze_monthlydur(evs):
-    """
-    Thie function plots events defined by countdur() by their appropriate month to help identify annual patterns
-    :param evs: df, output from coutndur()
-    :return: figure
-    """
-    stats = pd.DataFrame(columns=("month", "avg. dur", "count", "fraction"))
-    stats["month"] = range(1, 13)
-
-    # Average duration by month, number of events and fraction of all
-    for m in range(0, 12):
-        stats.loc[m, "avg. dur"] = np.mean(evs.loc[evs["month"] == m + 1, "duration"])
-        stats.loc[m, "count"] = len(evs[evs["month"] == m + 1])
-        stats.loc[m, "fraction"] = stats.loc[m, "count"] / len(evs)
-
-        # PLot durations vs month
-    fig, ax = plt.subplots(figsize=(6.25, 4))
-    plt.title("Durations vs Month (n=" + str(len(evs)) + ")")
-    plt.ylabel('Duration (days)')
-    x_ticks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    plt.xticks(range(1, 14), x_ticks)
-
-    # Plot all data
-    plt.scatter(evs["month"], evs["duration"], facecolors='none', edgecolors='grey',alpha=0.5, label="Events")
-    plt.plot(stats["month"], stats["avg. dur"], 'r+', label="Average Duration (Fraction of Total)")
-
-    for m in range(0, 12):
-        if pd.isna(stats.loc[m, "avg. dur"]):
-            continue
-        else:
-            y = int(stats.loc[m, "avg. dur"]) + 0.05
-            x =int(stats.loc[m, "month"]) + 0.05
-
-        plt.annotate((str(round(stats.loc[m, "avg. dur"],1)) + " (" + str(np.round(stats.loc[m, "fraction"], 2)) + ")"),[x, y], color="red")
-
-    plt.legend(loc="best")
-
-    return(stats)
-
-def analyze_monthlypeak(evs):
-    """
-    Thie function plots events defined by countdur() by their appropriate month to help identify annual patterns
-    :param evs: df, output from coutndur()
-    :return: figure
-    """
-    stats = pd.DataFrame(columns=("month", "avg. peak", "count", "fraction"))
-    stats["month"] = range(1, 13)
-
-    # Average duration by month, number of events and fraction of all
-    for m in range(0, 12):
-        stats.loc[m, "avg. peak"] = np.mean(evs.loc[evs["month"] == m + 1, "peak"])
-        stats.loc[m, "count"] = len(evs[evs["month"] == m + 1])
-        stats.loc[m, "fraction"] = stats.loc[m, "count"] / len(evs)
-
-        # PLot durations vs month
-    fig, ax = plt.subplots(figsize=(6.25, 4))
-    plt.title("Peaks vs Month (n=" + str(len(evs)) + ")")
-    plt.ylabel('Peaks (ft$^3$/s)')
-    x_ticks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    plt.xticks(range(1, 14), x_ticks)
-
-    # Plot all data
-    plt.scatter(evs["month"], evs["peak"], facecolors='none', edgecolors='grey',alpha=0.5,label="Events")
-    plt.plot(stats["month"], stats["avg. peak"], 'r+', label="Average Peak (Fraction of Total)")
-
-    for m in range(0, 12):
-        if pd.isna(stats.loc[m, "avg. peak"]):
-            continue
-        else:
-            y = int(stats.loc[m, "avg. peak"]) + 0.05
-            x = int(stats.loc[m, "month"]) + 0.05
-
-        plt.annotate((str(int(stats.loc[m, "avg. peak"])) + " (" + str(np.round(stats.loc[m, "fraction"], 2)) + ")"),[x,y],color="red")
-
-    plt.legend(loc="best")
-
-    return(stats)
-
 def durationplot(data, evs, e, thresh):
     """
     This function produces the duration plots for all events provided
@@ -621,7 +616,9 @@ def analyze_voldur(data, dur):
                     continue
                 if pd.isna(max_idx):
                     continue
-                evs.loc[wy,"date"] = max_idx-dt.timedelta(days=int(dur/2)) # place date as middle of window
+                evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as middle of window
+                evs.loc[wy, "mid"] = max_idx-dt.timedelta(days=int(dur/2)-1)  # place date as middle of window
+                evs.loc[wy, "end"] = max_idx  # place date as middle of window
                 evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
                 evs.loc[wy,f"max_{var}"] = round(max_data[max_idx],0)
                 evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
@@ -644,7 +641,8 @@ def plot_voldur(data,wy,site_dur,durations):
         evs = site_dur[d]
         if dur=="WY":
             if (wy < 0) or (pd.isna(evs.loc[wy, "count"])):
-                return
+                #return
+                print("eat slugs!")
             fig, ax = plt.subplots(figsize=(6.25, 4))
             plt.title(wy)
             plt.ylabel(get_varlabel(var))
@@ -654,75 +652,10 @@ def plot_voldur(data,wy,site_dur,durations):
             inflow = data.loc[dates,var]
             plt.plot(dates, inflow, color='black',label=var)
         else:
-            idx_s = evs.loc[wy,"date"]-dt.timedelta(days=int(dur/2))
-            idx_e = idx_s+dt.timedelta(days=int(dur))
+            idx_s = evs.loc[wy,"start"]
+            idx_e = evs.loc[wy,"end"]
             avg_val = evs.loc[wy,f"avg_{var}"]
             plt.plot([idx_s,idx_s,idx_e,idx_e],[0,avg_val,avg_val,0],label=f"{dur}-day {var}",alpha=0.75)
-
-def plot_wyvol(data,evs,wy_division,sel_wy=None,log=True):
-    """
-    This function produces a single plot of the WY with all WYs plotted as traces and the max, min, mean and median.
-    :param data: df, inflows including at least date, flow
-    :param evs: df, output from analyze_voldur() for WY
-    :param wy_division: str, "WY" or "CY"
-    :param sel_wy: list, selected WYs to plot colored traces for
-    :return: figure
-    """
-    var = data.columns[0]
-
-    fig, ax = plt.subplots(figsize=(6.25, 4))
-
-    if wy_division=="CY":
-        ax.set_xticks([1,32,60,91,121,152,182,213,244,274,305,335])
-        ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
-    else:
-        ax.set_xticks([1,32,62,93,124,153,184,214,245,275,306,337])
-        ax.set_xticklabels(["O","N","D","J","F","M","A","M","J","J","A","S"])
-
-    WYs = data["wy"].unique().astype(int)
-    i=-1
-    doy_data = pd.DataFrame(index=range(1,367),columns=WYs)
-    dates = pd.date_range("2020-01-01", "2020-12-31", freq="D", tz='UTC')
-
-    for wy in WYs:
-        i=+1
-        doy_flow = data.loc[data["wy"]==wy,var]
-        doy_idx = np.array(data.loc[data["wy"]==wy].index.dayofyear)
-        if wy_division=="WY":
-            doy_idx = doy_idx + 92
-            doy_idx[0:92] = np.where(doy_idx[0:92]>365,doy_idx[0:92]-365,doy_idx[0:92])
-        doy_data.loc[doy_idx,wy] = doy_flow.values
-        plt.plot(doy_idx, doy_flow, color="grey",alpha=0.2)
-    for d in doy_data.index:
-        doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
-        doy_data.loc[d, "median"] = doy_data.loc[d, WYs].median()
-
-    # Plot min and max year, volume
-    minwy = evs["annual_sum"].idxmin()
-    plt.plot(doy_data.index,doy_data[minwy], color="maroon",label=f"Driest, {minwy}")
-    maxwy = evs["annual_sum"].idxmax()
-    plt.plot(doy_data.index, doy_data[maxwy], color="lime", label=f"Wettest, {maxwy}")
-
-    if sel_wy is not None:
-        sel_col = ["blue","orange","purple","cyan"]
-        for sel in range(0,len(sel_wy)):
-            plt.plot(doy_data.index, doy_data[sel_wy[sel]], color=sel_col[sel], linestyle="dashdot", label=f"{sel_wy[sel]}")
-
-    plt.plot(doy_data.index, doy_data["mean"], color="black", linestyle="dashed", linewidth=2,label="Mean")
-    plt.plot(doy_data.index, doy_data["median"], color="black", linestyle="solid",linewidth=2,label="Median")
-
-    plt.xlim(1,366)
-    plt.xticks(rotation=90)
-    if log:
-        ax.set_yscale("log")
-        if ax.get_ylim()[0]<1:
-            ax.set_ylim(bottom = 1)
-        ax.set_ylim(top = data[var].max()*1.01)
-    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-    plt.ylabel(get_varlabel(var))
-    plt.legend(prop={'size': 8})
-
-    return(doy_data)
 
 ### PLOT VOLUME DURATION MULTIPLOT FUNCTIONS ###
 
@@ -880,7 +813,7 @@ def plot_voldurpdf(site_dur,durations):
     plt.hist(dat,density=True,label=durations)
     plt.legend()
 
-def plot_voldurmonth(site_dur, durations, stat,wy_division="WY"):
+def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
     """
     This function produces the pdf plots for all durations
     :param site_dur: list,
@@ -907,8 +840,11 @@ def plot_voldurmonth(site_dur, durations, stat,wy_division="WY"):
         name = f"{durations[d]}"
         data = site_dur[d]
         data = data.dropna()
-        data.index = pd.to_datetime(data["date"])
+        data.index = pd.to_datetime(data[eventdate])
         var = data.columns[1]
+
+        if "month" not in data.columns:
+            data.index = pd.to_datetime(data.date)
 
         if stat=="count":
             summary = pd.DataFrame(data.groupby([data.index.month],sort=False).count().eval(var))
@@ -919,7 +855,7 @@ def plot_voldurmonth(site_dur, durations, stat,wy_division="WY"):
         if wy_division=="WY":
             summary.loc[summary.index >= 10,"plot"] = summary.loc[summary.index >= 10].index - 9
             summary.loc[summary.index < 10,"plot"] = summary.loc[summary.index < 10].index + 3
-        plt.bar(summary["plot"]+0.1+width*d,summary[0],width=width,label=name)
+        plt.bar(summary["plot"]+0.1+width*d,summary[var],width=width,label=name)
 
     if wy_division=="WY":
         month_names = ["Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"]
@@ -940,3 +876,33 @@ def get_varlabel(var):
     else:
         lab = var
     return lab
+
+# INCOMPLETE.
+#     if mixed:
+#         if not os.path.isdir("mixed"):
+#             os.mkdir("mixed")
+#
+#         from sklearn.mixture import GaussianMixture
+#
+#         def GMM_sklearn(x, weights=None, means=None, covariances=None):
+#             model = GaussianMixture(n_components=2,
+#                                     covariance_type='full',
+#                                     tol=0.01,
+#                                     max_iter=1000,
+#                                     weights_init=weights,
+#                                     means_init=means,
+#                                     precisions_init=covariances)
+#             model.fit(x)
+#             print("\nscikit learn:\n\tphi: %s\n\tmu_0: %s\n\tmu_1: %s\n\tsigma_0: %s\n\tsigma_1: %s"
+#                   % (model.weights_[1], model.means_[0, :], model.means_[1, :], model.covariances_[0, :],
+#                      model.covariances_[1, :]))
+#             return model.predict(x), model.predict_proba(x)[:, 1]
+#
+#
+#         for dur, dat in zip(durations_sel, site_dur):
+#             print(dur)
+#             x = np.reshape(dat[var].values, (len(dat), 1))
+#             sklearn_forecasts, posterior_sklearn = GMM_sklearn(x)
+#
+#             dat["forecast"] = sklearn_forecasts
+#             dat.to_csv(f"mixed/{site}_{dur}_forecast.csv")

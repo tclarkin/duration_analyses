@@ -24,47 +24,44 @@ from functions import nwis_peak_import,csv_peak_import,get_varlabel
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'coolidge'  # site or dam name
+site = 'ARD'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "usgs" # "usgs" or "file"
-site_file = "09469499" # usgs site number (e.g., "09445000") or .csv data file
-
-# MOVE data prep
-move = False
-move_source = "file" # "usgs" or "file"
-move_file = 'ElVado_site_peak_x.csv' # usgs site number (e.g., "09445000") or .csv data file
+site_source = "ARD_site_peak.csv" # usgs site number (e.g., "09445000") or .csv data file
 
 ### Begin Script ###
+if not os.path.isdir("data"):
+    os.mkdir("data")
+
 # Load at-site data
-if site_source=="usgs":
-    if len(site_file) != 8:
+if ".csv" in site_source:
+    # Load from .csv file
+    site_peaks = csv_peak_import(site_source)
+    var = site_peaks.columns[1]
+else:
+    # Load from usgs website
+    if len(site_source) != 8:
         print("Must provide valid USGS site number (8-digit string) for at-site data")
     else:
-        site_peaks = nwis_peak_import(site=site_file)
+        site_peaks = nwis_peak_import(site=site_source)
         var = "peak"
-else:
-    site_peaks = csv_peak_import(site_file)
-    var = site_peaks.columns[0]
 
-site_peaks.to_csv(f"{site}_site_peak.csv")
+# Plot data
+site_peaks.to_csv(f"data/{site}_site_peak.csv")
 fig, ax = plt.subplots(figsize=(6.25, 4))
 plt.plot(site_peaks.index,site_peaks[var],marker="o",linewidth=0,label="Site Peaks")
-
-# MOVE (if applicable)
-if move:
-    if move_source == "usgs":
-        if len(move_file) != 8:
-            print("Must provide valid USGS site number (8-digit string) for at-site data")
-        else:
-            move_peaks = nwis_import(site=move_file)
-            mvar = "peak"
-    else:
-        move_peaks = csv_peak_import(move_file)
-        mvar = move_peaks.columns[1]
-    move_peaks.to_csv(f"{site}_move_peak.csv")
-    plt.plot(move_peaks.index, move_peaks[mvar],marker="x",linewidth=0,label="MOVE Peaks")
-
 plt.ylabel(get_varlabel(var))
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 plt.legend()
-plt.savefig(f"{site}_site_peak.jpg",bbox_inches='tight',dpi=300)
+ax.set_ylim([0,None])
+plt.savefig(f"data/{site}_site_peak.jpg",bbox_inches='tight',dpi=600)
+
+if os.path.isfile(f"data/{site}_site_daily.csv"):
+    site_daily = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
+    dvar = site_daily.columns[0]
+
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+    plt.plot(site_daily.index, site_daily[dvar], label="Site Daily")
+    plt.plot(site_peaks.date, site_peaks[var], marker="x", color="k",linewidth=0, label="Site Peaks")
+
+    plt.legend()
+    plt.savefig(f"data/{site}_site_peak_and_daily.jpg", bbox_inches='tight', dpi=600)

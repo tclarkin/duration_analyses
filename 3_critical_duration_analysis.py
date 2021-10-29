@@ -32,12 +32,11 @@ from functions import countdur,analyze_critdur,analyze_monthlydur,analyze_monthl
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-site = "ElVado" # site or dam name
-event_thresh = 400    # threshold for defining events
+site = "ARD" # site or dam name
+event_thresh = 2000    # threshold flow for defining flood events
 plot_events = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
-check_annual_pattern = True
-min_dur = 0        # minimum duration acceptable for analysis
-min_peak = 4000    # minimum duration acceptable for analysis
+min_dur = 0        # minumum duration acceptable for analysis
+min_peak = 10000    # minumum duration acceptable for analysis
 plot_max = 0       # maximum duration to show in peak vs duration plot (will use max if 0)
 
 ### Begin Script ###
@@ -46,13 +45,13 @@ if not os.path.isdir("critical"):
     os.mkdir("critical")
 
 # Load data
-data = pd.read_csv(f"{site}_site_daily.csv",parse_dates=True,index_col=0)
+data = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
 
 # Determine periods in excess of event threshold
-print('Analyzing critical duration for events above {} ft^3/s.'.format(event_thresh))
+print(f'Analyzing critical duration for events above {event_thresh} ft^3/s.')
 evs = countdur(data,event_thresh)
 analyze_critdur(evs,min_dur,min_peak,plot_max)
-plt.savefig(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.jpg',bbox_inches='tight',dpi=300)
+plt.savefig(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.jpg',bbox_inches='tight',dpi=600)
 evs.to_csv(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.csv')
 
 if plot_events:
@@ -61,20 +60,11 @@ if plot_events:
     n = 0
     for e in evs.loc[evs["peak"]>min_peak].index:
         n += 1
-        print('Plotting event {} of {}'.format(n,etot))
+        print(f'Plotting event {n} of {etot}')
         durationplot(data,evs,e,event_thresh)
 
         edate = evs.loc[e,"start_idx"].strftime("%Y-%m-%d")
-        plt.savefig(f"critical/{site}_{edate}.jpg",bbox_inches='tight',dpi=300)
+        plt.savefig(f"critical/{site}_{edate}.jpg",bbox_inches='tight',dpi=600)
 else:
     durationplot(data,evs,0,event_thresh)
     
-if check_annual_pattern:
-    print("Plotting annual pattern")
-    monthdur = analyze_monthlydur(evs)
-    plt.savefig(f"critical/{site}_{str(event_thresh)}_dur_seasonality.jpg",bbox_inches="tight",dpi=300)
-    monthdur.to_csv(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_dur_monthlystats.csv')
-
-    monthpeak = analyze_monthlypeak(evs)
-    plt.savefig(f"critical/{site}_{str(event_thresh)}_peak_seasonality.jpg",bbox_inches="tight",dpi=300)
-    monthpeak.to_csv(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peak_monthlystats.csv')
