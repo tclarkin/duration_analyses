@@ -23,7 +23,7 @@ from functions import analyze_voldur,plot_voldur
 sites = ["ARD"] # list, site or dam names
 durations = ["peak",15,121] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-plot = True  # Will plot each WY with all durations
+plot = False  # Will plot each WY with all durations
 
 ### Begin Script ###
 # Check for output directory

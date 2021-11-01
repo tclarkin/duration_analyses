@@ -30,7 +30,7 @@ plot_dur_ep()
 # Loop through sites
 var = None
 for site,label in zip(sites,labels):
-    data = pd.read_csv(f"duration/{site}_annual_raw.csv",parse_dates=True,index_col=0)
+    data = pd.read_csv(f"flow/{site}_annual_raw.csv",parse_dates=True,index_col=0)
     if var is None:
         var = data.columns[1]
         var_label = get_varlabel(var)
@@ -41,4 +41,4 @@ for site,label in zip(sites,labels):
     plt.plot(data.exceeded*100,data[var],label=label)
 plt.ylabel(var_label)
 plt.legend()
-plt.savefig(f"duration/all_annual_multiplot.jpg",bbox_inches='tight',dpi=600)
+plt.savefig(f"flow/all_annual_multiplot.jpg",bbox_inches='tight',dpi=600)

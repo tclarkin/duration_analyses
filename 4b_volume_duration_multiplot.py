@@ -24,16 +24,16 @@ from statsmodels.graphics import tsaplots
 
 # Site information and user selections
 sites = ["ARD"] # list, site or dam names
-durations = ["peak"] # Duration in days ("peak" can also be included)
+durations = ["peak",15,121] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-idaplot = True      # Will create initial data analysis plots
-ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
+idaplot = False      # Will create initial data analysis plots
+ppplot = False       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
 pdfplot = True      # Plot probability density function of data
 monthplot = True    # Plot monthly distribution of annual peaks
+eventdate = "max"   # When to plot seasonality: "start", "mid", "end", or "max"
+# TODO FIX MAX
 
-date !?!?
-#TODO make user selection
 
 ### Begin Script ###
 
@@ -48,10 +48,10 @@ for site in sites:
     print(f"Analyzing {site}")
     site_dur = list()
     site_sum = pd.DataFrame()
-    data = pd.read_csv(f"{site}_site_daily.csv", parse_dates=True, index_col=0)
+    data = pd.read_csv(f"data/{site}_site_daily.csv", parse_dates=True, index_col=0)
 
     if "peak" in durations:
-        if os.path.isfile(f"{site}_site_peak.csv"):
+        if os.path.isfile(f"data/{site}_site_peak.csv"):
             peaks = True
             durations_sel = durations
             durations_sel.remove("peak")
@@ -66,11 +66,17 @@ for site in sites:
 
     for dur in durations_sel:
         if dur == "peak":
-            df_dur = pd.read_csv(f"{site}_site_peak.csv",index_col=0)
+            df_dur = pd.read_csv(f"data/{site}_site_peak.csv",index_col=0)
             df_dur["date"] = pd.to_datetime(df_dur["date"])
         else:
             df_dur = pd.read_csv(f"volume/{site}_{dur}.csv",index_col=0)
-            df_dur["date"] = pd.to_datetime(df_dur["date"])
+
+            if eventdate not in str(data.columns):
+                date_used = "date"
+            else:
+                date_used = eventdate
+
+            df_dur[eventdate] = pd.to_datetime(df_dur[eventdate])
 
         df_dur = df_dur.dropna()
         site_dur.append(df_dur)
@@ -127,12 +133,7 @@ for site in sites:
 
     if monthplot:
         print("Plotting with monthly distributions")
-        plot_voldurmonth(site_dur,durations_sel,"count",wy_division)
-        plt.savefig(f"plot/{site}_month_count_plot.jpg", bbox_inches="tight", dpi=600)
-
-        plot_voldurmonth(site_dur,durations_sel,"mean",wy_division)
-        plt.savefig(f"plot/{site}_month_mean_plot.jpg", bbox_inches="tight", dpi=600)
-
-        plot_voldurmonth(site_dur,durations_sel,"max",wy_division)
-        plt.savefig(f"plot/{site}_month_max_plot.jpg", bbox_inches="tight", dpi=600)
+        for stat in ["count","mean","max"]:
+            plot_voldurmonth(site_dur,durations_sel,stat,eventdate,wy_division)
+            plt.savefig(f"plot/{site}_{eventdate}_month_{stat}_plot.jpg", bbox_inches="tight", dpi=600)
 

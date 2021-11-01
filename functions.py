@@ -606,7 +606,7 @@ def analyze_voldur(data, dur):
                     evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, var])
     else:
         dur_data = data[var].rolling(dur,min_periods=int(np.ceil(dur*0.90))).mean()
-        max_data = data[var].rolling(dur,min_periods=int(np.ceil(dur*0.90))).max()
+        #max_data = data[var].rolling(dur,min_periods=int(np.ceil(dur*0.90))).max()
         data["wy_shift"] = data["wy"].shift(+(int(dur/2)))
 
         for wy in WYs:
@@ -616,12 +616,14 @@ def analyze_voldur(data, dur):
                     continue
                 if pd.isna(max_idx):
                     continue
-                evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as middle of window
-                evs.loc[wy, "mid"] = max_idx-dt.timedelta(days=int(dur/2)-1)  # place date as middle of window
-                evs.loc[wy, "end"] = max_idx  # place date as middle of window
+                evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as start of window
                 evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
-                evs.loc[wy,f"max_{var}"] = round(max_data[max_idx],0)
+                evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=int(dur / 2) - 1)  # place date as middle of window
+                evs.loc[wy, "end"] = max_idx  # place date as end of window
+                evs.loc[wy, "max"] = dur_data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"]].idxmax() # TODO FIX MAX!
+                evs.loc[wy,f"max_{var}"] = data.loc[evs.loc[wy,"max"],var]
                 evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
+
 
     return (evs)
 
@@ -840,11 +842,17 @@ def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
         name = f"{durations[d]}"
         data = site_dur[d]
         data = data.dropna()
-        data.index = pd.to_datetime(data[eventdate])
+
+        if eventdate not in str(data.columns):
+            date_used = "date"
+        else:
+            date_used = eventdate
+
+        data.index = pd.to_datetime(data[date_used])
         var = data.columns[1]
 
         if "month" not in data.columns:
-            data.index = pd.to_datetime(data.date)
+            data.index = pd.to_datetime(data[date_used])
 
         if stat=="count":
             summary = pd.DataFrame(data.groupby([data.index.month],sort=False).count().eval(var))

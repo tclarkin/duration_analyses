@@ -63,18 +63,18 @@ for site in sites:
             combos = allcombos
 
         durtable,durraw = analyze_dur(data,combos,pcts,var)
-        durtable.to_csv(f"duration/{site}_{a}.csv",index=True,header=True)
+        durtable.to_csv(f"flow/{site}_{a}.csv",index=True,header=True)
         if a=="annual":
-            durraw[0].to_csv(f"duration/{site}_{a}_raw.csv",index=True,header=True)
-        plt.savefig(f"duration/{site}_{a}_plot.jpg",bbox_inches='tight',dpi=600)
+            durraw[0].to_csv(f"flow/{site}_{a}_raw.csv",index=True,header=True)
+        plt.savefig(f"flow/{site}_{a}_plot.jpg",bbox_inches='tight',dpi=600)
         if monthplot == True:
             plot_monthly_dur_ep(durtable,combos,var)
-            plt.savefig(f"duration/{site}_{a}_monthly_plot.jpg",bbox_inches='tight',dpi=600)
+            plt.savefig(f"flow/{site}_{a}_monthly_plot.jpg",bbox_inches='tight',dpi=600)
 
 # If selected, plot water year traces
 if wytrace:
     print("Plotting WY traces")
     doy_data = plot_wytraces(data, wy_division)
-    plt.savefig(f"duration/{site}_WY_plot.jpg", bbox_inches="tight", dpi=600)
+    plt.savefig(f"flow/{site}_WY_plot.jpg", bbox_inches="tight", dpi=600)
 
-    doy_data.to_csv(f"duration/{site}_doy.csv")
+    doy_data.to_csv(f"flow/{site}_doy.csv")
