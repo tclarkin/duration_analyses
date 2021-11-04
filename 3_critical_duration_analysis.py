@@ -25,7 +25,7 @@ This script should be run individually for each site being analyzed--should be i
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from functions import countdur,analyze_critdur,plot_standard_duration,plot_volwindow_duration
+from functions import countdur,analyze_critdur,plot_standard_duration,plot_volwindow_duration,csv_daily_import
     
 ### Begin User Input ### 
 # Set Working Directory
@@ -38,9 +38,15 @@ min_dur = 0        # minumum duration acceptable for analysis
 min_peak = 10000    # minumum duration acceptable for analysis
 plot_max = 0       # maximum duration to show in peak vs duration plot (will use max if 0)
 
-plot_events = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
-buffer = 10
-tangent = True
+# Standard Duration Plots
+standard_plots = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+buffer = 10                 # int, number of days before and after duration to plot
+tangent = True              # boolean, including cumulative flows and tangent line
+
+# Volume-Window Duration Plots
+volwindow_plots = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+res_file = "daily_res.csv"  # .csv filename or None. If file, QD (discharge) and AF (storage) are expected.
+timestep = 1                # int, timestep in days
 
 ### Begin Script ###
 # Check for output directory
@@ -57,8 +63,8 @@ analyze_critdur(evs,min_dur,min_peak,plot_max)
 plt.savefig(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.jpg',bbox_inches='tight',dpi=600)
 evs.to_csv(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.csv')
 
-# Plot events
-if plot_events:
+# Create standard event plots
+if standard_plots:
     print("Plotting events")
     etot = len(evs.loc[evs["peak"]>min_peak].index)
     n = 0
@@ -68,7 +74,22 @@ if plot_events:
         plot_standard_duration(data,evs,e,event_thresh,buffer,tangent)
 
         edate = evs.loc[e,"start_idx"].strftime("%Y-%m-%d")
-        plt.savefig(f"critical/{site}_{edate}.jpg",bbox_inches='tight',dpi=600)
-else:
-    durationplot(data,evs,0,event_thresh)
+        plt.savefig(f"critical/{site}_std_{edate}.jpg",bbox_inches='tight',dpi=600)
 
+# Create volume-window event plots
+if volwindow_plots:
+    if res_file is None:
+        print("No reservoir information file (res_file) provided. Volume-Window Plots not created.")
+    else:
+        # Import reservoir data
+        resdat = csv_daily_import(res_file,"WY",False)
+        for e in evs.loc[evs["peak"]>min_peak].index:
+            n += 1
+            if evs.loc[e,"start_idx"]<resdat.index.min():
+                print(f'Skipping event {n} of {etot}')
+                continue
+            else:
+                print(f'Plotting event {n} of {etot}')
+                plot_volwindow_duration(data,evs,e,resdat,timestep)
+                edate = evs.loc[e,"start_idx"].strftime("%Y-%m-%d")
+                plt.savefig(f"critical/{site}_vw_{edate}.jpg",bbox_inches='tight',dpi=600)

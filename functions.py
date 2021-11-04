@@ -20,7 +20,7 @@ from scipy.stats.mstats import theilslopes
 from scipy.stats import norm
 
 ### DATA PREP FUNCTIONS ###
-def csv_daily_import(filename,wy="WY"):
+def csv_daily_import(filename,wy="WY",single=True):
     """
     Imports data in a .csv files with two columns: date, variable (user specified)
     :param filename: str, filename or file path
@@ -28,15 +28,16 @@ def csv_daily_import(filename,wy="WY"):
     :return: dataframe with date index, dates, (user specified), month, year and water year
     """
     data = pd.read_csv(filename)
-    if len(data.columns) != 2:
-        print("Two columns are needed! Exiting.")
-        return
-    var = data.columns[1]
-    data.columns = ["date",var]
-    # Remove blank spaces...replace with nan, convert to float
-    data.loc[data[var] == ' ', var] = np.nan
-    data = data.dropna(how="all")
-    data[var] = data[var].astype('float')
+    if single:
+        if len(data.columns) != 2:
+            print("Two columns are needed! Exiting.")
+            return
+    data = data.rename(columns={data.columns[0]:"date"})
+    vars = data.columns[1:len(data.columns)]
+    for var in vars:
+        data.loc[data[var] == ' ', var] = np.nan
+        data = data.dropna(how="all")
+        data[var] = data[var].astype('float')
 
     # Convert first column to dates
     data["date"] = pd.to_datetime(data["date"])
@@ -48,7 +49,7 @@ def csv_daily_import(filename,wy="WY"):
     # Create date index and out dataframe
     date_index = pd.date_range(data.date.min(),data.date.max(),freq="D")
     out = pd.DataFrame(index=date_index)
-    out = out.merge(data[var],left_index=True,right_index=True,how="left")
+    out = out.merge(data[vars],left_index=True,right_index=True,how="left")
 
     # Add year, month and wy
     out["year"] = pd.DatetimeIndex(out.index).year
@@ -589,7 +590,50 @@ def plot_standard_duration(data,evs,e,thresh,buffer=1,tangent=True):
 
     plt.ylabel(ylab)
     plt.legend()
-    
+
+def plot_volwindow_duration(data,evs,e,resdat,timestep):
+    """
+    This function produces volume-window plots as used for the Folsom WCM
+    :param data: df, data including at least date, variable
+    :param evs: df, output from coutndur()
+    :param e: int, the event index
+    :param resdat:
+    :param timestep:
+    :return: figure
+    """
+    # Find max storage
+    vol_peak = resdat.loc[evs.loc[e,"start_idx"]:evs.loc[e,"end_idx"],"AF"].max()-resdat.loc[evs.loc[e,"start_idx"],"AF"]
+
+    # Define durations to analyze
+    if evs.loc[e,"duration"] < timestep:
+        windows = range(1,evs.loc[e,"duration"])
+    else:
+        windows = list()
+        windows.append(timestep)
+        ts = timestep
+        while ts < evs.loc[e,"duration"]-timestep:
+            ts = ts + timestep
+            windows.append(ts)
+        windows.append(evs.loc[e,"duration"])
+
+    # Calculate inflow volumes for windows:
+    var = data.columns[0]
+    volumes = pd.DataFrame()
+    for w in windows:
+        dur_data = data.loc[evs.loc[e,"start_idx"]:evs.loc[e,"end_idx"],var].rolling(w, min_periods=w).sum()*(24*60*60)/43560
+        try:
+            max_idx = dur_data.idxmax()
+        except ValueError:
+            continue
+        #if pd.isna(max_idx):
+        #    continue
+
+        volumes.loc[w, "start"] = max_idx - dt.timedelta(days=w - 1)  # place date as start of window
+        volumes.loc[w, "end"] = max_idx  # place date as end of window
+        volumes.loc[w, "vol"] = round(dur_data[max_idx], 0)
+        volumes.loc[w,"vw"] = volumes.loc[w, "vol"]/vol_peak
+
+
 ### VOLUME DURATION FUNCTIONS
 def analyze_voldur(data, dur):
     """
