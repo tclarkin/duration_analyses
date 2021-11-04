@@ -512,12 +512,12 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
 
     # Plot data and duration estimates
     plt.scatter(evs_lim["duration"],evs_lim["peak"],facecolors='none', edgecolors=col, label=scatter_label)
-    print("Peak Weighted Screened Avg: {}".format(lim_dur))
-    plt.plot(lim_dur, lim_peak, color=col,marker='x',linestyle="None",label="Peak Weighted Avg: {}".format(round(lim_dur, 1)))
-    print("Screened A. Avg: {}".format(lim_dur_avg))
-    plt.plot(lim_dur_avg, lim_peak * 1.1, color=col,marker='+',linestyle="None",label="Arithmetic Avg: {}".format(round(lim_dur_avg, 1)))
-    print("Screened G. Avg: {}".format(lim_dur_geo))
-    plt.plot(lim_dur_geo, lim_peak * 1.2, color=col,marker='^',linestyle="None",label="Geometric Avg: {}".format(round(lim_dur_geo, 1)))
+    print(f"Peak Weighted Screened Avg: {lim_dur}")
+    plt.plot(lim_dur, lim_peak, color=col,marker='x',linestyle="None",label=f"Peak Weighted Avg: {round(lim_dur, 1)}")
+    print(f"Screened A. Avg: {lim_dur_avg}")
+    plt.plot(lim_dur_avg, lim_peak * 1.1, color=col,marker='+',linestyle="None",label=f"Arithmetic Avg: {round(lim_dur_avg, 1)}")
+    print(f"Screened G. Avg: {lim_dur_geo}")
+    plt.plot(lim_dur_geo, lim_peak * 1.2, color=col,marker='^',linestyle="None",label=f"Geometric Avg: {round(lim_dur_geo, 1)}")
 
     # Annotate
     plt.annotate((str(np.round(lim_dur, 1)) + " (n=" + str(lim_n) + ")"),
@@ -529,57 +529,67 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
 
     plt.legend(loc="best", prop={'size': 9})
 
-def durationplot(data, evs, e, thresh):
+def plot_standard_duration(data,evs,e,thresh,buffer=1,tangent=True):
     """
     This function produces the duration plots for all events provided
     :param data: df, data including at least date, variable
     :param evs: df, output from coutndur()
     :param e: int, the event index
     :param thresh: float, data value threshold
+    :param buffer: int, number of days before/after for plots
+    :param tangent: boolean, include cumulative flows and tangent on plots
     :return: figure
     """
     var = data.columns[0]
-    xs = pd.date_range(evs.loc[e, "start_idx"] - dt.timedelta(days=1), evs.loc[e, "end_idx"] + dt.timedelta(days=1))
+    xs = pd.date_range(evs.loc[e, "start_idx"] - dt.timedelta(days=buffer), evs.loc[e, "end_idx"] + dt.timedelta(days=buffer))
     indata = data.loc[xs, var]
     cum_indata = data.loc[xs, var]
+    cum_outdata = data.loc[xs, var]
 
-    for s in xs:
-        if s == min(xs):
-            cum_indata[s] = 0
-        if s == evs.loc[e, "start_idx"]:
-            cum_indata[s] = indata[s]
-        elif s > evs.loc[e, "start_idx"]:
+    # Calculate cumulatives
+    if tangent:
+        cum_indata[cum_indata.index<evs.loc[e, "start_idx"]] = 0
+        for s in xs[xs>min(xs)]:
             cum_indata[s] = indata[s] + cum_indata[s - dt.timedelta(days=1)]
 
-    cum_outdata = data.loc[xs, var]
-    for s in reversed(xs):
-        if s > evs.loc[e, "end_idx"]:
-            cum_outdata[s] = cum_indata[evs.loc[e, "end_idx"]] + thresh
-        if s == evs.loc[e, "end_idx"]:
-            cum_outdata[s] = cum_indata[s]
-            tangency = cum_indata[s]
-        elif s < evs.loc[e, "end_idx"]:
+        tangency = cum_indata[evs.loc[e, "end_idx"]]
+        cum_outdata[evs.loc[e, "end_idx"]] = tangency
+        for s in xs[xs>evs.loc[e, "end_idx"]]:
+            cum_outdata[s] = thresh + cum_outdata[s - dt.timedelta(days=1)]
+        for s in reversed(xs[xs<evs.loc[e, "end_idx"]]):
             cum_outdata[s] = cum_outdata[s + dt.timedelta(days=1)] - thresh
 
-    plot_dur = range(0, evs.loc[e, "duration"] + 2)
+    # Prepare plot
+    plot_dur = range(1-buffer, evs.loc[e, "duration"] + buffer + 1)
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.title("Event Beginning " + evs.loc[e, "start_idx"].strftime("%d-%b-%Y") + " | Duration: " + str(
         evs.loc[e, "duration"]) + " days")
-    plt.ylabel('Flow ($ft^3$/s) | Cumulative Flow ($ft^3$/s days) ')
-    plt.ylim(0, round(max(cum_outdata), -4) + 10000)
+    ylab = get_varlabel(var)
+    varname = ylab.split(" ")[0]
+    ymax = round(max(cum_outdata), -4) + 10000
+    plt.ylim(0, ymax)
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     plt.xlabel('Duration (days)')
     plt.xlim(min(plot_dur), max(plot_dur))
 
-
+    # Plot data
     plt.bar(plot_dur, indata, width=1,color='blue',alpha=0.5,label="_nolegend_")
-    plt.plot(plot_dur, indata, 'blue',label=var)
-    plt.plot(plot_dur, cum_indata, "black",label=f"Cum. {var}")
-    plt.plot(plot_dur, [thresh]*len(plot_dur),'red', label="Event Threshold")
-    plt.plot(plot_dur, cum_outdata, color='maroon',linestyle="dashed",label="Cum. Threshold Flow")
-    plt.plot(evs.loc[e, "duration"],tangency,"rx",label="Point of Tangency")
-    plt.legend()
+    plt.plot(plot_dur, indata, 'blue',label=varname)
+    plt.plot(plot_dur, [thresh] * len(plot_dur), 'red', label="Event Threshold")
 
+    if tangent:
+        plt.plot(plot_dur, cum_indata, "black",label=f"Cum. {varname}")
+        plt.plot(plot_dur, cum_outdata, color='maroon',linestyle="dashed",label="Cum. Threshold Flow")
+        plt.plot(evs.loc[e, "duration"],tangency,"rx",label="Point of Tangency")
+        ylab = f"{ylab} | Cumulative {ylab} ($ft^3$/s days)"
+
+    # Plot duration window
+    plt.plot([0]*2,[0,ymax],color="r",linestyle="dashed",linewidth=0.5,label="Duration Window")
+    plt.plot([max(plot_dur)-buffer]*2,[0,ymax],color="r",linestyle="dashed",linewidth=0.5,label="_nolegend_")
+
+    plt.ylabel(ylab)
+    plt.legend()
+    
 ### VOLUME DURATION FUNCTIONS
 def analyze_voldur(data, dur):
     """
@@ -598,15 +608,14 @@ def analyze_voldur(data, dur):
                 continue
             else:
                 if dur == "WY":
-                    max_idx = data.loc[data["wy"] == wy, var].idxmax()
-                    evs.loc[wy, "date"] = max_idx
                     evs.loc[wy, "annual_sum"] = round(data.loc[data["wy"] == wy, var].sum(), 0)
                     evs.loc[wy, "annual_acft"] = round(data.loc[data["wy"] == wy, var].sum() * 86400 / 43560, 0)
-                    evs.loc[wy, "max"] = round(data.loc[max_idx, var].max(), 0)
                     evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, var])
+                    max_idx = data.loc[data["wy"] == wy, var].idxmax()
+                    evs.loc[wy, "max"] = max_idx
+                    evs.loc[wy, f"max_{var}"] = round(data.loc[max_idx, var], 0)
     else:
         dur_data = data[var].rolling(dur,min_periods=int(np.ceil(dur*0.90))).mean()
-        #max_data = data[var].rolling(dur,min_periods=int(np.ceil(dur*0.90))).max()
         data["wy_shift"] = data["wy"].shift(+(int(dur/2)))
 
         for wy in WYs:
@@ -620,7 +629,7 @@ def analyze_voldur(data, dur):
                 evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
                 evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=int(dur / 2) - 1)  # place date as middle of window
                 evs.loc[wy, "end"] = max_idx  # place date as end of window
-                evs.loc[wy, "max"] = dur_data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"]].idxmax() # TODO FIX MAX!
+                evs.loc[wy, "max"] = data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"],var].idxmax()
                 evs.loc[wy,f"max_{var}"] = data.loc[evs.loc[wy,"max"],var]
                 evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
 
@@ -684,7 +693,11 @@ def plot_trendsshifts(evs,dur,var):
         # Theil Slope
         theil = theilslopes(evs[var],evs.index)
         kendall = kendalltau(evs[var],evs.index)
-        plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {int(theil[0])} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
+        if theil[0]<1:
+            theil_slope = round(theil[0],1)
+        else:
+            theil_slope = round(theil[0],0)
+        plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {theil_slope} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
 
         for i in evs.index[::10]:
             if i>max(evs.index)-20:
@@ -776,7 +789,7 @@ def plot_voldurpp(site,site_dur,durations,alpha=0):
         else:
             peaks_sorted = calc_pp(evs[var],alpha)
             peaks_sorted.to_csv(f"plot/{site}_{dur}_pp.csv")
-            plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[var],label=f"{dur}-day Flow")
+            plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[var],label=f"{dur}-day {var}")
 
             if peaks_sorted[var].min() < minp:
                 minp = peaks_sorted[var].min()
@@ -873,9 +886,9 @@ def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
     plt.legend()
 
 def get_varlabel(var):
-    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","cfs","CFS"]:
+    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","QU","cfs","CFS"]:
         lab = "Flow (ft$^3$/s)"
-    elif var in ["peak", "Peak", "peaks", "Peaks"]:
+    elif var in ["peak", "Peak", "peaks", "Peaks","peak discharge","Peak Discharge"]:
         lab = "Peak Flow (ft$^3$/s)"
     elif var in ["stage","Stage","feet","Feet","FT","ft","pool_elevation","elevation","Elevation","elev","Elev"]:
         lab = "Stage (ft)"

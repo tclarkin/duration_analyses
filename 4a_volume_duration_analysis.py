@@ -20,8 +20,8 @@ from functions import analyze_voldur,plot_voldur
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ARD"] # list, site or dam names
-durations = ["peak",15,121] # Duration in days ("peak" can also be included)
+sites = ["ARD_swe"] # list, site or dam names
+durations = [1] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 plot = False  # Will plot each WY with all durations
 

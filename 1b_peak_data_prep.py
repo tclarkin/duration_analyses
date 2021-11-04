@@ -15,7 +15,6 @@ date: (dd-mmm-yyyy)
 """
 import os
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from functions import nwis_peak_import,csv_peak_import,get_varlabel

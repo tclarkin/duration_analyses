@@ -17,23 +17,19 @@ import matplotlib.pyplot as plt
 from functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldurpdf,plot_voldurmonth
 from statsmodels.graphics import tsaplots
 
-
-
 ### Begin User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ARD"] # list, site or dam names
-durations = ["peak",15,121] # Duration in days ("peak" can also be included)
+sites = ["ARD_swe"] # list, site or dam names
+durations = ["WY",1] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-idaplot = False      # Will create initial data analysis plots
-ppplot = False       # Will create a plot with all durations plotted with plotting positions (using alpha below)
+idaplot = True      # Will create initial data analysis plots
+ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
 pdfplot = True      # Plot probability density function of data
 monthplot = True    # Plot monthly distribution of annual peaks
 eventdate = "max"   # When to plot seasonality: "start", "mid", "end", or "max"
-# TODO FIX MAX
-
 
 ### Begin Script ###
 
@@ -63,6 +59,11 @@ for site in sites:
     else:
         peaks = False
         durations_sel = durations
+
+    if "WY" in durations:
+        print("Removing WY from list of durations.")
+        durations_sel = durations
+        durations_sel.remove("WY")
 
     for dur in durations_sel:
         if dur == "peak":

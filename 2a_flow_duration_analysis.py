@@ -24,7 +24,7 @@ from functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces
 #os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ARD"] # list, site or dam names
+sites = ["ARD_swe"] # list, site or dam names
 analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 

@@ -25,7 +25,7 @@ This script should be run individually for each site being analyzed--should be i
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from functions import countdur,analyze_critdur,analyze_monthlydur,analyze_monthlypeak,durationplot
+from functions import countdur,analyze_critdur,plot_standard_duration,plot_volwindow_duration
     
 ### Begin User Input ### 
 # Set Working Directory
@@ -34,10 +34,13 @@ from functions import countdur,analyze_critdur,analyze_monthlydur,analyze_monthl
 # Site information and user selections
 site = "ARD" # site or dam name
 event_thresh = 2000    # threshold flow for defining flood events
-plot_events = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 min_dur = 0        # minumum duration acceptable for analysis
 min_peak = 10000    # minumum duration acceptable for analysis
 plot_max = 0       # maximum duration to show in peak vs duration plot (will use max if 0)
+
+plot_events = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+buffer = 10
+tangent = True
 
 ### Begin Script ###
 # Check for output directory
@@ -54,6 +57,7 @@ analyze_critdur(evs,min_dur,min_peak,plot_max)
 plt.savefig(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.jpg',bbox_inches='tight',dpi=600)
 evs.to_csv(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.csv')
 
+# Plot events
 if plot_events:
     print("Plotting events")
     etot = len(evs.loc[evs["peak"]>min_peak].index)
@@ -61,10 +65,10 @@ if plot_events:
     for e in evs.loc[evs["peak"]>min_peak].index:
         n += 1
         print(f'Plotting event {n} of {etot}')
-        durationplot(data,evs,e,event_thresh)
+        plot_standard_duration(data,evs,e,event_thresh,buffer,tangent)
 
         edate = evs.loc[e,"start_idx"].strftime("%Y-%m-%d")
         plt.savefig(f"critical/{site}_{edate}.jpg",bbox_inches='tight',dpi=600)
 else:
     durationplot(data,evs,0,event_thresh)
-    
+
