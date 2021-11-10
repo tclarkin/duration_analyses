@@ -428,7 +428,7 @@ def plot_wytraces(data,wy_division,sel_wy=None,log=True):
     return(doy_data)
 
 ### CRITICAL DURATION FUNCTIONS ###
-def countdur(data, thresh):
+def identify_thresh_events(data, thresh):
     """
     This function loops through daily data and identifies periods of time when data exceed the threshold provided.
     :param data: df, data including at least date, variable
@@ -461,7 +461,7 @@ def countdur(data, thresh):
 
     return (evs)
 
-def analyze_critdur(evs, min_dur, min_peak, plot_max):
+def analyze_thresh_duration(evs, min_dur, min_peak, plot_max):
     """
     This function plots events defined by countdur() by their peak and volume and calculates critical duration
     :param evs: df, output from coutndur()
@@ -470,9 +470,9 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
     :param plot_max: int, user specified limit on plotting of durations
     :return: figure
     """
-    # PLot peaks vs durations
+    # Plot peaks vs durations
     fig, ax = plt.subplots(figsize=(6.25, 4))
-    plt.title("Flow vs Duration (n=" + str(len(evs)) + ")")
+    plt.title("Flow vs Threshold Duration (n=" + str(len(evs)) + ")")
     plt.ylabel('Flow ($ft^3$/s)')
     if plot_max == 0:
         plt.xlim(0.5, max(evs.duration)+0.5)
@@ -530,7 +530,7 @@ def analyze_critdur(evs, min_dur, min_peak, plot_max):
 
     plt.legend(loc="best", prop={'size': 9})
 
-def plot_standard_duration(data,evs,e,thresh,buffer=1,tangent=True):
+def plot_thresh_duration(data,evs,e,thresh,buffer=1,tangent=True):
     """
     This function produces the duration plots for all events provided
     :param data: df, data including at least date, variable
@@ -591,47 +591,100 @@ def plot_standard_duration(data,evs,e,thresh,buffer=1,tangent=True):
     plt.ylabel(ylab)
     plt.legend()
 
-def plot_volwindow_duration(data,evs,e,resdat,timestep):
+def analyze_volwindow_duration(data,evs,e,resdat,timestep,buffer,plot=True):
     """
     This function produces volume-window plots as used for the Folsom WCM
     :param data: df, data including at least date, variable
     :param evs: df, output from coutndur()
     :param e: int, the event index
-    :param resdat:
-    :param timestep:
-    :return: figure
+    :param resdat: df, data including at least date, QD, AF
+    :param timestep: int, number of days for each timestep to use for analyzing duration
+    :return: evs2
     """
     # Find max storage
-    vol_peak = resdat.loc[evs.loc[e,"start_idx"]:evs.loc[e,"end_idx"],"AF"].max()-resdat.loc[evs.loc[e,"start_idx"],"AF"]
+    vol_peak_idx = resdat.loc[evs.loc[e,"start_idx"]:evs.loc[e,"end_idx"],"AF"].idxmax()
+    vol_peak = resdat.loc[vol_peak_idx,"AF"]-resdat.loc[evs.loc[e,"start_idx"],"AF"]
+
+    # Find duration, based on date of max storage
+    duration = max((vol_peak_idx - evs.loc[e,"start_idx"]).days,evs.loc[e,"duration"])
 
     # Define durations to analyze
-    if evs.loc[e,"duration"] < timestep:
-        windows = range(1,evs.loc[e,"duration"])
+    if duration < timestep:
+        windows = range(1,duration)
     else:
         windows = list()
         windows.append(timestep)
         ts = timestep
-        while ts < evs.loc[e,"duration"]-timestep:
+        while ts < duration-timestep:
             ts = ts + timestep
             windows.append(ts)
-        windows.append(evs.loc[e,"duration"])
+        windows.append(duration)
 
     # Calculate inflow volumes for windows:
     var = data.columns[0]
     volumes = pd.DataFrame()
+
     for w in windows:
         dur_data = data.loc[evs.loc[e,"start_idx"]:evs.loc[e,"end_idx"],var].rolling(w, min_periods=w).sum()*(24*60*60)/43560
         try:
             max_idx = dur_data.idxmax()
         except ValueError:
             continue
-        #if pd.isna(max_idx):
-        #    continue
+        if pd.isna(max_idx):
+            continue
 
-        volumes.loc[w, "start"] = max_idx - dt.timedelta(days=w - 1)  # place date as start of window
-        volumes.loc[w, "end"] = max_idx  # place date as end of window
-        volumes.loc[w, "vol"] = round(dur_data[max_idx], 0)
-        volumes.loc[w,"vw"] = volumes.loc[w, "vol"]/vol_peak
+        volumes.loc[w,"start"] = max_idx - dt.timedelta(days=w - 1)  # place date as start of window
+        volumes.loc[w,"end"] = max_idx  # place date as end of window
+        volumes.loc[w,"vol"] = round(dur_data[max_idx], 0)
+        volumes.loc[w,"vol_peak"] = round(data.loc[evs.loc[e,"start_idx"]:vol_peak_idx,var].sum()*(24*60*60)/43560,0)
+        volumes.loc[w,"vw"] = volumes.loc[w, "vol_peak"]/volumes.loc[w,"vol"]
+
+    crit_dur = abs(volumes["vw"]-1).idxmin()
+
+    # Plot event
+    if plot:
+        xs = pd.date_range(evs.loc[e, "start_idx"] - dt.timedelta(days=buffer),
+                           evs.loc[e, "end_idx"] + dt.timedelta(days=buffer+5))
+        inflow = data.loc[xs, var]
+        storage = resdat.loc[xs, "AF"]
+        outflow = resdat.loc[xs, "QD"]
+
+        # Prepare plot
+        fig, ax1 = plt.subplots(figsize=(6.25, 4))
+        plt.title("Event Beginning " + evs.loc[e, "start_idx"].strftime("%d-%b-%Y") + " | Duration: " + str(
+            evs.loc[e, "duration"]) + " days")
+        ylab = get_varlabel(var)
+        ax1.set_ylabel(ylab)
+        ax1.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+        ax1.set_xlabel('Duration (days)')
+
+        # Plot flow data
+        ax1.plot(xs, inflow, 'blue', label="Inflow")
+        ax1.plot(xs, outflow, 'red', linestyle="dashed", label="Outflow")
+
+        # Plot volume data
+        ax2 = ax1.twinx()
+        ax2.plot(xs, storage, 'black', label="Storage (acre-feet)")
+        ax2.plot([vol_peak_idx]*2,[0,volumes.vol.max()],"black",linestyle="dashed",label="Storage Peak")
+        ax2.set_ylabel("Storage (thousands acre-feet)")
+        ax2.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+
+        for w in volumes.index:
+            if w==crit_dur:
+                col = "black"
+                alp = 1
+            else:
+                col = None
+                alp = 0.5
+            ax2.plot([volumes.loc[w,"start"],volumes.loc[w,"end"]],[volumes.loc[w,"vol"]]*2, color=col, alpha=alp, label="_nolegend_")
+            ax2.annotate(f"{w}-days: {round(volumes.loc[w,'vw'],2)}",[volumes.loc[w,"end"],volumes.loc[w,"vol"]], alpha=alp,color=col)
+
+        plt.legend()
+        #box = ax2.get_position()
+        #ax2.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+        #plt.legend(bbox_to_anchor=(1, 0.5), loc='center left', prop={'size': 10})
+
+    return crit_dur
 
 
 ### VOLUME DURATION FUNCTIONS
