@@ -461,66 +461,65 @@ def identify_thresh_events(data, thresh):
 
     return (evs)
 
-def summarize_duration(evs, min_dur, min_peak, plot_max):
+def init_duration_plot(evs,plot_max):
     """
-    This function plots events defined by countdur() by their peak and volume and calculates critical duration
-    :param evs: df, output from coutndur()
-    :param min_dur: int, user specified duration limit
-    :param min_peak: int, user specified peak limit
-    :param plot_max: int, user specified limit on plotting of durations
+    This function initializes plots for output from identify_thresh_events() by their peak and volume and calculates averages
+    :param evs: df, output from identify_thresh_events()
+    :param plot_max: int, maximum duration for plots
     :return: figure
     """
     # Plot peaks vs durations
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.ylabel('Flow ($ft^3$/s)')
     plt.ylim(0,evs["peak"].max()*1.1)
-    if plot_max == 0:
+    if (plot_max == 0) or (plot_max is None):
         plt.xlim(0.5, max(evs.duration)+0.5)
     else:
         plt.xlim(0.5, plot_max)
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     plt.xlabel('Duration (days)')
-    # Plot all data
-    plt.scatter(evs["duration"], evs["peak"], facecolors='none', edgecolors='grey', label="_nolegend_")
 
-    # Calculate screened data and screened averages
+def plot_and_calc_durations(evs, min_dur, min_peak,calc=False,scatter_label="Events",col="grey",fill="none"):
+    """
+    This function plots events defined by identify_thresh_events() by their peak and volume and calculates critical duration
+    :param evs: df, output from identify_thresh_events()
+    :param min_dur: int, user specified duration limit
+    :param min_peak: int, user specified peak limit
+    :param plot_max: int, user specified limit on plotting of durations
+    :return: figure
+    """
+    # Check screening limits and plot
+    if min_peak > 0:
+        plt.plot((0, max(evs["duration"])+1),(min_peak,min_peak),color='blue',linestyle="dashed",label="Peak Limit")
+        col = fill = "blue"
+    if min_dur > 0:
+        plt.plot((min_dur, min_dur), (0, max(evs["peak"])), color='red', linestyle="dashed", label="Duration Limit")
+        col = fill = "red"
+    if (min_peak > 0) & (min_dur > 0):
+        col = fill = "purple"
+
+    # Screen data
     print("Screening data...")
     evs_lim = evs.loc[(evs["duration"]>min_dur)&(evs["peak"]>min_peak)]
-    print("Calculating screened averages...")
-    lim_dur = sum(evs_lim["duration"] * evs_lim["peak"]) / sum(evs_lim["peak"])
-    lim_peak = sum(evs_lim["duration"] * evs_lim["peak"]) / sum(evs_lim["duration"])
     lim_n = len(evs_lim)
-    lim_dur_avg = evs_lim["duration"].mean()
-    lim_dur_geo = (evs_lim["duration"].astype("float").prod()) ** (1 / lim_n)
 
-    # Plot screened data and limits
-    if (min_dur > 0) & (min_peak == 0):
-        col = "red"
-        scatter_label = "Screened Events"
-        plt.plot((min_dur,min_dur),(0,max(evs_lim["peak"])),color='red',linestyle="dashed",label="Duration Limit")
-    if (min_peak > 0) & (min_dur == 0):
-        col = "blue"
-        scatter_label = "Screened Events"
-        plt.plot((0, max(evs_lim["duration"])+1),(min_peak,min_peak),color='blue',linestyle="dashed",label="Peak Limit")
-    if (min_peak > 0) & (min_dur > 0):
-        col = "black"
-        scatter_label = "Screened Events"
-        plt.plot((min_dur, min_dur), (0, max(evs_lim["peak"])), color='red',linestyle="dashed",label="Screening Limits")
-        plt.plot((0, max(evs_lim["duration"])), (min_peak, min_peak), color='blue',linestyle="dashed",label="_nolegend_")
-    if (min_peak == 0) & (min_dur == 0):
-        col = "black"
-        scatter_label = "Events"
+    # Plot screened data
+    plt.scatter(evs_lim["duration"],evs_lim["peak"],facecolors=fill,edgecolors=col,label=f"{scatter_label} (n={lim_n})")
 
-    # Plot data and duration estimates
-    plt.scatter(evs_lim["duration"],evs_lim["peak"],facecolors='none', edgecolors=col, label=f"{scatter_label} (n={lim_n})")
-    print(f"Peak Weighted Screened Avg: {lim_dur}")
-    plt.plot([lim_dur]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="solid",linewidth=2,alpha=0.5,label=f"Peak Weighted Avg: {round(lim_dur, 1)}")
-    print(f"Screened A. Avg: {lim_dur_avg}")
-    plt.plot([lim_dur_avg]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dashdot",alpha=0.5,label=f"Arithmetic Avg: {round(lim_dur_avg, 1)}")
-    print(f"Screened G. Avg: {lim_dur_geo}")
-    plt.plot([lim_dur_geo]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dotted",alpha=0.5,label=f"Geometric Avg: {round(lim_dur_geo, 1)}")
+    # Calculate averages
+    if calc:
+        print("Calculating screened averages...")
+        lim_dur_pw = sum(evs_lim["duration"] * evs_lim["peak"]) / sum(evs_lim["peak"])
+        lim_dur_avg = evs_lim["duration"].mean()
+        lim_dur_geo = (evs_lim["duration"].astype("float").prod()) ** (1 / lim_n)
 
-    plt.legend(loc="best", prop={'size': 9})
+        # Plot averages
+        print(f"Peak Weighted Screened Mean: {lim_dur_pw}")
+        plt.plot([lim_dur_pw]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="solid",linewidth=2,alpha=0.75,label=f"Peak Weighted Mean: {round(lim_dur_pw, 1)}")
+        print(f"Screened A. Mean: {lim_dur_avg}")
+        plt.plot([lim_dur_avg]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dashdot",alpha=0.75,label=f"Arithmetic Mean: {round(lim_dur_avg, 1)}")
+        print(f"Screened G. Mean: {lim_dur_geo}")
+        plt.plot([lim_dur_geo]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dotted",alpha=0.75,label=f"Geometric Mean: {round(lim_dur_geo, 1)}")
 
 def plot_thresh_duration(data,evs,e,thresh,buffer=1,tangent=True):
     """
@@ -583,7 +582,7 @@ def plot_thresh_duration(data,evs,e,thresh,buffer=1,tangent=True):
     plt.ylabel(ylab)
     plt.legend()
 
-def analyze_volwindow_duration(data,evs,e,resdat,divisions=10,buffer=1,plot=True):
+def analyze_volwindow_duration(data,evs,e,resdat,buffer=1,plot=True):
     """
     This function produces volume-window plots as used for the Folsom WCM
     :param data: df, data including at least date, variable
@@ -595,21 +594,17 @@ def analyze_volwindow_duration(data,evs,e,resdat,divisions=10,buffer=1,plot=True
     """
     # Find max storage
     vol_peak_idx = resdat.loc[evs.loc[e,"start_idx"]:evs.loc[e,"end_idx"],"AF"].idxmax()
-    vol_peak = resdat.loc[vol_peak_idx,"AF"]-resdat.loc[evs.loc[e,"start_idx"],"AF"]
+    vol_peak_dur = (vol_peak_idx-evs.loc[e,'start_idx']).days+1
 
     # Find duration, based on date of max storage
     duration = evs.loc[e,"duration"]
     windows = list()
-    if duration >= divisions:
-        timestep = int(duration/divisions)
-        windows.append(1)
-    else:
-        timestep = 1
+    timestep = 1
 
     # Define durations to analyze
-    windows.append(timestep)
     ts = timestep
-    while ts < duration-timestep:
+    windows.append(ts)
+    while ts+timestep <= duration-timestep:
         ts = ts + timestep
         windows.append(ts)
     windows.append(duration)
@@ -634,35 +629,10 @@ def analyze_volwindow_duration(data,evs,e,resdat,divisions=10,buffer=1,plot=True
         volumes.loc[w, "vol_peak"] = round(data.loc[volumes.loc[w, "start"]:vol_peak_idx, var].sum() * (24 * 60 * 60) / 43560, 0)
         volumes.loc[w, "vw"] = volumes.loc[w, "vol_peak"] / volumes.loc[w,"vol"]
 
-    if (timestep == 1) or any(volumes["vw"]-1==0) or ((volumes["vw"]-1).idxmin()==1):
-        crit_dur = abs(volumes["vw"]-1).idxmin()
-    else:
-        rel_vol = volumes["vw"]-1
-        crit_low = rel_vol[rel_vol<=0].idxmax()
-        crit_hi = rel_vol[rel_vol>0].idxmin()
 
-        windows2 = range(min([crit_low,crit_hi]),max([crit_low,crit_hi]))
-        volumes2 = pd.DataFrame()
-
-        for w in windows2:
-            dur_data = data.loc[evs.loc[e, "start_idx"]:evs.loc[e, "end_idx"], var].rolling(w, min_periods=w).sum() * (
-                        24 * 60 * 60) / 43560
-            try:
-                max_idx = dur_data.idxmax()
-            except ValueError:
-                continue
-            if pd.isna(max_idx):
-                continue
-
-            volumes2.loc[w, "start"] = max_idx - dt.timedelta(days=w - 1)  # place date as start of window
-            volumes2.loc[w, "end"] = max_idx  # place date as end of window
-            volumes2.loc[w, "avg"] = data.loc[volumes2.loc[w, "start"]:volumes2.loc[w, "end"], var].mean()
-            volumes2.loc[w, "vol"] = round(dur_data[max_idx], 0)
-            volumes2.loc[w, "vol_peak"] = round(data.loc[volumes2.loc[w, "start"]:vol_peak_idx, var].sum() * (24 * 60 * 60) / 43560, 0)
-            volumes2.loc[w, "vw"] = volumes2.loc[w, "vol_peak"] / volumes2.loc[w, "vol"]
-
-        crit_dur = abs(volumes2["vw"]-1).idxmin()
-        volumes.loc[crit_dur,:] = volumes2.loc[crit_dur,:]
+    crit_dur = abs(volumes["vw"]-1).idxmin()
+    edate = evs.loc[e, "start_idx"].strftime("%Y-%m-%d")
+    volumes.to_csv(f"critical/{edate}_volumes.csv")
 
     # Plot event
     if plot:
@@ -680,25 +650,35 @@ def analyze_volwindow_duration(data,evs,e,resdat,divisions=10,buffer=1,plot=True
 
         ax1.set_ylabel(ylab)
         ax1.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-        #ax1.set_xticklabels(ax1.get_xticklabels(), rotation = 90)
+        ax1.set_xticklabels(ax1.get_xticklabels(), rotation = 15)
 
         # Plot flow data
-        ax1.plot(xs, inflow, 'blue', label="Inflow")
+        ax1.plot(xs, inflow, 'blue', label=f"Inflow ({duration}-days)")
         ax1.plot(xs, outflow, 'red', linestyle="dashed", label="Outflow")
 
         # Plot volume data
         ax2 = ax1.twinx()
         ax2.plot(xs, storage, 'black', label="Storage (acre-feet)")
-        ax2.plot([vol_peak_idx]*2,[0,resdat.loc[vol_peak_idx,"AF"]*1.1],"black",linestyle="dashed",label="Storage Peak")
+        ax2.plot([vol_peak_idx]*2,[0,resdat.loc[vol_peak_idx,"AF"]*1.1],"black",linestyle="dashed",label=f"Storage Peak ({vol_peak_dur}-days)")
         ax2.set_ylabel("Storage (acre-feet)")
         ax2.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 
-        for w in volumes.index:
+        volumes_plot = list()
+        for i in [1,5,10,25,50,75,100,125,150,175,200]:
+            if i in volumes.index:
+                volumes_plot.append(i)
+        if crit_dur not in volumes_plot:
+            near = [x for x in volumes_plot if abs(x-crit_dur)<5]
+            for n in near:
+                volumes_plot.remove(n)
+            volumes_plot.append(crit_dur)
+
+        for w in volumes_plot:
             if w==crit_dur:
                 alp = 1
                 col = str(0)
             else:
-                alp = 0.5-abs((volumes.loc[w,"vw"]-1)/(max(abs(volumes["vw"]-1))*2))
+                alp = max(1-abs(volumes.loc[w,"vw"]-1)*2,0.25)
                 col = str(0)
 
             ax1.plot([volumes.loc[w,"start"],volumes.loc[w,"end"]],[volumes.loc[w,"avg"]]*2, color=col, alpha=alp, label="_nolegend_")

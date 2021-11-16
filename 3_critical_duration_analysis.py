@@ -25,7 +25,7 @@ This script should be run individually for each site being analyzed--should be i
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from functions import identify_thresh_events,summarize_duration,plot_thresh_duration,analyze_volwindow_duration,csv_daily_import
+from functions import identify_thresh_events,init_duration_plot,plot_and_calc_durations,plot_thresh_duration,analyze_volwindow_duration,csv_daily_import
 
 ### Begin User Input ###
 # Set Working Directory
@@ -33,21 +33,22 @@ from functions import identify_thresh_events,summarize_duration,plot_thresh_dura
 
 # Site information and user selections
 site = "ARD" # site or dam name
-event_thresh = 2000 # threshold flow for defining flood events
-min_dur = 0        # minumum duration acceptable for analysis
-min_peak = 9000    # minumum duration acceptable for analysis
-plot_max = 0       # maximum duration to show in peak vs duration plot (will use max if 0)
+event_thresh = 1000 # threshold flow for defining flood events
+min_dur = None      # minumum duration acceptable for analysis (or None)
+min_peak = 9000    # minumum duration acceptable for analysis (or None)
+plot_max = 0        # maximum duration to show in peak vs duration plot (will use max if 0)
 
 # Standard Duration Plots
 standard_plots = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 buffer = 10                 # int, number of days before and after duration to plot
-tangent = True              # boolean, including cumulative flows and tangent line
+tangent = False              # boolean, including cumulative flows and tangent line
 
 # Volume-Window Duration Plots
 analyze_volwindow = True    # Analyze using volume-window method
 volwindow_plots = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 res_file = "daily_res.csv"  # .csv filename or None. If file, QD (discharge) and AF (storage) are expected.
-divisions = 5               # number of divisions for initial check of vol window
+
+# TODO Add seasonality component...option to select specific months? Easy input from storm separation script?
 
 ### Begin Script ###
 # Check for output directory
@@ -60,8 +61,28 @@ data = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
 # Determine periods in excess of event threshold
 print(f'Analyzing critical duration for events above {event_thresh} ft^3/s.')
 evs = identify_thresh_events(data,event_thresh)
-summarize_duration(evs,min_dur,min_peak,plot_max)
-plt.title(f"Flow vs Threshold Duration (n={str(len(evs))})")
+
+# Check thresholds
+if min_peak is None:
+    min_peak = 0
+if min_dur is None:
+    min_dur = 0
+
+# Intialize figure
+init_duration_plot(evs,plot_max)
+
+# Plot all data
+plot_and_calc_durations(evs,0,0)
+# Plot screened data
+if (min_dur>0) or (min_peak>0):
+    plot_and_calc_durations(evs,min_dur,min_peak,True,"Screened Events")
+
+# Add title and legend, and save
+plt.title(f"Flow vs Duration")
+ax = plt.gca()
+box = ax.get_position()
+ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+plt.legend(bbox_to_anchor=(1, 0.5), loc='center left', prop={'size': 10})
 plt.savefig(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.jpg',bbox_inches='tight',dpi=600)
 evs.to_csv(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.csv')
 
@@ -89,7 +110,7 @@ if analyze_volwindow:
         # Import reservoir data
         resdat = csv_daily_import(res_file,"WY",False)
         # Create volume-window plots
-        print("Analyzing events")
+        print("Analyzing events with Volume-Window Method")
         for n,e in zip(range(1,len(evs_sel)+1),evs_sel.index):
             if evs_sel.loc[e,"start_idx"]<resdat.index.min():
                 print(f'Skipping event {n} of {etot}')
@@ -97,7 +118,7 @@ if analyze_volwindow:
                 continue
             else:
                 print(f'Analyzing event {n} of {etot}')
-                crit = analyze_volwindow_duration(data,evs_sel,e,resdat,divisions,buffer,volwindow_plots)
+                crit = analyze_volwindow_duration(data,evs_sel,e,resdat,buffer,volwindow_plots)
                 evs_sel.loc[e,"duration"] = crit
                 if volwindow_plots:
                     edate = evs_sel.loc[e, "start_idx"].strftime("%Y-%m-%d")
@@ -107,7 +128,23 @@ if analyze_volwindow:
         evs_sel.to_csv(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_volwindow.csv')
 
         # Summarize duration information
-        summarize_duration(evs_sel, min_dur, min_peak, plot_max)
-        plt.title(f"Flow vs Volume-Window Duration (n={str(len(evs_sel))})")
+        # Intialize figure
+        init_duration_plot(evs, plot_max)
+        # Replot all data
+        plot_and_calc_durations(evs, 0, 0)
+        # Plot screened data
+        if (min_dur > 0) or (min_peak > 0):
+            plot_and_calc_durations(evs,min_dur,min_peak,True,"Screened Events")
+
+        # Plot volume-window durations
+        plot_and_calc_durations(evs_sel,0,0,True,"Volume-Window Events","black","black")
+
+        # Add title and legend and save
+        plt.title(f"Flow vs Duration")
+        ax = plt.gca()
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+        plt.legend(bbox_to_anchor=(1, 0.5), loc='center left', prop={'size': 10})
+
         plt.savefig(f'critical/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_volwindow.jpg',
                 bbox_inches='tight', dpi=600)

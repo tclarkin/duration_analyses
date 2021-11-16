@@ -21,8 +21,8 @@ from statsmodels.graphics import tsaplots
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ARD_swe"] # list, site or dam names
-durations = ["WY",1] # Duration in days ("peak" can also be included)
+sites = ["ARD"] # list, site or dam names
+durations = ["peak",30,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
