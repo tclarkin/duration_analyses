@@ -17,7 +17,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from functions import nwis_daily_import,csv_daily_import,get_varlabel
+from functions import nwis_import,csv_daily_import,get_varlabel
 
 ### User Input ###
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
@@ -47,7 +47,7 @@ else:
     if len(site_source) != 8:
         print("Must provide valid USGS site number (8-digit string) for at-site data")
     else:
-        site_daily = nwis_daily_import(site=site_source,dtype="dv",wy=wy_division)
+        site_daily = nwis_import(site=site_source,dtype="dv",wy=wy_division)
         var = "flow"
 
 # Clean data, if selected
@@ -84,7 +84,7 @@ if dereg_source != False:
         if len(dereg_source) != 8:
             print("Must provide valid USGS site number (8-digit string) for dereg data")
         else:
-            dereg_daily = nwis_daily_import(site=dereg_source,dtype="dv",wy=wy_division)
+            dereg_daily = nwis_import(site=dereg_source,dtype="dv",wy=wy_division)
             dvar = "flow"
 
     # Check if data loaded

@@ -60,7 +60,7 @@ def csv_daily_import(filename,wy="WY",single=True):
 
     return(out)
 
-def nwis_daily_import(site, dtype, start=None, end=None, wy="WY"):
+def nwis_import(site, dtype, start=None, end=None, wy="WY"):
     """
     Imports flows from NWIS site
     :param site: str, USGS site number
@@ -75,11 +75,13 @@ def nwis_daily_import(site, dtype, start=None, end=None, wy="WY"):
     elif dtype == "iv":
         parameter = "00060"
 
+    data = pd.DataFrame()
+
     if (start!=None) & (end!=None):
         try:
             data = nwis.get_record(sites=site, start=start, end=end, service=dtype, parameterCd='00060')
         except ValueError:
-            data[var] = np.nan
+            data["flow"] = np.nan
     else:
         if (start==None) & (end==None):
             try:
