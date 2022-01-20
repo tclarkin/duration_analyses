@@ -22,14 +22,14 @@ from statsmodels.graphics import tsaplots
 
 # Site information and user selections
 sites = ["ARD"] # list, site or dam names
-durations = ["peak",30,120] # Duration in days ("peak" can also be included)
+durations = ["peak",1,30,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
 pdfplot = True      # Plot probability density function of data
 monthplot = True    # Plot monthly distribution of annual peaks
-eventdate = "max"   # When to plot seasonality: "start", "mid", "end", or "max"
+eventdate = "start"   # When to plot seasonality: "start", "mid", "end", or "max"
 
 ### Begin Script ###
 

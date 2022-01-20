@@ -23,9 +23,9 @@ from functions import nwis_import,csv_daily_import,get_varlabel
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'ARD_swe'  # site or dam name
+site = 'ard_fb'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "snotel830_swe.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_source = "fb.csv" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
 
 # Optional deregulation of at-site data
@@ -109,5 +109,6 @@ if dereg_source != False:
 
 # Complete and save plot
 plt.legend()
-ax.set_ylim([0,None])
+if "Stage" not in get_varlabel(var):
+    ax.set_ylim([0,None])
 plt.savefig(f"data/{site}_site_daily.jpg",bbox_inches='tight',dpi=600)

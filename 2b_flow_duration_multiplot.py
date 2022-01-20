@@ -16,12 +16,12 @@ from functions import plot_dur_ep,get_varlabel
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-sites = ["ARD","ARD_USGS"] # list, site or dam names
-labels = ["Flow","Flow (USGS)"] # labels for sites
+sites = ["ARD","ARD_USGS","NRNI"] # list, site or dam names
+labels = ["Flow","Flow (USGS)","Flow (BPA)"] # labels for sites
 
 ### Begin Script ###
 # Check for output directory
-if not os.path.isdir("duration"):
+if not os.path.isdir("flow"):
     print("duration directory does not exist. Please run 2a_flow_duration_analysis.py before using this script.")
 
 # Initiate plot

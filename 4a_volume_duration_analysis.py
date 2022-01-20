@@ -21,7 +21,7 @@ from functions import analyze_voldur,plot_voldur
 
 # Site information and user selections
 sites = ["ARD"] # list, site or dam names
-durations = [15,30,120] # Duration in days ("peak" can also be included)
+durations = ["peak",1,30,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 plot = False  # Will plot each WY with all durations
 
@@ -64,7 +64,7 @@ for site in sites:
     if (plot):
         print("Plotting WYs")
         if peaks:
-            site_peaks = pd.read_csv(f"{site}_site_peak.csv", index_col=0)
+            site_peaks = pd.read_csv(f"data/{site}_site_peak.csv", index_col=0)
             site_peaks["date"] = pd.to_datetime(site_peaks["date"])
 
         for wy in df_dur.index:
