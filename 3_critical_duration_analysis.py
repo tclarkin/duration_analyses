@@ -35,8 +35,9 @@ from functions import identify_thresh_events,init_duration_plot,plot_and_calc_du
 site = "ARD" # site or dam name
 event_thresh = 1000 # threshold flow for defining flood events
 min_dur = None      # minumum duration acceptable for analysis (or None)
-min_peak = 9000    # minumum duration acceptable for analysis (or None)
+min_peak = 10000    # minumum duration acceptable for analysis (or None)
 plot_max = 0        # maximum duration to show in peak vs duration plot (will use max if 0)
+mean_type = "arithmetic" # "arithmetic", "geometric", "peak-weight"
 
 # Standard Duration Plots
 standard_plots = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
@@ -75,7 +76,7 @@ init_duration_plot(evs,plot_max)
 plot_and_calc_durations(evs,0,0)
 # Plot screened data
 if (min_dur>0) or (min_peak>0):
-    plot_and_calc_durations(evs,min_dur,min_peak,True,"Screened Events")
+    plot_and_calc_durations(evs,min_dur,min_peak,mean_type,"Screened Events")
 
 # Add title and legend, and save
 plt.title(f"Flow vs Duration")
@@ -134,10 +135,10 @@ if analyze_volwindow:
         plot_and_calc_durations(evs, 0, 0)
         # Plot screened data
         if (min_dur > 0) or (min_peak > 0):
-            plot_and_calc_durations(evs,min_dur,min_peak,True,"Screened Events")
+            plot_and_calc_durations(evs,min_dur,min_peak,mean_type,"Screened Events")
 
         # Plot volume-window durations
-        plot_and_calc_durations(evs_sel,0,0,True,"Volume-Window Events","black","black")
+        plot_and_calc_durations(evs_sel,0,0,mean_type,"Volume-Window Events","black","black")
 
         # Add title and legend and save
         plt.title(f"Flow vs Duration")

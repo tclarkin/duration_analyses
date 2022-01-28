@@ -23,10 +23,11 @@ from functions import nwis_import,csv_daily_import,get_varlabel
 #os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
 
 # Site information and user selections
-site = 'ard_fb'  # site or dam name
+site = 'ARD'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "fb.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_source = "daily_flow.csv" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
+zero = 100
 
 # Optional deregulation of at-site data
 dereg_source = False # False, usgs site number (e.g., "09445000") or .csv data file
@@ -53,7 +54,7 @@ else:
 # Clean data, if selected
 if clean:
     # Remove negative values
-    site_daily.loc[site_daily[var] < 0, var] = 0
+    site_daily.loc[site_daily[var] < zero, var] = zero
 
     # Remove WYs with less than 300 days of data or if last month is lower than September
     for wy in site_daily["wy"].unique():

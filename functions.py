@@ -487,7 +487,10 @@ def plot_and_calc_durations(evs, min_dur, min_peak,calc=False,scatter_label="Eve
     :param evs: df, output from identify_thresh_events()
     :param min_dur: int, user specified duration limit
     :param min_peak: int, user specified peak limit
-    :param plot_max: int, user specified limit on plotting of durations
+    :param calc: str, False or str "arithmetic", "geometric", "peak-weight"
+    :param scatter_label: str, label
+    :param col: str, color for plotted data
+    :param fill: str, fill color for plotted data
     :return: figure
     """
     # Check screening limits and plot
@@ -509,19 +512,21 @@ def plot_and_calc_durations(evs, min_dur, min_peak,calc=False,scatter_label="Eve
     plt.scatter(evs_lim["duration"],evs_lim["peak"],facecolors=fill,edgecolors=col,label=f"{scatter_label} (n={lim_n})")
 
     # Calculate averages
-    if calc:
-        print("Calculating screened averages...")
-        lim_dur_pw = sum(evs_lim["duration"] * evs_lim["peak"]) / sum(evs_lim["peak"])
-        lim_dur_avg = evs_lim["duration"].mean()
-        lim_dur_geo = (evs_lim["duration"].astype("float").prod()) ** (1 / lim_n)
+    if calc!=False:
+        print("Calculating screened average...")
+        if calc=="geometric":
+            lim_dur_geo = (evs_lim["duration"].astype("float").prod()) ** (1 / lim_n)
+            print(f"Screened G. Mean: {lim_dur_geo}")
+            plt.plot([lim_dur_geo]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dashdot",alpha=0.75,label=f"Geometric Mean: {round(lim_dur_geo, 1)}")
+        elif calc=="peak-weight":
+            lim_dur_pw = sum(evs_lim["duration"] * evs_lim["peak"]) / sum(evs_lim["peak"])
+            print(f"Peak Weighted Screened Mean: {lim_dur_pw}")
+            plt.plot([lim_dur_pw]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dashdot",linewidth=2,alpha=0.75,label=f"Peak Weighted Mean: {round(lim_dur_pw, 1)}")
+        else:
+            lim_dur_avg = evs_lim["duration"].mean()
+            print(f"Screened A. Mean: {lim_dur_avg}")
+            plt.plot([lim_dur_avg]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dashdot",alpha=0.75,label=f"Arithmetic Mean: {round(lim_dur_avg, 1)}")
 
-        # Plot averages
-        print(f"Peak Weighted Screened Mean: {lim_dur_pw}")
-        plt.plot([lim_dur_pw]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="solid",linewidth=2,alpha=0.75,label=f"Peak Weighted Mean: {round(lim_dur_pw, 1)}")
-        print(f"Screened A. Mean: {lim_dur_avg}")
-        plt.plot([lim_dur_avg]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dashdot",alpha=0.75,label=f"Arithmetic Mean: {round(lim_dur_avg, 1)}")
-        print(f"Screened G. Mean: {lim_dur_geo}")
-        plt.plot([lim_dur_geo]*2, [0,evs["peak"].max()*1.1], color=col,linestyle="dotted",alpha=0.75,label=f"Geometric Mean: {round(lim_dur_geo, 1)}")
 
 def plot_thresh_duration(data,evs,e,thresh,buffer=1,tangent=True):
     """
