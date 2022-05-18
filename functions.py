@@ -362,7 +362,7 @@ def analyze_dur(data,combos,pcts,var):
         plt.legend()
     return (full_table,all_durflows)
 
-def plot_wytraces(data,wy_division,sel_wy=None,log=True):
+def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=True):
     """
     This function produces a single plot of the WY with all WYs plotted as traces and the max, min, mean and median.
     :param data: df, inflows including at least date, flow
@@ -398,7 +398,8 @@ def plot_wytraces(data,wy_division,sel_wy=None,log=True):
         plt.plot(doy_idx, doy_flow, color="grey",alpha=0.2)
     for d in doy_data.index:
         doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
-        doy_data.loc[d, "median"] = doy_data.loc[d, WYs].median()
+        for q in quantiles:
+            doy_data.loc[d, q] = doy_data.loc[d,WYs].quantile(q)
 
     # Plot min and max year, volume
     annual_vol = doy_data.sum().sort_values()
@@ -414,7 +415,8 @@ def plot_wytraces(data,wy_division,sel_wy=None,log=True):
             plt.plot(doy_data.index, doy_data[sel_wy[sel]], color=sel_col[sel], linestyle="dashdot", label=f"{sel_wy[sel]}")
 
     plt.plot(doy_data.index, doy_data["mean"], color="black", linestyle="dashed", linewidth=2,label="Mean")
-    plt.plot(doy_data.index, doy_data["median"], color="black", linestyle="solid",linewidth=2,label="Median")
+    for q in quantiles:
+        plt.plot(doy_data.index, doy_data[q], linestyle="solid",linewidth=2,label=q)
 
     plt.xlim(1,366)
     plt.xticks(rotation=90)

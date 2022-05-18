@@ -21,21 +21,22 @@ from functions import annualcombos,monthcombos,allcombos,standard
 from functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces
 
 ### Begin User Input ###
-#os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
+#os.chdir("")
 
 # Site information and user selections
-sites = ["ard_fb"] # list, site or dam names
+sites = ["cc"] # list, site or dam names
 analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
 # If custcomb == True...define combos: {"Name":[months],etc.}
 custcombos = {"Winter Season (Nov-Feb)":[1,2,11,12],
-              "Spring Season (Mar-Jul)":[3,4,5,6,7],
-              "Fall Season (Aug-Oct)":[8,9,10]}
+              "Spring Season (Mar-May":[3,4,5],
+              "Summer/Fall Season (Jun-Oct)":[8,9,10]}
 
 # Plot water year traces?
 wytrace = True
 wy_division = "WY" # "WY" or "CY"
+quantiles = [0.05,0.5,0.95] # quantiles to include on plot
 
 ### Begin Script ###
 # Check for output directory
@@ -74,7 +75,7 @@ for site in sites:
 # If selected, plot water year traces
 if wytrace:
     print("Plotting WY traces")
-    doy_data = plot_wytraces(data, wy_division)
+    doy_data = plot_wytraces(data, wy_division,quantiles)
     plt.savefig(f"flow/{site}_WY_plot.jpg", bbox_inches="tight", dpi=600)
 
     doy_data.to_csv(f"flow/{site}_doy.csv")

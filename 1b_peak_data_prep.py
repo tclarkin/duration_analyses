@@ -15,17 +15,25 @@ date: (dd-mmm-yyyy)
 """
 import os
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from functions import nwis_peak_import,csv_peak_import,get_varlabel
 
 ### User Input ###
-#os.chdir("C://Users//tclarkin//Documents//Projects//El_Vado_Dam//duration_analyses//")
+#os.chdir("")
 
 # Site information and user selections
-site = 'ARD'  # site or dam name
+site = 'caliham'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "ARD_site_peak.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_source = "08207000" # usgs site number (e.g., "09445000") or .csv data file
+
+# Optional seasonal selection
+season = True # True or False
+# Dictionary of seasons and months {"name":[months],etc.}
+seasons = {"winter":[1,2,11,12],
+            "spring":[3,4,5],
+            "summer":[6,7,8,9,10]}
 
 ### Begin Script ###
 if not os.path.isdir("data"):
@@ -44,17 +52,40 @@ else:
         site_peaks = nwis_peak_import(site=site_source)
         var = "peak"
 
-# Plot data
+# Save data
 site_peaks.to_csv(f"data/{site}_site_peak.csv")
+
+# Plot data
 fig, ax = plt.subplots(figsize=(6.25, 4))
-plt.plot(site_peaks.index,site_peaks[var],marker="o",linewidth=0,label="Site Peaks")
 plt.ylabel(get_varlabel(var))
+plt.plot(site_peaks["date"],site_peaks[var],marker="o",linewidth=0,label="Site Peaks")
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-plt.legend()
 ax.set_ylim([0,None])
+plt.legend()
 plt.savefig(f"data/{site}_site_peak.jpg",bbox_inches='tight',dpi=600)
 
-if os.path.isfile(f"data/{site}_site_daily.csv"):
+if season:
+    for s in seasons.keys():
+        season_peaks = site_peaks.copy()
+        season_peaks.loc[~pd.DatetimeIndex(season_peaks["date"]).month.isin(seasons[s]), var] = np.nan
+        plt.plot(season_peaks["date"], season_peaks[var],marker="x",linewidth=0,label=f"{s} Site Data")
+        plt.legend()
+        plt.savefig(f"data/{site}_site_peak.jpg", bbox_inches='tight', dpi=600)
+        season_peaks.to_csv(f"data/{site}_{s}_site_peak.csv")
+        print(f"Seasonal peaks saved to data/{site}_{s}_site_peak.csv")
+
+    if os.path.isfile(f"data/{site}_{s}_site_daily.csv"):
+        site_daily = pd.read_csv(f"data/{site}_{s}_site_daily.csv",parse_dates=True,index_col=0)
+        dvar = site_daily.columns[0]
+
+        fig, ax = plt.subplots(figsize=(6.25, 4))
+        plt.plot(site_daily.index, site_daily[dvar], label="Site Daily")
+        plt.plot(season_peaks.date, season_peaks[var], marker="x", color="k",linewidth=0, label="Site Peaks")
+
+        plt.legend()
+        plt.savefig(f"data/{site}_{s}_site_peak_and_daily.jpg", bbox_inches='tight', dpi=600)
+
+elif os.path.isfile(f"data/{site}_site_daily.csv"):
     site_daily = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
     dvar = site_daily.columns[0]
 

@@ -20,19 +20,26 @@ import matplotlib as mpl
 from functions import nwis_import,csv_daily_import,get_varlabel
 
 ### User Input ###
-#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
+#os.chdir("")
 
 # Site information and user selections
-site = 'ARD'  # site or dam name
+site = 'cc_res'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "daily_flow.csv" # usgs site number (e.g., "09445000") or .csv data file
+site_source = "08206910" # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
-zero = 100
+zero = 0
 
 # Optional deregulation of at-site data
 dereg_source = False # False, usgs site number (e.g., "09445000") or .csv data file
 dereg_shift = 0 # days to shift (+ forward, - backward)
 sign = "plus" # "plus" or "minus"
+
+# Optional seasonal selection
+season = False # True or False
+# Dictionary of seasons and months {"name":[months],etc.}
+seasons = {"winter":[1,2,11,12],
+            "spring":[3,4,5],
+            "summer":[6,7,8,9,10]}
 
 ### Begin Script ###
 if not os.path.isdir("data"):
@@ -65,14 +72,15 @@ if clean:
         if site_daily.loc[site_daily["wy"]==wy].tail(1).month.item()<9:
             site_daily.loc[site_daily["wy"] == wy, var] = np.nan
 
-# Save data
-site_daily.to_csv(f"data/{site}_site_daily.csv")
-
 # Plot data
 fig, ax = plt.subplots(figsize=(6.25, 4))
 plt.ylabel(get_varlabel(var))
 ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 plt.plot(site_daily.index,site_daily[var],label="Site Data")
+
+# Save data
+site_daily.to_csv(f"data/{site}_site_daily.csv")
+print(f"Site data saved to data/{site}_site_daily.csv")
 
 # Deregulate, if selected
 if dereg_source != False:
@@ -89,7 +97,7 @@ if dereg_source != False:
             dvar = "flow"
 
     # Check if data loaded
-    if dereg_daily != None:
+    if dereg_daily is not None:
         # Deregulate data
         if sign == "plus":
             site_dereg = pd.DataFrame(site_daily[var] + dereg_daily[dvar])
@@ -104,9 +112,18 @@ if dereg_source != False:
 
     # Save deregulated data
     site_daily.to_csv(f"data/{site}_site_daily.csv")
+    print(f"Dereguated data saved to data/{site}_dereg_site_daily.csv")
 
     # Plot deregulated data
     plt.plot(site_daily.index, site_daily[var],label="Dereg Site Data")
+
+if season:
+    for s in seasons.keys():
+        season_daily = site_daily.copy()
+        season_daily.loc[~season_daily["month"].isin(seasons[s]), var] = np.nan
+        plt.plot(season_daily.index, season_daily[var],linestyle="dashed",label=f"{s} Site Data")
+        season_daily.to_csv(f"data/{site}_{s}_site_daily.csv")
+        print(f"Seasonal data saved to data/{site}_{s}_site_daily.csv")
 
 # Complete and save plot
 plt.legend()

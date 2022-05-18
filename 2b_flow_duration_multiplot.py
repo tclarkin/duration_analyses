@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from functions import plot_dur_ep,get_varlabel
 
 ### Begin User Input ###
-#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
+#os.chdir("")
 
 # Site information and user selections
 sites = ["ARD","ARD_USGS","NRNI"] # list, site or dam names

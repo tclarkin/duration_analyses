@@ -17,12 +17,12 @@ import matplotlib.pyplot as plt
 from functions import analyze_voldur,plot_voldur
 
 ### Begin User Input ###
-#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
+#os.chdir("")
 
 # Site information and user selections
-sites = ["ARD"] # list, site or dam names
-durations = ["peak",1,30,120] # Duration in days ("peak" can also be included)
-wy_division = "WY" # "WY" or "CY"
+sites = ["cc","caliham_summer"] # list, site or dam names
+durations = [1,15,23] # Duration in days ("peak" can also be included)
+wy_division = "CY" # "WY" or "CY"
 plot = False  # Will plot each WY with all durations
 
 ### Begin Script ###

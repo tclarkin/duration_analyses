@@ -29,27 +29,25 @@ from functions import identify_thresh_events,init_duration_plot,plot_and_calc_du
 
 ### Begin User Input ###
 # Set Working Directory
-#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
+#os.chdir("")
 
 # Site information and user selections
-site = "ARD" # site or dam name
-event_thresh = 1000 # threshold flow for defining flood events
+site = "cc" # site or dam name
+event_thresh = 2000 # threshold flow for defining flood events
 min_dur = None      # minumum duration acceptable for analysis (or None)
 min_peak = 10000    # minumum duration acceptable for analysis (or None)
 plot_max = 0        # maximum duration to show in peak vs duration plot (will use max if 0)
 mean_type = "arithmetic" # "arithmetic", "geometric", "peak-weight"
 
 # Standard Duration Plots
-standard_plots = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
-buffer = 10                 # int, number of days before and after duration to plot
+standard_plots = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+buffer = 5                 # int, number of days before and after duration to plot
 tangent = False              # boolean, including cumulative flows and tangent line
 
 # Volume-Window Duration Plots
 analyze_volwindow = True    # Analyze using volume-window method
 volwindow_plots = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 res_file = "daily_res.csv"  # .csv filename or None. If file, QD (discharge) and AF (storage) are expected.
-
-# TODO Add seasonality component...option to select specific months? Easy input from storm separation script?
 
 ### Begin Script ###
 # Check for output directory
@@ -73,7 +71,10 @@ if min_dur is None:
 init_duration_plot(evs,plot_max)
 
 # Plot all data
-plot_and_calc_durations(evs,0,0)
+if (min_dur==0) and (min_peak==0):
+    plot_and_calc_durations(evs,0,0,mean_type)
+else:
+    plot_and_calc_durations(evs, 0, 0)
 # Plot screened data
 if (min_dur>0) or (min_peak>0):
     plot_and_calc_durations(evs,min_dur,min_peak,mean_type,"Screened Events")

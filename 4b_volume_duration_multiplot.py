@@ -18,11 +18,11 @@ from functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldur
 from statsmodels.graphics import tsaplots
 
 ### Begin User Input ###
-#os.chdir("C://Users//tclarkin//Documents//Projects//Anderson_Ranch_Dam//duration_analyses//")
+#os.chdir("")
 
 # Site information and user selections
-sites = ["ARD"] # list, site or dam names
-durations = ["peak",1,30,120] # Duration in days ("peak" can also be included)
+sites = ["cc","caliham_summer"] # list, site or dam names
+durations = [1,15,23] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
