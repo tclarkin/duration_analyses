@@ -23,14 +23,14 @@ from functions import nwis_import,csv_daily_import,get_varlabel
 #os.chdir("")
 
 # Site information and user selections
-site = 'cc_res'  # site or dam name
+site = 'MF'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "08206910" # usgs site number (e.g., "09445000") or .csv data file
-clean = True # remove any WYs with less than 300 days of data
+site_source = '13185000' # usgs site number (e.g., "09445000") or .csv data file
+clean = False # remove any WYs with less than 300 days of data
 zero = 0
 
 # Optional deregulation of at-site data
-dereg_source = False # False, usgs site number (e.g., "09445000") or .csv data file
+dereg_source = "13200000" # False, usgs site number (e.g., "09445000") or .csv data file
 dereg_shift = 0 # days to shift (+ forward, - backward)
 sign = "plus" # "plus" or "minus"
 
@@ -130,3 +130,5 @@ plt.legend()
 if "Stage" not in get_varlabel(var):
     ax.set_ylim([0,None])
 plt.savefig(f"data/{site}_site_daily.jpg",bbox_inches='tight',dpi=600)
+
+#TODO add data summary

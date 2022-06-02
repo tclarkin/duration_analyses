@@ -378,19 +378,21 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=Tru
     if wy_division=="CY":
         ax.set_xticks([1,32,60,91,121,152,182,213,244,274,305,335])
         ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
+        col = "year"
     else:
         ax.set_xticks([1,32,62,93,124,153,184,214,245,275,306,337])
         ax.set_xticklabels(["O","N","D","J","F","M","A","M","J","J","A","S"])
+        col = "wy"
 
-    WYs = data["wy"].unique().astype(int)
+    WYs = data[col].unique().astype(int)
     i=-1
     doy_data = pd.DataFrame(index=range(1,367),columns=WYs)
     dates = pd.date_range("2020-01-01", "2020-12-31", freq="D", tz='UTC')
 
     for wy in WYs:
         i=+1
-        doy_flow = data.loc[data["wy"]==wy,var]
-        doy_idx = np.array(data.loc[data["wy"]==wy].index.dayofyear)
+        doy_flow = data.loc[data[col]==wy,var]
+        doy_idx = np.array(data.loc[data[col]==wy].index.dayofyear)
         if wy_division=="WY":
             doy_idx = doy_idx + 92
             doy_idx[0:92] = np.where(doy_idx[0:92]>365,doy_idx[0:92]-365,doy_idx[0:92])
@@ -430,6 +432,47 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=Tru
     plt.legend(prop={'size': 8})
 
     return(doy_data)
+
+def interp(x,knownxs,knownys,round=0,verbose=False):
+    """
+    Interpolation function; if requested value is outside of x range, set to min or max x.
+    :param x: float, independent variable value of interest
+    :param knownxs: array, known independent variable values
+    :param knownys: array, known dependent variable values
+    :param round: int, number of decimals to round
+    :param verbose: boolean, include printed statements
+    :return: float, dependent variable value of interest
+    """
+    # Convert to arrays
+    knownxs = np.array(knownxs)
+    knownys = np.array(knownys)
+
+    # Check if x is one of the known xs
+    if x in knownxs:
+        y = knownys[knownxs==x]
+    elif x < knownxs.min():
+        # If x is below min known x, set to min known x
+        y = knownys[knownxs==knownxs.min()]
+        if verbose:
+            print("Warning!! Interpolation outside of known values--set to minumum.")
+    elif x > knownxs.max():
+        # If x is above max known x, set to max known x
+        y = knownys[knownxs == knownxs.max()]
+        if verbose:
+            print("Warning!! Interpolation outside of known values--set to maximum.")
+    else:
+        # Calculate interpolated value
+        relxs = knownxs-x
+        lowx_idx = relxs[relxs<0].argmax()
+        hix_idx = lowx_idx+1
+        lowx = knownxs[lowx_idx].item()
+        lowy = knownys[lowx_idx].item()
+        hix = knownxs[hix_idx].item()
+        hiy = knownys[hix_idx].item()
+
+        y = np.round(lowy + (x-lowx)*(hiy-lowy)/(hix-lowx),round)
+
+    return y.item()
 
 ### CRITICAL DURATION FUNCTIONS ###
 def identify_thresh_events(data, thresh):
@@ -667,7 +710,7 @@ def analyze_volwindow_duration(data,evs,e,resdat,buffer=1,plot=True):
 
         # Plot volume data
         ax2 = ax1.twinx()
-        ax2.plot(xs, storage, 'black', label="Storage (acre-feet)")
+        ax2.plot(xs, storage, 'green', label="Storage (acre-feet)")
         ax2.plot([vol_peak_idx]*2,[0,resdat.loc[vol_peak_idx,"AF"]*1.1],"black",linestyle="dashed",label=f"Storage Peak ({vol_peak_dur}-days)")
         ax2.set_ylabel("Storage (acre-feet)")
         ax2.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))

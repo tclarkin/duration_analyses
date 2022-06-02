@@ -24,12 +24,12 @@ from functions import nwis_peak_import,csv_peak_import,get_varlabel
 #os.chdir("")
 
 # Site information and user selections
-site = 'caliham'  # site or dam name
+site = 'example15_ext'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = "08207000" # usgs site number (e.g., "09445000") or .csv data file
+site_source = "07050000" # usgs site number (e.g., "09445000") or .csv data file
 
 # Optional seasonal selection
-season = True # True or False
+season = False # True or False
 # Dictionary of seasons and months {"name":[months],etc.}
 seasons = {"winter":[1,2,11,12],
             "spring":[3,4,5],
@@ -95,3 +95,5 @@ elif os.path.isfile(f"data/{site}_site_daily.csv"):
 
     plt.legend()
     plt.savefig(f"data/{site}_site_peak_and_daily.jpg", bbox_inches='tight', dpi=600)
+
+# TODO add data summary

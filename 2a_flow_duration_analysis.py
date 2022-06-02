@@ -24,8 +24,8 @@ from functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces
 #os.chdir("")
 
 # Site information and user selections
-sites = ["cc"] # list, site or dam names
-analyze = ["annual","monthly","custom"] # list of "annual", "monthly", "custom" or "all"
+sites = ["MF"] # list, site or dam names
+analyze = ["annual","monthly"] # list of "annual", "monthly", "custom" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
 # If custcomb == True...define combos: {"Name":[months],etc.}
@@ -35,7 +35,7 @@ custcombos = {"Winter Season (Nov-Feb)":[1,2,11,12],
 
 # Plot water year traces?
 wytrace = True
-wy_division = "WY" # "WY" or "CY"
+wy_division = "CY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
 
 ### Begin Script ###

@@ -20,9 +20,9 @@ from functions import analyze_voldur,plot_voldur
 #os.chdir("")
 
 # Site information and user selections
-sites = ["cc","caliham_summer"] # list, site or dam names
-durations = [1,15,23] # Duration in days ("peak" can also be included)
-wy_division = "CY" # "WY" or "CY"
+sites = ["example15_ext"] # list, site or dam names
+durations = [3,4,5,6,7] # Duration in days ("peak" can also be included)
+wy_division = "WY" # "WY" or "CY"
 plot = False  # Will plot each WY with all durations
 
 ### Begin Script ###
@@ -53,6 +53,7 @@ for site in sites:
 
     durations_sel.insert(0,"WY")
 
+    #TODO add all data
     for dur in durations_sel:
         if dur=="peak":
             continue

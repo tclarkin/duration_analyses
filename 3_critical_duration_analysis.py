@@ -32,10 +32,10 @@ from functions import identify_thresh_events,init_duration_plot,plot_and_calc_du
 #os.chdir("")
 
 # Site information and user selections
-site = "cc" # site or dam name
-event_thresh = 2000 # threshold flow for defining flood events
+site = "example15_ext" # site or dam name
+event_thresh = 5000 # threshold flow for defining flood events
 min_dur = None      # minumum duration acceptable for analysis (or None)
-min_peak = 10000    # minumum duration acceptable for analysis (or None)
+min_peak = 60000   # minumum duration acceptable for analysis (or None)
 plot_max = 0        # maximum duration to show in peak vs duration plot (will use max if 0)
 mean_type = "arithmetic" # "arithmetic", "geometric", "peak-weight"
 
@@ -47,7 +47,7 @@ tangent = False              # boolean, including cumulative flows and tangent l
 # Volume-Window Duration Plots
 analyze_volwindow = True    # Analyze using volume-window method
 volwindow_plots = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
-res_file = "daily_res.csv"  # .csv filename or None. If file, QD (discharge) and AF (storage) are expected.
+res_file = "res.csv"  # .csv filename or None. If file, QD (discharge) and AF (storage) are expected.
 
 ### Begin Script ###
 # Check for output directory
