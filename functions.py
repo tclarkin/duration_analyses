@@ -398,10 +398,6 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=Tru
             doy_idx[0:92] = np.where(doy_idx[0:92]>365,doy_idx[0:92]-365,doy_idx[0:92])
         doy_data.loc[doy_idx,wy] = doy_flow.values
         plt.plot(doy_idx, doy_flow, color="grey",alpha=0.2)
-    for d in doy_data.index:
-        doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
-        for q in quantiles:
-            doy_data.loc[d, q] = doy_data.loc[d,WYs].quantile(q)
 
     # Plot min and max year, volume
     annual_vol = doy_data.sum().sort_values()
@@ -415,6 +411,11 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=Tru
         sel_col = ["blue","orange","purple","cyan"]
         for sel in range(0,len(sel_wy)):
             plt.plot(doy_data.index, doy_data[sel_wy[sel]], color=sel_col[sel], linestyle="dashdot", label=f"{sel_wy[sel]}")
+
+    for d in doy_data.index:
+        doy_data.loc[d,"mean"] = doy_data.loc[d,WYs].mean()
+        for q in quantiles:
+            doy_data.loc[d, q] = doy_data.loc[d,WYs].quantile(q)
 
     plt.plot(doy_data.index, doy_data["mean"], color="black", linestyle="dashed", linewidth=2,label="Mean")
     for q in quantiles:
@@ -803,9 +804,6 @@ def plot_voldur(data,wy,site_dur,durations):
         dur = durations[d]
         evs = site_dur[d]
         if dur=="WY":
-            if (wy < 0) or (pd.isna(evs.loc[wy, "count"])):
-                #return
-                print("eat slugs!")
             fig, ax = plt.subplots(figsize=(6.25, 4))
             plt.title(wy)
             plt.ylabel(get_varlabel(var))

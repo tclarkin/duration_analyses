@@ -23,23 +23,23 @@ from functions import nwis_import,csv_daily_import,get_varlabel
 #os.chdir("")
 
 # Site information and user selections
-site = 'MF'  # site or dam name
+site = 'sanmarc_unreg'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = '13185000' # usgs site number (e.g., "09445000") or .csv data file
-clean = False # remove any WYs with less than 300 days of data
+site_source = 'sanmarc_unreg.csv' # usgs site number (e.g., "09445000") or .csv data file
+clean = True # remove any WYs with less than 300 days of data
 zero = 0
 
 # Optional deregulation of at-site data
-dereg_source = "13200000" # False, usgs site number (e.g., "09445000") or .csv data file
+dereg_source = False # False, usgs site number (e.g., "09445000") or .csv data file
 dereg_shift = 0 # days to shift (+ forward, - backward)
 sign = "plus" # "plus" or "minus"
 
 # Optional seasonal selection
-season = False # True or False
+season = True # True or False
 # Dictionary of seasons and months {"name":[months],etc.}
 seasons = {"winter":[1,2,11,12],
-            "spring":[3,4,5],
-            "summer":[6,7,8,9,10]}
+            "spring":[3,4,5,6,7],
+            "summer":[8,9,10]}
 
 ### Begin Script ###
 if not os.path.isdir("data"):

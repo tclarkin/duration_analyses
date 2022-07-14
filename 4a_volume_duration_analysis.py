@@ -20,10 +20,10 @@ from functions import analyze_voldur,plot_voldur
 #os.chdir("")
 
 # Site information and user selections
-sites = ["example15_ext"] # list, site or dam names
-durations = [3,4,5,6,7] # Duration in days ("peak" can also be included)
+sites = ["sanmarc_reg","sanmarc_unreg"] # list, site or dam names
+durations = [1,7,15,30,90,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-plot = False  # Will plot each WY with all durations
+plot = True  # Will plot each WY with all durations
 
 ### Begin Script ###
 # Check for output directory
