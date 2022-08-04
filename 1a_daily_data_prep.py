@@ -23,9 +23,9 @@ from functions import nwis_import,csv_daily_import,get_varlabel
 #os.chdir("")
 
 # Site information and user selections
-site = 'sanmarc_unreg'  # site or dam name
+site = 'for'  # site or dam name
 wy_division = "WY" # "WY" or "CY"
-site_source = 'sanmarc_unreg.csv' # usgs site number (e.g., "09445000") or .csv data file
+site_source = 'for.csv' # usgs site number (e.g., "09445000") or .csv data file
 clean = True # remove any WYs with less than 300 days of data
 zero = 0
 
@@ -35,7 +35,7 @@ dereg_shift = 0 # days to shift (+ forward, - backward)
 sign = "plus" # "plus" or "minus"
 
 # Optional seasonal selection
-season = True # True or False
+season = False # True or False
 # Dictionary of seasons and months {"name":[months],etc.}
 seasons = {"winter":[1,2,11,12],
             "spring":[3,4,5,6,7],

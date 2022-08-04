@@ -24,8 +24,8 @@ from functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces
 #os.chdir("")
 
 # Site information and user selections
-sites = ["sanmarc_unreg"] # list, site or dam names
-analyze = ["annual","monthly","season"] # list of "annual", "monthly", "season" or "all"
+sites = ["for"] # list, site or dam names
+analyze = ["annual","monthly"] # list of "annual", "monthly", "season" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
 # If season == True...define combos: {"Name":[months],etc.}

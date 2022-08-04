@@ -685,7 +685,7 @@ def analyze_volwindow_duration(data,evs,e,resdat,buffer=1,plot=True):
 
     crit_dur = abs(volumes["vw"]-1).idxmin()
     edate = evs.loc[e, "start_idx"].strftime("%Y-%m-%d")
-    volumes.to_csv(f"critical/{edate}_volumes.csv")
+    volumes.to_csv(f"critical/vw/{edate}_volumes.csv")
 
     # Plot event
     if plot:
@@ -741,6 +741,124 @@ def analyze_volwindow_duration(data,evs,e,resdat,buffer=1,plot=True):
         ax1.legend(loc="upper left")
 
     return crit_dur
+
+cfs_af = 24*60*60/43560
+
+def route(hydro,start,rating):
+    output = pd.DataFrame()
+    start_af = interp(start,rating.FB,rating.AF)
+
+    for i in hydro.index:
+        inflow = output.loc[i,"q"] = hydro[i]
+
+        # First timestep
+        if i==0:
+            output.loc[i,"fb"] = start
+            output.loc[i,"af"] = start_af
+            output.loc[i,"qd"] = interp(start,rating.FB,rating.QD)
+        # Any other timestep
+        else:
+            output.loc[i, "af"] = output.loc[i-1, "af"]+(inflow-output.loc[i-1,"qd"])*cfs_af
+            output.loc[i,"fb"] = interp(output.loc[i, "af"],rating.AF,rating.FB,2)
+            output.loc[i,"qd"] = interp(output.loc[i,"fb"],rating.FB,rating.QD)
+
+        # Check if lower than start, correct
+        if output.loc[i, "af"]+(inflow-output.loc[i,"qd"])*cfs_af < start_af:
+            output.loc[i, "qd"] = output.loc[i, "af"]/cfs_af+inflow-start_af/cfs_af
+
+    return output
+
+
+def analyze_cvhs_duration(data,evs,min_peak,hydro_dur,by,rating_file,start,plot=False):
+    if min_peak == 0:
+        print("Warning! Highly recommended a minumum peak be used for CVHS method!")
+
+    # First, develop proxy curves
+    var = data.columns[0]
+    durations = range(1,hydro_dur+1,by)
+    vol_table = pd.DataFrame()
+
+    for dur in durations:
+        # identify duration volumes
+        df_dur = analyze_voldur(data,dur)
+        # identify pp
+        df_dur_pp = calc_pp(df_dur["avg_flow"])
+        # select largest event, record pp
+        vol_table.loc[dur,"pp"] = df_dur_pp.loc[0,"pp"]
+        vol_table.loc[dur,"flow"] = df_dur_pp.loc[0,"avg_flow"]
+    vol_table.to_csv("critical/cvhs/vol_table.csv")
+
+    # Second, identify hydrographs
+    evs_sel = evs.loc[evs["peak"] > min_peak]
+    hydros = pd.DataFrame()
+    for e in evs_sel.index:
+        if evs_sel.loc[e,"duration"] != hydro_dur:
+            shift = int(hydro_dur - evs_sel.loc[e,"duration"])
+        elif evs_sel.loc[e,"duration"] == hydro_dur:
+            shift = 0
+        hydros.loc[:,evs_sel.loc[e,"start_idx"]] = data.loc[evs_sel.loc[e,"start_idx"]-dt.timedelta(days=np.floor(shift/3)):evs_sel.loc[e,"end_idx"]+dt.timedelta(days=np.ceil(2*shift/3)),var].reset_index(drop=True)
+    hydros.to_csv("critical/cvhs/hydros.csv")
+
+    # Third, define rating curve and check start
+    rating = pd.read_csv(rating_file)
+    if start < rating.FB.min() or start > rating.FB.max():
+        print("Start outside of range of FB in rating file; please correct!")
+        return
+
+    # Fourth, begin analysis
+    output = vol_table.copy()
+    route_out = np.zeros((len(hydros.columns),hydro_dur,hydro_dur,4))
+    for h,hydro in enumerate(hydros.columns):
+        if plot:
+            colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928']
+            while len(durations)>len(colors):
+                colors=colors*2
+
+            fig, ax = plt.subplots(figsize=(8, 3.5))
+            plt.title = f"{hydro}"
+            ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+            plt.ylabel('Flow (ft$^3$s)')
+            plt.xlabel('Day')
+
+        for d,dur in enumerate(durations):
+
+            # create volume scaled hydrograph
+            hydro_in = hydros.loc[:,hydro]
+            hydro_vol = hydro_in.rolling(dur).mean()
+            hydro_vol_max = hydro_vol.idxmax()
+            hydro_scale = hydro_in.copy()
+
+            vol = vol_table.loc[dur,"flow"]
+            vr = vol/hydro_vol[hydro_vol_max]
+
+            if dur>1:
+                hydro_scale.loc[hydro_vol_max-dur+1:hydro_vol_max+1] = \
+                    hydro_scale.loc[hydro_vol_max-dur+1:hydro_vol_max+1]*vr
+            else:
+                hydro_scale.loc[hydro_vol_max] = hydro_scale.loc[hydro_vol_max]*vr
+            # route hydrograph
+            routed = route(hydro_scale,start,rating)
+            routed.to_csv(f"critical/cvhs/{hydro.year}_{dur}.csv")
+
+            route_out[h,d,:,:] = np.array(routed)
+            output.loc[dur,hydro.year] = route_out[h,d,:,1].max()
+
+            if plot:
+                if d==0:
+                    inf_lab = "Inflow"
+                    out_lab = "Outflow"
+                else:
+                    inf_lab = "_nolegend_"
+                    out_lab = "_nolegend_"
+                plt.plot(routed.q,color=colors[d],linestyle="solid",label=inf_lab)
+                #plt.plot(routed.qd,color=colors[d],linestyle="dotted",label=out_lab)
+        plt.plot(hydro_in,color="black",linestyle="dashed",linewidth=0.5,label='Raw Hydro')
+        plt.legend()
+        plt.savefig(f"critical/cvhs/{hydro.year}.jpg", dpi=600, bbox_inches="tight")
+        plt.close()
+
+    output.loc[:,"mean"] = output.iloc[:,2:].mean(axis=1)
+    return(output)
 
 
 ### VOLUME DURATION FUNCTIONS
