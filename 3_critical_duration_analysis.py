@@ -25,7 +25,9 @@ This script should be run individually for each site being analyzed--should be i
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from functions import identify_thresh_events,init_duration_plot,plot_and_calc_durations,plot_thresh_duration,analyze_volwindow_duration,csv_daily_import,analyze_cvhs_duration
+from src.functions import check_dir
+from src.data_functions import csv_daily_import
+from src.crit_functions import identify_thresh_events,init_duration_plot,plot_and_calc_durations,plot_thresh_duration,analyze_volwindow_duration,analyze_cvhs_duration
 
 ### Begin User Input ###
 # Set Working Directory
@@ -60,10 +62,8 @@ start = 220.5                # must be in rating_file
 
 ### Begin Script ###
 # Check for output directory
-if not os.path.isdir("critical"):
-    os.mkdir("critical")
-if not os.path.isdir("critical/thresh"):
-    os.mkdir("critical/thresh")
+outdir = check_dir(site,"critical")
+threshdir = check_dir(outdir,"thresh")
 
 # Load data
 data = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
@@ -97,14 +97,14 @@ if analyze_standard:
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
     plt.legend(bbox_to_anchor=(1, 0.5), loc='center left', prop={'size': 10})
-    plt.savefig(f'critical/thresh/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.jpg',bbox_inches='tight',dpi=600)
-    evs.to_csv(f'critical/thresh/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.csv')
+    plt.savefig(f'{threshdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.jpg',bbox_inches='tight',dpi=300)
+    evs.to_csv(f'{threshdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur.csv')
 
     # Selected events
     evs_sel = evs.copy(deep=True)
     evs_sel = evs_sel.loc[evs["peak"] > min_peak]
     etot = len(evs_sel.index)
-    evs_sel.to_csv(f'critical/thresh/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_selected.csv')
+    evs_sel.to_csv(f'{threshdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_selected.csv')
 
 # Create standard event plots
 if standard_plots:
@@ -114,13 +114,12 @@ if standard_plots:
         plot_thresh_duration(data,evs_sel,e,event_thresh,buffer,tangent)
 
         edate = evs_sel.loc[e,"start_idx"].strftime("%Y-%m-%d")
-        plt.savefig(f"critical/thresh/{site}_thresh_{edate}.jpg",bbox_inches='tight',dpi=600)
+        plt.savefig(f"{threshdir}/{site}_thresh_{edate}.jpg",bbox_inches='tight',dpi=300)
 
 # Analyse by volume-window method
 if analyze_volwindow:
     print("Beginning Volume Window Duration Analysis")
-    if not os.path.isdir("critical/vw"):
-        os.mkdir("critical/vw")
+    vwdir = check_dir(outdir,"vw")
 
     if res_file is None:
         print("No reservoir information file (res_file) provided. Volume-Window Plots not created.")
@@ -140,10 +139,10 @@ if analyze_volwindow:
                 evs_sel.loc[e,"duration"] = crit
                 if volwindow_plots:
                     edate = evs_sel.loc[e, "start_idx"].strftime("%Y-%m-%d")
-                    plt.savefig(f"critical/vw/{site}_volwindow_{edate}.jpg",bbox_inches='tight',dpi=600)
+                    plt.savefig(f"{vwdir}/{site}_volwindow_{edate}.jpg",bbox_inches='tight',dpi=300)
 
         # Save data
-        evs_sel.to_csv(f'critical/vw/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_volwindow.csv')
+        evs_sel.to_csv(f'{vwdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_volwindow.csv')
 
         # Summarize duration information
         # Intialize figure
@@ -164,18 +163,17 @@ if analyze_volwindow:
         ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
         plt.legend(bbox_to_anchor=(1, 0.5), loc='center left', prop={'size': 10})
 
-        plt.savefig(f'critical/vw/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_volwindow.jpg',
-                bbox_inches='tight', dpi=600)
+        plt.savefig(f'{vwdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_peakvsdur_volwindow.jpg',
+                bbox_inches='tight', dpi=300)
 
 # Analyze CVHS Critical Duration
 if analyze_cvhs:
     print("Beginning CVHS Duration Analysis")
-    if not os.path.isdir("critical/cvhs"):
-        os.mkdir("critical/cvhs")
+    cvhsdir = check_dir(outdir,"cvhs")
 
     # Analyze
     cvhs = analyze_cvhs_duration(data,evs,min_peak,hydro_dur,by,rating_file,start,cvhs_plots)
-    cvhs.to_csv(f"critical/cvhs/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_cvhs.csv")
+    cvhs.to_csv(f"{cvhsdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_cvhs.csv")
 
     # Plot results
     fig, ax = plt.subplots(figsize=(8, 3.5))
@@ -190,4 +188,4 @@ if analyze_cvhs:
             plt.plot(cvhs[h],label=h)
 
     plt.legend()
-    plt.savefig(f"critical/cvhs/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_cvhs.jpg")
+    plt.savefig(f"{cvhsdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_cvhs.jpg")

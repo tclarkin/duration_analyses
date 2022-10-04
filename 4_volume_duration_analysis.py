@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on May 25 2021
+Updated on Oct 4, 2022
 Volume Duration Script  (v1)
 @author: tclarkin (USBR 2021)
 
@@ -14,53 +15,52 @@ This script can be run for all sites simultaneously
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from functions import analyze_voldur,plot_voldur
+from src.functions import check_dir
+from src.vol_functions import analyze_voldur,plot_voldur
 
 ### Begin User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ["for"] # list, site or dam names
-durations = [] # Duration in days ("peak" can also be included)
+sites = ['UNREGsanmarcial','REGsanmarcial','GAGEsanmarcial']  # list, site or dam names
+durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 plot = True  # Will plot each WY with all durations
 
 ### Begin Script ###
-# Check for output directory
-if not os.path.isdir("volume"):
-    os.mkdir("volume")
-
 # Loop through sites
 for site in sites:
+    # Check for output and input directories
+    outdir = check_dir(site, "volume")
+    indir = f"{site}/data"
+    if not os.path.isdir(indir):
+        print("Input data directory not found.")
+
     # Load data
-    data = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
+    data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
 
     # Create list to store all duration data
     site_dur = list()
 
     # Loop through durations and analyze
     if "peak" in durations:
-        if os.path.isfile(f"data/{site}_site_peak.csv"):
+        durations_sel = durations
+        if os.path.isfile(f"{indir}/{site}_site_peak.csv"):
             peaks = True
-            durations_sel = durations
             durations_sel.remove("peak")
         else:
             peaks = False
-            durations_sel = durations
-    else:
-        peaks = False
-        durations_sel = durations
+            durations_sel.remove("peak")
 
     durations_sel.insert(0,"WY")
 
-    #TODO add all data
     for dur in durations_sel:
         if dur=="peak":
             continue
         print(f'Analyzing duration for {dur} days')
         df_dur = analyze_voldur(data,dur)
         site_dur.append(df_dur)
-        df_dur.to_csv(f"volume/{site}_{dur}.csv")
+        df_dur.to_csv(f"{outdir}/{site}_{dur}.csv")
 
     if (plot):
         print("Plotting WYs")
@@ -83,5 +83,5 @@ for site in sites:
                         continue
                     plt.plot(site_peaks.loc[wy,"date"],site_peaks.loc[wy,"peak"],marker="x",linewidth=0,label="Peak")
                 plt.legend()
-                plt.savefig(f"volume/{site}_{wy}.jpg", bbox_inches="tight", dpi=600)
+                plt.savefig(f"{outdir}/{site}_{wy}.jpg", bbox_inches="tight", dpi=300)
 
