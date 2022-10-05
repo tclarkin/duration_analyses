@@ -22,7 +22,7 @@ from statsmodels.graphics import tsaplots
 #os.chdir("")
 
 # Site information and user selections
-sites = ['UNREGsanmarcial','REGsanmarcial','GAGEsanmarcial']  # list, site or dam names
+sites = ['REGelephant']  # list, site or dam names
 durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots

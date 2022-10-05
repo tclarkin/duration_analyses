@@ -22,7 +22,7 @@ from src.vol_functions import analyze_voldur,plot_voldur
 #os.chdir("")
 
 # Site information and user selections
-sites = ['UNREGsanmarcial','REGsanmarcial','GAGEsanmarcial']  # list, site or dam names
+sites = ["REGelephant"]  # list, site or dam names
 durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 plot = True  # Will plot each WY with all durations

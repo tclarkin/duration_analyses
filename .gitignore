@@ -121,3 +121,7 @@ dmypy.json
 *.jpg
 *.xls
 *.xlsx
+
+# Clone directories
+site_sources
+clones

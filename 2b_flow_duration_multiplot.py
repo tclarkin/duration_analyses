@@ -17,8 +17,8 @@ from src.flow_functions import plot_dur_ep,standard
 #os.chdir("")
 
 # Site information and user selections
-sites = ["UNREGelephant","UNREGembudo"] # list, site or dam names
-labels = ["Elephant Butte","Embudo"] # labels for sites
+sites = ["UNREGelephant","REGelephant"] # list, site or dam names
+labels = ["Elephant Butte","Elephant Butte Reg"] # labels for sites
 
 ### Begin Script ###
 # Check for output directory

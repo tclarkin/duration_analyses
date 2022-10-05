@@ -21,9 +21,9 @@ from src.data_functions import import_daily,season_subset
 #os.chdir("")
 
 # Site information and user selections
-sites = ['UNREGsanmarcial','REGsanmarcial','GAGEsanmarcial']  # list, site or dam names
+sites = ['REGelephant',]  # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ['input_data/sanmarcial_unreg.csv','input_data/sanmarcial_reg.csv',"08358400"] # usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ['input_data/elephant_reg.csv'] # usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional data cleaning (remove sub "zero" values)
 clean = False # remove any WYs with less than 300 days of data
