@@ -45,7 +45,7 @@ for site,label in zip(sites,labels):
     plt.plot(data.exceeded*100,data[var],label=label)
 plt.ylabel(var_label)
 plt.legend()
-plt.savefig(f"{outdir}/all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
+plt.savefig(f"{outdir}/{site}_all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
 
 # Combined table
 all_data = pd.DataFrame(index=standard)

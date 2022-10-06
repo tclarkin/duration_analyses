@@ -18,7 +18,7 @@ wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
 script1a = True
-script1a_input_file = 'input_data/URGWOM_FlowDataOutput_1975-2019_Unregulated.csv'  # single file with columns for each site OR list of USGS gages and/or site names
+script1a_input_file = "input_data/URGWOM_FlowDataOutput_1975-2019_Unregulated.csv"  # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
                 "seasons":False # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
@@ -56,9 +56,10 @@ script5_dict = {"idaplot":True,     # Will create initial data analysis plots
 ### BEGIN SCRIPT ###
 # Second, begin running scripts by creating clones of each and overwriting information in the header
 # Script 1a:
+# Identify sites and site_sources
+sites, site_sources = getsites(script1a_input_file)
+
 if script1a:
-    # Identify sites and site_sources
-    sites,site_sources = getsites(script1a_input_file)
     # Add sites and site_sources to script1a_dict
     script1a_dict["sites"] = sites
     script1a_dict["site_sources"] = site_sources
