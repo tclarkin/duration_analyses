@@ -26,34 +26,47 @@ def plot_trendsshifts(evs,dur,var):
     :return: figure
     """
     # calculate plotting positions
-    if dur=="WY":
-        return
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+    plt.get_cmap("viridis")
+    plt.ylabel(get_varlabel(var))
+    plt.xlabel('Year')
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
+    plt.scatter(evs.index,evs[var],label=f"{dur}-day AMS")
+
+    # Theil Slope
+    theil = theilslopes(evs[var],evs.index)
+    kendall = kendalltau(evs[var],evs.index)
+    if theil[0]<1:
+        theil_slope = round(theil[0],1)
     else:
-        fig, ax = plt.subplots(figsize=(6.25, 4))
-        plt.get_cmap("viridis")
-        plt.ylabel(get_varlabel(var))
-        plt.xlabel('Year')
-        ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-        ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
-        plt.scatter(evs.index,evs[var],label=f"{dur}-day AMS")
+        theil_slope = round(theil[0],0)
+    plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {theil_slope} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
 
-        # Theil Slope
-        theil = theilslopes(evs[var],evs.index)
-        kendall = kendalltau(evs[var],evs.index)
-        if theil[0]<1:
-            theil_slope = round(theil[0],1)
-        else:
-            theil_slope = round(theil[0],0)
-        plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {theil_slope} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
+    plt.legend()
 
-        for i in evs.index[::10]:
-            if i>max(evs.index)-20:
-                continue
-            print(f'{i}-{i+10} vs {i+11}-{i+21}')
-            mw = mannwhitneyu(evs.loc[i:i+10,var],evs.loc[i+11:i+21,var])
-            print(mw)
+def mannwhitney(evs,dur,var,block):
+    if len(evs.index) < 2*block:
+        return
 
-        plt.legend()
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+    plt.get_cmap("viridis")
+    plt.ylabel(f"{dur} {get_varlabel(var)}")
+    plt.xlabel('Year')
+    plt.title(block)
+
+    mw = pd.DataFrame()
+    for i in evs.index[::block]:
+        if i > max(evs.index) - 2*block:
+            continue
+        idx = f'{i}-{i + block} vs {i + block+1}-{i + 2*block+1}'
+        mw.loc[idx,"wy"] = i
+        mx = mannwhitneyu(evs.loc[i:i + block, var], evs.loc[i + block+1:i + 2*block+1, var])
+        mw.loc[idx,"pvalue"] = mx.pvalue
+
+    plt.plot(mw.wy,mw.pvalue)
+    plt.plot([evs.index.min(),evs.index.max()],[0.05]*2,linestyle="dashed",label="0.05 significance")
+    plt.legend()
 
 def plot_normality(evs,dur,var):
     """

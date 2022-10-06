@@ -7,54 +7,30 @@ Batch Run of Duration Analyses  (v1)
 ...add description...
 
 """
-import pandas as pd
 import subprocess
-from src.functions import check_dir
-
-def createclone(script_name,dict):
-    # Read script
-    with open(script_name,"r") as script:
-        script_lines = script.readlines()
-    # Create new script
-    clone_dir = check_dir("clones")
-    with open(f"{clone_dir}/{script_name}","w+") as clone:
-        # Find beginning of code:
-        for line in script_lines:
-            clone.write(line)
-            if "### Begin Script ###" in line:
-                # cycle through dictionary replacing text in user input
-                for d in dict.keys():
-                    key = d
-                    if isinstance(dict[d],str):
-                        setting = f"\"{dict[d]}\""
-                    else:
-                        setting = dict[d]
-                    clone.write(f"{key} = {setting}\n")
-    return f"{clone_dir}/{script_name}"
+from src.functions import getsites,createclone
 
 ### User Input ###
 #os.chdir("")
 
 # Input data file
-input_file = 'input_data/test.csv'  # single file with columns for each site OR list of USGS gages and/or site names
 wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
 script1a = True
-script1adict = {"clean":False,    # remove any WYs with less than 300 days of data
+script1a_input_file = 'input_data/URGWOM_FlowDataOutput_1975-2019_Unregulated.csv'  # single file with columns for each site OR list of USGS gages and/or site names
+script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
-                "seasons":{"winter":[1,2,11,12], # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
-                            "spring":[3,4,5,6,7],
-                            "summer":[8,9,10],
-                           "doy":[30,150]
-                           }
+                "seasons":False # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
                 }
 
-## Script 1b WILL BE SKIPPED
-script1b = False
+## Script 1b Settings
+script1b = True
+script1b_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08332010","08354900","08358400","08361000"]   # single file with columns for each site OR list of USGS gages and/or site names
+
 ## Script 2a Settings
 script2a = True
-script2adict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasons" or "all"
+script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasons" or "all"
                 "wytrace":True} # Boolean to plot wy traces
 
 ## Script 2b Settings
@@ -65,12 +41,12 @@ script3 = False
 
 ## Script 4 Settings
 script4 = True
-script4dict = {"durations":["peak",1,5,15,30,60,90,120], # Duration in days ("peak" can also be included)
+script4_dict = {"durations":["peak",1,5,15,30,60,90,120], # Duration in days ("peak" can also be included)
                "plot":True}  # Will plot each WY with all durations
 
 ## Script 5 Settings
 script5 = True
-script5dict = {"idaplot":True,     # Will create initial data analysis plots
+script5_dict = {"idaplot":True,     # Will create initial data analysis plots
                 "ppplot":True,      # Will create a plot with all durations plotted with plotting positions (using alpha below)
                 "pdfplot":True,      # Plot probability density function of data
                 "monthplot":True,    # Plot monthly distribution of annual peaks
@@ -78,39 +54,117 @@ script5dict = {"idaplot":True,     # Will create initial data analysis plots
                 }
 
 ### BEGIN SCRIPT ###
-# First, check for the type of input_file provided
-if isinstance(input_file,list):
-    # If we have a list, take the list and make it both the sites (names) and the site_sources
-    sites = list()
-    for i in input_file:
-        # Site names will be the last name, without extension
-        sites.append(i.split("/")[len(i.split("/"))-1].split(".")[0])
-    site_sources = sites
-else:
-    # If we have a single file, use the column names as the sites (names) and create site_source files
-    input = pd.read_csv(input_file,header=0,index_col=0)
-    sites = list(input.columns)
-    # Create site_source directory and files
-    outdir = check_dir("site_sources")
-    site_sources = list()
-    for i in input.columns:
-        site_source = f"{outdir}/{i}.csv"
-        input[i].to_csv(site_source)
-        site_sources.append(site_source)
-
-
 # Second, begin running scripts by creating clones of each and overwriting information in the header
 # Script 1a:
 if script1a:
-    # Add sites and site_sources to script1adict
-    script1adict["sites"] = sites
-    script1adict["site_sources"] = site_sources
-    script1adict["wy_division"] = wy_division
+    # Identify sites and site_sources
+    sites,site_sources = getsites(script1a_input_file)
+    # Add sites and site_sources to script1a_dict
+    script1a_dict["sites"] = sites
+    script1a_dict["site_sources"] = site_sources
+    script1a_dict["wy_division"] = wy_division
 
     # Clone script
-    clone = createclone("1a_daily_data_prep.py",script1adict)
+    clone1a = createclone("1a_daily_data_prep.py",script1a_dict)
 
     # Run clone
-    subprocess.call(["python",clone])
+    subprocess.call(["python",clone1a])
 
-# Set seasons for 2a
+# Script 1b
+if script1b:
+    # Identify sites and site_sources
+    peak_sites,peak_site_sources = getsites(script1b_input_file)
+
+    # Compare lists:
+    if peak_sites != sites:
+        print("Peak Sites and Daily Sites are not the same...")
+        if len(peak_sites) == len(sites):
+            print("Lists have same length; script will continue using daily data site names.")
+            peak_sites_sel = sites
+        else:
+            print("Lists have different lengths; script will continue using peak data site names.")
+            peak_sites_sel = peak_sites
+    else:
+        peak_sites_sel = peak_sites
+
+    # Add sites, site_sources, wy_division, and seasons to script1b_dict
+    script1b_dict = dict()
+    script1b_dict["sites"] = peak_sites_sel
+    script1b_dict["site_sources"] = peak_site_sources
+    script1b_dict["wy_division"] = wy_division
+    script1b_dict["seasons"] = script1a_dict["seasons"]
+
+    # Clone script
+    clone1b = createclone("1b_peak_data_prep.py",script1b_dict)
+
+    # Run clone
+    subprocess.call(["python",clone1b])
+
+# Script 2a
+if script2a:
+    # Add sites, wy_division, and seasons to script2a_dict
+    script2a_dict["sites"] = sites
+    script2a_dict["wy_division"] = wy_division
+    if isinstance(script1a_dict["seasons"],bool)==False:
+        if all(script1a_dict["seasons"]):
+            script2a_dict["seasons"] = list(script1a_dict["seasons"].keys())
+    else:
+        script2a_dict["seasons"] = [None]
+
+    # Clone script
+    clone2a = createclone("2a_flow_duration_analysis.py",script2a_dict)
+
+    # Run clone
+    subprocess.call(["python",clone2a])
+
+# Script 2b
+if script2b:
+    # Add sites and labels (sites) to script2b_dict
+    script2b_dict = dict()
+    script2b_dict["sites"] = sites
+    script2b_dict["labels"] = sites
+
+    # Clone script
+    clone2b = createclone("2b_flow_duration_multiplot.py", script2b_dict)
+
+    # Run clone
+    subprocess.call(["python", clone2b])
+
+# Script 3
+if script3:
+    print("Script 3 not setup to run in batch. Skipping...")
+
+# Script 4
+if script4:
+    # Add sites, wy_division, and seasons to script4_dict
+    script4_dict["sites"] = sites
+    script4_dict["wy_division"] = wy_division
+    if isinstance(script1a_dict["seasons"],bool)==False:
+        if all(script1a_dict["seasons"]):
+            script4_dict["seasons"] = list(script1a_dict["seasons"].keys())
+    else:
+        script4_dict["seasons"] = [None]
+
+    # Clone script
+    clone4 = createclone("4_volume_duration_analysis.py", script4_dict)
+
+    # Run clone
+    subprocess.call(["python", clone4])
+
+# Script 5
+if script5:
+    # Add sites, wy_division, durations, and seasons to script4_dict
+    script5_dict["sites"] = sites
+    script5_dict["wy_division"] = wy_division
+    script5_dict["durations"] = script4_dict["durations"]
+    if isinstance(script1a_dict["seasons"],bool)==False:
+        if all(script1a_dict["seasons"]):
+            script5_dict["seasons"] = list(script1a_dict["seasons"].keys())
+    else:
+        script5_dict["seasons"] = [None]
+
+    # Clone script
+    clone5 = createclone("5_multiplot.py", script5_dict)
+
+    # Run clone
+    subprocess.call(["python", clone5])

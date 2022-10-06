@@ -27,7 +27,6 @@ wy_division = "WY" # USGS Peaks are only available for WY
 site_sources = [None,None,"08358400"] # usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
-season = False # True or False
 # Dictionary of seasons and months {"name":[months],etc.}
 seasons = {"winter":[1,2,11,12],
             "spring":[3,4,5],
@@ -36,7 +35,7 @@ seasons = {"winter":[1,2,11,12],
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):
-    print(site)
+    print(f"Importing peak data for {site}...")
     if site_source is None:
         continue
     outdir = check_dir(site,"data")
@@ -49,12 +48,13 @@ for site,site_source in zip(sites,site_sources):
     site_peaks.to_csv(f"{outdir}/{site}_site_peak.csv")
     print(f"Site data saved to {outdir}/{site}_site_peak.csv")
 
-    if season:
-        # Subset, plot, and save seasonal data
-        for s in seasons.keys():
-            season_peaks = season_subset(site_peaks,seasons[s],var)
-            simple_plot(season_peaks, f"{s} Peaks", marker="o")
-            season_peaks.to_csv(f"{outdir}/{site}_{s}_site_peak.csv")
-            print(f"Seasonal data saved to {outdir}/{site}_{s}_site_peak.csv")
-        plt.legend()
-        plt.savefig(f"{outdir}/{site}_{s}_site_peak.jpg", bbox_inches='tight', dpi=300)
+    if isinstance(seasons,bool)==False:
+        if all(seasons):
+            # Subset, plot, and save seasonal data
+            for s in seasons.keys():
+                season_peaks = season_subset(site_peaks,seasons[s],var)
+                simple_plot(season_peaks, f"{s} Peaks", marker="o")
+                season_peaks.to_csv(f"{outdir}/{site}_{s}_site_peak.csv")
+                print(f"Seasonal data saved to {outdir}/{site}_{s}_site_peak.csv")
+            plt.legend()
+            plt.savefig(f"{outdir}/{site}_{s}_site_peak.jpg", bbox_inches='tight', dpi=300)

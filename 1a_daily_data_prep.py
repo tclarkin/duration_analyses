@@ -30,8 +30,7 @@ clean = False # remove any WYs with less than 300 days of data
 zero = "average" # minimum flow value or "average"
 
 # Optional seasonal selection
-season = False # True or False
-# Dictionary of seasons and months {"name":[months],etc.}
+# Dictionary of seasons and months {"name":[months],etc.} OR False
 seasons = {"winter":[1,2,11,12],
             "spring":[3,4,5,6,7],
             "summer":[8,9,10],
@@ -39,7 +38,7 @@ seasons = {"winter":[1,2,11,12],
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):
-    print(site)
+    print(f"Importing daily data for {site}...")
     # Check directories
     outdir = check_dir(site,"data")
 
@@ -52,14 +51,15 @@ for site,site_source in zip(sites,site_sources):
     print(f"Site summary saved to {outdir}/{site}_site_summary.csv")
 
     # Subset by season, if selected
-    if season:
-        var = site_daily.columns[0]
-        # Subset, plot, and save seasonal data
-        for s in seasons.keys():
-            season_daily = season_subset(site_daily,seasons[s],var)
-            plt.plot(season_daily.index, season_daily[var], linestyle="dashed", label=f"{s}")
-            season_daily.to_csv(f"{outdir}/{site}_{s}_site_daily.csv")
-            print(f"Seasonal data saved to {outdir}/{site}_{s}_site_daily.csv")
+    if isinstance(seasons,bool)==False:
+        if all(seasons):
+            var = site_daily.columns[0]
+            # Subset, plot, and save seasonal data
+            for s in seasons.keys():
+                season_daily = season_subset(site_daily,seasons[s],var)
+                plt.plot(season_daily.index, season_daily[var], linestyle="dashed", label=f"{s}")
+                season_daily.to_csv(f"{outdir}/{site}_{s}_site_daily.csv")
+                print(f"Seasonal data saved to {outdir}/{site}_{s}_site_daily.csv")
 
     # Complete and save plot
     plt.legend()

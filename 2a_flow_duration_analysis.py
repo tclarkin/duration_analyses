@@ -39,7 +39,7 @@ quantiles = [0.05,0.5,0.95] # quantiles to include on plot
 ### Begin Script ###
 # Loop through sites
 for site in sites:
-    print(site)
+    print(f"Analyzing flow duration for {site}...")
 
     # Check for output and input directories
     outdir = check_dir(site,"flow")

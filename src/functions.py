@@ -19,6 +19,50 @@ from scipy.stats import kendalltau
 from scipy.stats.mstats import theilslopes
 from scipy.stats import norm
 
+def getsites(input_file):
+    # First, check for the type of input_file provided
+    if isinstance(input_file, list):
+        # If we have a list, take the list and make it both the sites (names) and the site_sources
+        sites = list()
+        for i in input_file:
+            # Site names will be the last name, without extension
+            sites.append(i.split("/")[len(i.split("/")) - 1].split(".")[0])
+        site_sources = sites
+    else:
+        # If we have a single file, use the column names as the sites (names) and create site_source files
+        input = pd.read_csv(input_file, header=0, index_col=0)
+        sites = list(input.columns)
+        # Create site_source directory and files
+        outdir = check_dir("site_sources")
+        site_sources = list()
+        for i in input.columns:
+            site_source = f"{outdir}/{i}.csv"
+            input[i].to_csv(site_source)
+            site_sources.append(site_source)
+
+    return sites,site_sources
+
+def createclone(script_name,dict):
+    # Read script
+    with open(script_name,"r") as script:
+        script_lines = script.readlines()
+    # Create new script
+    clone_dir = check_dir("clones")
+    with open(f"{clone_dir}/{script_name}","w+") as clone:
+        # Find beginning of code:
+        for line in script_lines:
+            clone.write(line)
+            if "### Begin Script ###" in line:
+                # cycle through dictionary replacing text in user input
+                for d in dict.keys():
+                    key = d
+                    if isinstance(dict[d],str):
+                        setting = f"\"{dict[d]}\""
+                    else:
+                        setting = dict[d]
+                    clone.write(f"{key} = {setting}\n")
+    return f"{clone_dir}/{script_name}"
+
 def check_dir(dir,sub=False):
     """
     Function to check for and create directory

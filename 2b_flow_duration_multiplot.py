@@ -32,6 +32,8 @@ plot_dur_ep()
 # Loop through sites
 var = None
 for site,label in zip(sites,labels):
+    print(f"Adding {site} to flow duration multiplot...")
+
     data = pd.read_csv(f"{site}/flow/{site}_annual_raw.csv",parse_dates=True,index_col=0)
     if var is None:
         var = data.columns[1]
@@ -48,6 +50,8 @@ plt.savefig(f"{outdir}/all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
 # Combined table
 all_data = pd.DataFrame(index=standard)
 for site in sites:
+    print(site)
+
     data = pd.read_csv(f"{site}/flow/{site}_annual.csv",parse_dates=True,index_col=0)
     all_data.loc[:,site] = data["Annual"]
 all_data.to_csv(f"{outdir}/{site}_allplot_combine.csv")
