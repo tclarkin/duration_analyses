@@ -20,7 +20,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from src.functions import check_dir
 from src.flow_functions import annualcombos,monthcombos,allcombos,standard
-from src.flow_functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces
+from src.flow_functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces,plot_boxplot
 
 ### Begin User Input ###
 #os.chdir("")
@@ -35,6 +35,9 @@ pcts = standard         # list of fractional exceedance probabilities or standar
 wytrace = True
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
+
+# Plot box plots?
+boxplot = True
 
 ### Begin Script ###
 # Loop through sites
@@ -87,7 +90,13 @@ for site in sites:
         # If selected, plot water year traces
         if wytrace:
             print("Plotting WY traces")
-            doy_data = plot_wytraces(data, wy_division,quantiles)
+            doy_data = plot_wytraces(data, wy_division,quantiles,ax=None)
             plt.savefig(f"{outdir}/{site}{s}_WY_plot.jpg", bbox_inches="tight", dpi=300)
 
             doy_data.to_csv(f"{outdir}/{site}{s}_doy.csv")
+
+        # If selected, plot water year box and whisker plots
+        if boxplot:
+            print("Ploting WY box and whisker")
+            plot_boxplot(data,wy_division)
+            plt.savefig(f"{outdir}/{site}{s}_boxplot.jpg", bbox_inches="tight", dpi=300)

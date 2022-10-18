@@ -17,7 +17,7 @@ from src.functions import getsites,createclone
 wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
-script1a = True
+script1a = False
 script1a_input_file = "input_data/URGWOM_FlowDataOutput_1975-2019_Unregulated.csv"  # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
@@ -25,27 +25,30 @@ script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of d
                 }
 
 ## Script 1b Settings
-script1b = True
+script1b = False
 script1b_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08332010","08354900","08358400","08361000"]   # single file with columns for each site OR list of USGS gages and/or site names
 
 ## Script 2a Settings
-script2a = True
+script2a = False
 script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasons" or "all"
-                "wytrace":True} # Boolean to plot wy traces
+                "wytrace":True, # Boolean to plot wy traces
+                "boxplot":True} # Boolean to plot boxplot
 
 ## Script 2b Settings
 script2b = True
+script2b_dict = {"wytrace":True, # Boolean to plot wy traces
+                 "boxplot":True} # Boolean to plot boxplot
 
 ## Script 3 WILL BE SKIPPED
 script3 = False
 
 ## Script 4 Settings
-script4 = True
-script4_dict = {"durations":["peak",1,5,15,30,60,90,120], # Duration in days ("peak" can also be included)
+script4 = False
+script4_dict = {"durations":["peak",1,3,5,15,30,60,90,120], # Duration in days ("peak" can also be included)
                "plot":True}  # Will plot each WY with all durations
 
 ## Script 5 Settings
-script5 = True
+script5 = False
 script5_dict = {"idaplot":True,     # Will create initial data analysis plots
                 "ppplot":True,      # Will create a plot with all durations plotted with plotting positions (using alpha below)
                 "pdfplot":True,      # Plot probability density function of data
@@ -121,7 +124,6 @@ if script2a:
 # Script 2b
 if script2b:
     # Add sites and labels (sites) to script2b_dict
-    script2b_dict = dict()
     script2b_dict["sites"] = sites
     script2b_dict["labels"] = sites
 

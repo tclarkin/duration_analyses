@@ -192,7 +192,7 @@ def analyze_dur(data,combos,pcts,var):
         plt.legend()
     return (full_table,all_durflows)
 
-def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=True):
+def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],ax=None,legend=True,sel_wy=None,log=True):
     """
     This function produces a single plot of the WY with all WYs plotted as traces and the max, min, mean and median.
     :param data: df, inflows including at least date, flow
@@ -203,7 +203,11 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=Tru
     """
     var = data.columns[0]
 
-    fig, ax = plt.subplots(figsize=(6.25, 4))
+    if ax is None:
+        pltout = False
+        fig,ax = plt.subplots(figsize=(6.25, 4))
+    else:
+        pltout = True
 
     if wy_division=="CY":
         ax.set_xticks([1,32,60,91,121,152,182,213,244,274,305,335])
@@ -259,7 +263,59 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],sel_wy=None,log=Tru
             ax.set_ylim(bottom = 1)
         ax.set_ylim(top = data[var].max()*1.01)
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-    plt.ylabel(get_varlabel(var))
-    plt.legend(prop={'size': 8})
+    if legend:
+        plt.ylabel(get_varlabel(var))
+        plt.legend(prop={'size': 8})
 
-    return(doy_data)
+    if pltout:
+        return ax
+    else:
+        return doy_data
+
+def plot_boxplot(data,wy_division,ax=None,legend=True):
+    var = data.columns[0]
+    colors = ["saddlebrown",
+              "darkslateblue",
+              "royalblue",
+              "slategrey",
+              "skyblue",
+              "teal",
+              "darkgreen",
+              "limegreen",
+              "gold",
+              "orangered",
+              "crimson",
+              "maroon"]
+
+    # First, summarize data by months
+    monthly_data = list()
+    if wy_division=="WY":
+        mon_key = [10,11,12,1,2,3,4,5,6,7,8,9]
+        mon_lab = ["O","N","D","J","F","M","A","M","J","J","A","S"]
+    else:
+        mon_key = [1,2,3,4,5,6,7,8,9,10,11,12]
+        mon_lab = ["J","F","M","A","M","J","J","A","S","O","N","D"]
+    for month in mon_key:
+        monthly_data.append(data.loc[data.index.month==month,var].values)
+
+    # Prepare plot
+    if ax is None:
+        fig,ax = plt.subplots(figsize=(6.25, 4))
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+
+    plt.grid()
+    bp = plt.boxplot(monthly_data,
+                     patch_artist=True,
+                     sym="",
+                     medianprops={"color":"black","linewidth":2},
+                     whiskerprops={"linestyle":"dashed"},
+                     labels=mon_lab)
+    for patch,color in zip(bp['boxes'],colors):
+        patch.set_facecolor(color)
+
+    if legend:
+        plt.ylabel(get_varlabel(var))
+        plt.annotate(f"{data.index.year.min()}-{data.index.year.max()}", xy=(10.5, 1.01),
+                     xycoords=ax.get_xaxis_transform(), )
+
+    return ax

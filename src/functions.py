@@ -97,6 +97,8 @@ def get_varlabel(var):
         lab = "Stage (ft)"
     elif var in ["SWE","swe","snowpack","snowdepth","snow","SNWD","WTEQ"]:
         lab = "SWE (in)"
+    elif var in ["P","Precip","Rainfall","rainfall","precip","precipitation","Precipitation","PRCP"]:
+        lab = "Precip. (in)"
     else:
         lab = var
 

@@ -14,7 +14,7 @@ variable, where variable is "flow", "swe", or "stage" (no spaces)
 
 """
 import matplotlib.pyplot as plt
-from src.functions import check_dir,simple_plot
+from src.functions import check_dir,simple_plot,get_varlabel
 from src.data_functions import import_daily,season_subset
 
 ### User Input ###
