@@ -18,8 +18,8 @@ from src.flow_functions import plot_dur_ep,standard,plot_wytraces,plot_boxplot
 #os.chdir("")
 
 # Site information and user selections
-sites = ["UNREGelephant","REGelephant","UNREGembudo","REGembudo"] # list, site or dam names
-labels = ["Elephant Butte","Elephant Butte Reg","Yes","No"] # labels for sites
+sites = ["UNREGelephant","REGelephant","UNREGembudo","UNREGelephant","REGelephant"] # list, site or dam names
+labels = ["Elephant Butte","Elephant Butte Reg","Yes","No","Poop"] # labels for sites
 
 # Plot water year traces?
 wytrace = True
@@ -74,7 +74,7 @@ if wytrace or boxplot:
 
 # If selected, plot wy traces onto same panel
 if wytrace:
-    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=True,figsize=(3*ncol, 3*nrow))
+    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=True,figsize=(3*ncol, 3*nrow),squeeze=False)
 
     for n,site in enumerate(sites):
         ax = plt.subplot(nrow,ncol,n+1)
@@ -84,16 +84,25 @@ if wytrace:
         ax = plot_wytraces(data,wy_division,quantiles,ax=ax,legend=False)
         plt.annotate(f"({n+1}) {site} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
+    # Add legend
+    if n+1==nrow*ncol:
+        box = fig.get_tightbbox(fig.canvas.get_renderer())
+        plt.legend(bbox_to_anchor=(box.width/2,box.y0),loc="lower center")
+    else:
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width, box.height])
+        plt.legend(bbox_to_anchor=(1+box.width,1-box.height), loc='center left', prop={'size': 10},ncol=2)
+        # Remove blanks
+        while n+1 < nrow*ncol:
+            n += 1
+            ax = plt.subplot(nrow,ncol,n+1)
+            ax.set_visible(False)
 
-    plt.gca().set_ylim(bottom=0)
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width, box.height])
-    plt.legend(bbox_to_anchor=(0, -box.height*0.5), loc='upper center', prop={'size': 10},ncol=2)
     plt.savefig(f"{outdir}/{site}_all_wy_plots.jpg", bbox_inches="tight", dpi=600)
 
 # If selected, plot box plots onto same panel
 if boxplot:
-    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=True,figsize=(3*ncol, 3*nrow))
+    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=True,figsize=(3*ncol, 3*nrow),squeeze=False)
 
     for n,site in enumerate(sites):
         ax = plt.subplot(nrow,ncol,n+1)
@@ -103,5 +112,11 @@ if boxplot:
         plot_boxplot(data,wy_division,ax=ax,legend=False)
         plt.annotate(f"({n+1}) {site} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
+
+    # Remove blanks
+    while n+1 < nrow*ncol:
+        n += 1
+        ax = plt.subplot(nrow,ncol,n+1)
+        ax.set_visible(False)
 
     plt.savefig(f"{outdir}/{site}_all_boxplot.jpg", bbox_inches="tight", dpi=600)

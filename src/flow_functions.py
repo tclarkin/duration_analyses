@@ -238,8 +238,8 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],ax=None,legend=True
     annual_vol = annual_vol[annual_vol.values>0]
     minwy = annual_vol.index[0]
     maxwy = annual_vol.index[len(annual_vol)-1]
-    plt.plot(doy_data.index,doy_data[minwy], color="maroon",label=f"Driest, {minwy}")
-    plt.plot(doy_data.index, doy_data[maxwy], color="lime", label=f"Wettest, {maxwy}")
+    plt.plot(doy_data.index,doy_data[minwy], color="maroon",label=f"Driest")
+    plt.plot(doy_data.index, doy_data[maxwy], color="lime", label=f"Wettest")
 
     if sel_wy is not None:
         sel_col = ["blue","orange","purple","cyan"]

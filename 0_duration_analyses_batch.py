@@ -18,7 +18,7 @@ wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
 script1a = False
-script1a_input_file = "input_data/URGWOM_FlowDataOutput_1975-2019_Unregulated.csv"  # single file with columns for each site OR list of USGS gages and/or site names
+script1a_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08332010","08354900","08358400","08361000"]  # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
                 "seasons":False # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
