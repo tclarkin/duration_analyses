@@ -18,16 +18,19 @@ from src.flow_functions import plot_dur_ep,standard,plot_wytraces,plot_boxplot
 #os.chdir("")
 
 # Site information and user selections
-sites = ["UNREGelephant","REGelephant","UNREGembudo","UNREGelephant","REGelephant"] # list, site or dam names
-labels = ["Elephant Butte","Elephant Butte Reg","Yes","No","Poop"] # labels for sites
+sites = ["UNREGelephant","REGelephant","UNREGembudo","UNREGelephant"] # list, site or dam names
+labels = ["Elephant Butte","Elephant Butte Reg","Yes","No"] # labels for sites
+ylabel = ["Flow (ft$^3$/s)","Flow (ft$^3$/s)","Flow (ft$^3$/s)","Flow (ft$^3$/s)"] # If str, single ylabel, if list, will assign to each row
 
 # Plot water year traces?
 wytrace = True
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
+sharey = True
 
 # Plot box plots?
 boxplot = True
+outliers = True
 
 ### Begin Script ###
 # Check for output directory
@@ -40,13 +43,19 @@ plot_dur_ep()
 
 # Loop through sites
 var = None
-for site,label in zip(sites,labels):
-    print(f"Adding {site} to flow duration multiplot...")
+for n,site,label in zip(range(0,len(sites)),sites,labels):
+    print(f"{n} Adding {site} to flow duration multiplot...")
 
     data = pd.read_csv(f"{site}/flow/{site}_annual_raw.csv",parse_dates=True,index_col=0)
-    if var is None:
+    if var is None and ylabel is None:
         var = data.columns[1]
         var_label = get_varlabel(var)
+    elif ylabel is not None:
+        var = data.columns[1]
+        if isinstance(ylabel,list):
+            var_label = ylabel[n]
+        else:
+            var_label = ylabel
     else:
         if data.columns[1]!=var:
             var = data.columns[1]
@@ -69,12 +78,16 @@ all_data.to_csv(f"{outdir}/{site}_allplot_combine.csv")
 if wytrace or boxplot:
     # determine number of subplots
     nplot = len(sites)
-    ncol = int(min([max([1,np.floor(nplot/2)]),3]))
+    ncol = int(min([max([1,np.floor(nplot/4)]),2]))
     nrow = int(np.ceil(nplot/ncol))
 
 # If selected, plot wy traces onto same panel
 if wytrace:
-    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=True,figsize=(3*ncol, 3*nrow),squeeze=False)
+
+    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=sharey,figsize=(6.25, 2*nrow),squeeze=False)
+
+    if sharey:
+        ylim = [10000,1]
 
     for n,site in enumerate(sites):
         ax = plt.subplot(nrow,ncol,n+1)
@@ -84,10 +97,18 @@ if wytrace:
         ax = plot_wytraces(data,wy_division,quantiles,ax=ax,legend=False)
         plt.annotate(f"({n+1}) {site} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
+        if sharey:
+            ylim[0] = min([ylim[0],10**np.floor(np.log10(max([1,data.iloc[:,0].min()])))])
+            ylim[1] = max([ylim[1],10**np.ceil(np.log10(data.iloc[:,0].max()))])
+
+    if sharey:
+        for n,site in enumerate(sites):
+            ax = plt.subplot(nrow, ncol, n + 1)
+            ax.set_ylim(ylim)
+
     # Add legend
     if n+1==nrow*ncol:
-        box = fig.get_tightbbox(fig.canvas.get_renderer())
-        plt.legend(bbox_to_anchor=(box.width/2,box.y0),loc="lower center")
+        plt.legend(loc="upper center",bbox_to_anchor=(0.5,-0.2),prop={'size': 8},ncol=2)
     else:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width, box.height])
@@ -98,18 +119,26 @@ if wytrace:
             ax = plt.subplot(nrow,ncol,n+1)
             ax.set_visible(False)
 
+    # Add row labels:
+    if isinstance(ylabel,list):
+        for ax,lab in zip(axs[:, 0],ylabel):
+            ax.set_ylabel(lab, rotation=90, size='large')
+    else:
+        fig.text(0, 0.5,ylabel, va='center', rotation='vertical')
+
     plt.savefig(f"{outdir}/{site}_all_wy_plots.jpg", bbox_inches="tight", dpi=600)
+
 
 # If selected, plot box plots onto same panel
 if boxplot:
-    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=True,figsize=(3*ncol, 3*nrow),squeeze=False)
+    fig,axs = plt.subplots(nrow,ncol,sharex=True,sharey=sharey,figsize=(6.25, 2*nrow),squeeze=False)
 
     for n,site in enumerate(sites):
         ax = plt.subplot(nrow,ncol,n+1)
         indir = f"{site}/data"
         data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
         data = data.dropna()
-        plot_boxplot(data,wy_division,ax=ax,legend=False)
+        plot_boxplot(data,wy_division,outliers,ax=ax,legend=False)
         plt.annotate(f"({n+1}) {site} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
 
@@ -118,5 +147,12 @@ if boxplot:
         n += 1
         ax = plt.subplot(nrow,ncol,n+1)
         ax.set_visible(False)
+
+    # Add row labels:
+    if isinstance(ylabel,list):
+        for ax,lab in zip(axs[:, 0],ylabel):
+            ax.set_ylabel(lab, rotation=90, size='large')
+    else:
+        fig.text(0, 0.5,ylabel, va='center', rotation='vertical')
 
     plt.savefig(f"{outdir}/{site}_all_boxplot.jpg", bbox_inches="tight", dpi=600)

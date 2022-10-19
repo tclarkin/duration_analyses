@@ -272,7 +272,7 @@ def plot_wytraces(data,wy_division,quantiles=[0.05,0.5,0.95],ax=None,legend=True
     else:
         return doy_data
 
-def plot_boxplot(data,wy_division,ax=None,legend=True):
+def plot_boxplot(data,wy_division,outlier=True,ax=None,legend=True):
     var = data.columns[0]
     colors = ["saddlebrown",
               "darkslateblue",
@@ -298,6 +298,12 @@ def plot_boxplot(data,wy_division,ax=None,legend=True):
     for month in mon_key:
         monthly_data.append(data.loc[data.index.month==month,var].values)
 
+    # Set outlier
+    if outlier:
+        outsym = "o"
+    else:
+        outsym = ""
+
     # Prepare plot
     if ax is None:
         fig,ax = plt.subplots(figsize=(6.25, 4))
@@ -306,7 +312,7 @@ def plot_boxplot(data,wy_division,ax=None,legend=True):
     plt.grid()
     bp = plt.boxplot(monthly_data,
                      patch_artist=True,
-                     sym="",
+                     sym=outsym,
                      medianprops={"color":"black","linewidth":2},
                      whiskerprops={"linestyle":"dashed"},
                      labels=mon_lab)

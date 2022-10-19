@@ -18,7 +18,7 @@ wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
 script1a = False
-script1a_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08332010","08354900","08358400","08361000"]  # single file with columns for each site OR list of USGS gages and/or site names
+script1a_input_file = "input_data/URGWOM_FlowDataOutput_1975-2019_Unregulated.csv"  # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
                 "seasons":False # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
@@ -37,7 +37,10 @@ script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", 
 ## Script 2b Settings
 script2b = True
 script2b_dict = {"wytrace":True, # Boolean to plot wy traces
-                 "boxplot":True} # Boolean to plot boxplot
+                 "boxplot":True, # Boolean to plot boxplot
+                 "ylabel":"Flow (ft$^3$/s)", # If str, single ylabel, if list, will assign to each row
+                 "outliers":False, # Boolean to show outliers in boxplot
+                 "sharey":True} # Boolean to use shared y axis
 
 ## Script 3 WILL BE SKIPPED
 script3 = False
