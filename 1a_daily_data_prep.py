@@ -5,7 +5,7 @@ Updated on Oct 3, 2022
 Daily Data Preparation Script (v1)
 @author: tclarkin (USBR 2021)
 
-This script takes user supplied USGS gage or other data in .csv format and compresses into a continuous timeseries
+This script takes user .csv format, usgs gage, or snotel site and compresses into a continuous timeseries
 for use in flow, critical and volume duration analyses. Option to "clean" data, by removing WYs with less than 300 days
 
 This script should be run once for each site being analyzed. If input csv files are used, suggest having two columns:
@@ -21,9 +21,9 @@ from src.data_functions import import_daily,season_subset
 #os.chdir("")
 
 # Site information and user selections
-sites = ['REGelephant',]  # list, site or dam names
+sites = ['08358500']  # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ['input_data/elephant_reg.csv'] # usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ['08358500'] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
 
 # Optional data cleaning (remove sub "zero" values)
 clean = False # remove any WYs with less than 300 days of data
@@ -31,10 +31,10 @@ zero = "average" # minimum flow value or "average"
 
 # Optional seasonal selection
 # Dictionary of seasons and months {"name":[months],etc.} OR False
-seasons = {"winter":[1,2,11,12],
-            "spring":[3,4,5,6,7],
-            "summer":[8,9,10],
-           "doy":[30,150]}
+seasons = False # {"winter":[1,2,11,12],
+            #"spring":[3,4,5,6,7],
+            #"summer":[8,9,10],
+           #"doy":[30,150]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):

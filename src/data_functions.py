@@ -10,6 +10,8 @@ import dataretrieval.nwis as nwis
 import pandas as pd
 import numpy as np
 import datetime as dt
+from requests import get as r_get
+from io import StringIO
 
 ### DATA PREP FUNCTIONS ###
 def csv_daily_import(filename,wy="WY",single=True):
@@ -118,11 +120,134 @@ def nwis_import(site, dtype, start=None, end=None, wy="WY"):
 
     return(out)
 
+
+# Define functions
+def snotel_import(site_triplet,vars=["WTEQ", "SNWD", "PREC", "TAVG"],wy="WY",verbose=False):
+    """Download NRCS SNOTEL data
+
+    Parameters
+    ---------
+        site_triplet: three part SNOTEL triplet (e.g., 713_CO_SNTL)
+            https://wcc.sc.egov.usda.gov/nwcc/yearcount?network=sntl&counttype=statelist&state=
+        vars: array of variables for import (tested with WTEQ, SNWD, PREC, TAVG..other options may be available)
+        out_dir: str to directory to save .csv...if None, will return df
+        verbose: boolean
+            True : enable print during function run
+
+    Returns
+    -------
+        dataframe
+
+    """
+    # Create dictionary of variables
+    snotel_dict = dict()
+    ext = "DAILY"
+
+    # Cycle through variables
+    for var in vars:
+        if verbose == True:
+            print("Importing {} data".format(var))
+        site_url = "https://www.nrcs.usda.gov/Internet/WCIS/sitedata/" + ext + "/" + var + "/" + site_triplet + ".json"
+        if verbose == True:
+            print(site_url)
+        failed = True
+        tries = 0
+        while failed:
+            try:
+                csv_str = r_get(site_url, timeout=1,verify=False).text
+                failed = False
+            except ConnectionError:
+                raise Exception("Timeout; Data unavailable?")
+                tries += 1
+                print(tries)
+                if tries > 10:
+                    return
+
+            if "not found on this server" in csv_str:
+                print("Site URL incorrect.")
+                return
+
+        csv_io = StringIO(csv_str)
+        f = pd.read_json(csv_io, orient="index")
+
+        # Create index of dates for available data for current site
+        json_index = pd.date_range(f.loc["beginDate"].item(), f.loc["endDate"].item(), freq="D", tz='UTC')
+        # Create dataframe of available data (includes Feb 29)
+        json_data = pd.DataFrame(f.loc["values"].item())
+        # Cycle through and remove data assigned to February 29th in non-leap years
+        years = json_index.year.unique()
+        for year in years:
+            if (year % 4 == 0) & ((year % 100 != 0) | (year % 400 == 0)):
+                continue
+            else:
+                feb29 = dt.datetime(year=year, month=3, day=1, tzinfo=dt.timezone.utc)
+                try:
+                    feb29idx = json_index.get_loc(feb29)
+                    if feb29idx == 0:
+                        continue
+                    else:
+                        json_data = json_data.drop(feb29idx)
+                        if verbose == True:
+                            print("February 29th data for {} removed.".format(year))
+                except KeyError:
+                    continue
+
+        # Concatenate the cleaned data to the date index
+        snotel_in = pd.DataFrame(index=json_index)
+        snotel_in[var] = json_data.values
+
+        # For precip, calculate incremental precip and remove negative values
+        if var == "PREC":
+            if verbose == True:
+                print("Calculating incremental Precip.")
+            snotel_in["PREC"] = snotel_in[var] - snotel_in[var].shift(1)
+            snotel_in.loc[snotel_in["PREC"] < 0, "PREC"] = 0
+
+        # Add to dict
+        snotel_dict[var] = snotel_in
+
+    if verbose == True:
+        print("Checking dates")
+    begin = end = pd.to_datetime(dt.datetime.now()).tz_localize("UTC")
+    for key in snotel_dict.keys():
+        if snotel_dict[key].index.min() < begin:
+            begin = snotel_dict[key].index.min()
+        if snotel_dict[key].index.max() > end:
+            end = snotel_dict[key].index.max()
+
+    dates = pd.date_range(begin,end,freq="D",tz='UTC')
+    out = pd.DataFrame(index=dates)
+
+    if verbose == True:
+        print("Preparing output")
+    for key in snotel_dict.keys():
+        # Merge to output dataframe
+        snotel_in = out.merge(snotel_dict[key][key], left_index=True, right_index=True, how="left")
+        out[key] = snotel_in[key]
+        if verbose == True:
+            print("Added to dataframe")
+
+    # Add year, month and wy
+    out["doy"] = pd.DatetimeIndex(out.index).dayofyear
+    out["year"] = pd.DatetimeIndex(out.index).year
+    out["month"] = pd.DatetimeIndex(out.index).month
+    out["wy"] = out["year"]
+    if wy=="WY":
+        out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
+
+    return out
+
+
 def import_daily(site_source,wy_division,clean=False,zero=False):
     if ".csv" in site_source:
         # Load from .csv file
         site_daily = csv_daily_import(site_source, wy=wy_division)
         var = site_daily.columns[0]  # infer variable by column name
+    elif "SNTL" in site_source or "sntl" in site_source:
+        var = site_source.split("+")[1]
+        site_source = site_source.split("+")[0]
+        site_daily = snotel_import(site_source,[var])
+
     else:
         # Load from usgs website
         if len(site_source) != 8:

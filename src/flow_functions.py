@@ -295,6 +295,13 @@ def plot_boxplot(data,wy_division,outlier=True,ax=None,legend=True):
     else:
         mon_key = [1,2,3,4,5,6,7,8,9,10,11,12]
         mon_lab = ["J","F","M","A","M","J","J","A","S","O","N","D"]
+
+    if var == "PREC":
+        data = data.resample("M").sum()
+    else:
+        data = data.resample("M").mean()
+    data = data.dropna()
+
     for month in mon_key:
         monthly_data.append(data.loc[data.index.month==month,var].values)
 
@@ -312,7 +319,7 @@ def plot_boxplot(data,wy_division,outlier=True,ax=None,legend=True):
     plt.grid()
     bp = plt.boxplot(monthly_data,
                      patch_artist=True,
-                     sym=outsym,
+                     flierprops={"marker":outsym,"markersize":4,"alpha":0.5},
                      medianprops={"color":"black","linewidth":2},
                      whiskerprops={"linestyle":"dashed"},
                      labels=mon_lab)

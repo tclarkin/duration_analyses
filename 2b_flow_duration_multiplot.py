@@ -18,15 +18,15 @@ from src.flow_functions import plot_dur_ep,standard,plot_wytraces,plot_boxplot
 #os.chdir("")
 
 # Site information and user selections
-sites = ["UNREGelephant","REGelephant","UNREGembudo","UNREGelephant"] # list, site or dam names
-labels = ["Elephant Butte","Elephant Butte Reg","Yes","No"] # labels for sites
-ylabel = ["Flow (ft$^3$/s)","Flow (ft$^3$/s)","Flow (ft$^3$/s)","Flow (ft$^3$/s)"] # If str, single ylabel, if list, will assign to each row
+sites = ['bt_prec','bt_wteq','08279500']  # list, site or dam names
+labels = ["Beartown SNOTEL (11,600 ft)","Beartown SNOTEL (11,600 ft)","Rio Grande at Embudo, NM (5,789 ft)"] # labels for sites
+ylabel = ["Precip (in)","SWE (in)","Flow ($ft^3/s$)"] # If str, single ylabel, if list, will assign to each row
 
 # Plot water year traces?
-wytrace = True
+wytrace = False
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
-sharey = True
+sharey = False
 
 # Plot box plots?
 boxplot = True
@@ -95,7 +95,7 @@ if wytrace:
         data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
         data = data.dropna()
         ax = plot_wytraces(data,wy_division,quantiles,ax=ax,legend=False)
-        plt.annotate(f"({n+1}) {site} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
+        plt.annotate(f"({n+1}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
         if sharey:
             ylim[0] = min([ylim[0],10**np.floor(np.log10(max([1,data.iloc[:,0].min()])))])
@@ -139,7 +139,7 @@ if boxplot:
         data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
         data = data.dropna()
         plot_boxplot(data,wy_division,outliers,ax=ax,legend=False)
-        plt.annotate(f"({n+1}) {site} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
+        plt.annotate(f"({n+1}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
 
     # Remove blanks
