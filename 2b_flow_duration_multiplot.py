@@ -12,25 +12,29 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from src.functions import get_varlabel,check_dir
-from src.flow_functions import plot_dur_ep,standard,plot_wytraces,plot_boxplot
+from src.flow_functions import plot_dur_ep,standard,plot_wytraces,plot_boxplot,alphabet
+from src.data_functions import summarize_daily
 
 ### Begin User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ['bt_prec','bt_wteq','08279500']  # list, site or dam names
-labels = ["Beartown SNOTEL (11,600 ft)","Beartown SNOTEL (11,600 ft)","Rio Grande at Embudo, NM (5,789 ft)"] # labels for sites
-ylabel = ["Precip (in)","SWE (in)","Flow ($ft^3/s$)"] # If str, single ylabel, if list, will assign to each row
+sites = ['08279500unreg','UNREGembudo','08290000unreg','UNREGchamita','08358500unreg','UNREGsanmarcial']  # list, site or dam names
+labels = ["Embudo OBS","URGWOM UNREG",'Chamita OBS',"URGWOM UNREG","San Marcial OBS","URGWOM UNREG"] # labels for sites
+ylabel = ["Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)"] # If str, single ylabel, if list, will assign to each row
 
 # Plot water year traces?
-wytrace = False
+wytrace = True
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
-sharey = False
+sharey = True
 
 # Plot box plots?
 boxplot = True
 outliers = True
+
+# Summary table?
+summarize = True
 
 ### Begin Script ###
 # Check for output directory
@@ -78,7 +82,7 @@ all_data.to_csv(f"{outdir}/{site}_allplot_combine.csv")
 if wytrace or boxplot:
     # determine number of subplots
     nplot = len(sites)
-    ncol = int(min([max([1,np.floor(nplot/4)]),2]))
+    ncol = int(min([max([1,np.floor(nplot/3)]),2]))
     nrow = int(np.ceil(nplot/ncol))
 
 # If selected, plot wy traces onto same panel
@@ -95,7 +99,7 @@ if wytrace:
         data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
         data = data.dropna()
         ax = plot_wytraces(data,wy_division,quantiles,ax=ax,legend=False)
-        plt.annotate(f"({n+1}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
+        plt.annotate(f"({alphabet[n]}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
         if sharey:
             ylim[0] = min([ylim[0],10**np.floor(np.log10(max([1,data.iloc[:,0].min()])))])
@@ -139,7 +143,7 @@ if boxplot:
         data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
         data = data.dropna()
         plot_boxplot(data,wy_division,outliers,ax=ax,legend=False)
-        plt.annotate(f"({n+1}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
+        plt.annotate(f"({alphabet[n]}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
 
     # Remove blanks
@@ -156,3 +160,14 @@ if boxplot:
         fig.text(0, 0.5,ylabel, va='center', rotation='vertical')
 
     plt.savefig(f"{outdir}/{site}_all_boxplot.jpg", bbox_inches="tight", dpi=600)
+
+if summarize:
+    summary_df = pd.DataFrame()
+    for n,site in enumerate(sites):
+        indir = f"{site}/data"
+        data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
+        data = data.dropna()
+        data_summary = summarize_daily(data)
+        summary_df[site] = data_summary.loc["all",:]
+
+    summary_df.to_csv(f"{outdir}/{site}_all_summaries.csv")

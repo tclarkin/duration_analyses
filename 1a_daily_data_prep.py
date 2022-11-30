@@ -15,7 +15,7 @@ variable, where variable is "flow", "swe", or "stage" (no spaces)
 """
 import matplotlib.pyplot as plt
 from src.functions import check_dir,simple_plot,get_varlabel
-from src.data_functions import import_daily,season_subset
+from src.data_functions import import_daily,season_subset,summarize_daily
 
 ### User Input ###
 #os.chdir("")
@@ -43,7 +43,8 @@ for site,site_source in zip(sites,site_sources):
     outdir = check_dir(site,"data")
 
     # Load, plot, and save at-site data
-    site_daily,site_summary = import_daily(site_source,wy_division,clean,zero)
+    site_daily = import_daily(site_source,wy_division,clean,zero)
+    site_summary = summarize_daily(site_daily)
     simple_plot(site_daily,"Site Daily")
     site_daily.to_csv(f"{outdir}/{site}_site_daily.csv")
     print(f"Site data saved to {outdir}/{site}_site_daily.csv")

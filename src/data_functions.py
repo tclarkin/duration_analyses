@@ -265,6 +265,12 @@ def import_daily(site_source,wy_division,clean=False,zero=False):
             site_rolling = site_daily.rolling(3, center=True).mean()
             site_daily.loc[site_daily[var] < 0, var] = site_rolling
 
+
+    return site_daily
+
+def summarize_daily(site_daily,var=None):
+    if var is None:
+        var = site_daily.columns[0]
     # Summarize data
     summary = pd.DataFrame()
     summary.loc["all","start"] = site_daily.index.min()
@@ -274,6 +280,7 @@ def import_daily(site_source,wy_division,clean=False,zero=False):
     summary.loc["all","min"] = site_daily[var].min()
     summary.loc["all","mean"] = site_daily[var].mean()
     summary.loc["all","median"] = site_daily[var].median()
+    summary.loc["all", "sd"] = site_daily[var].std()
     for wy in site_daily["wy"].unique():
         wy_daily = site_daily.loc[site_daily["wy"] == wy]
         summary.loc[wy, "start"] = wy_daily.index.min()
@@ -283,7 +290,9 @@ def import_daily(site_source,wy_division,clean=False,zero=False):
         summary.loc[wy, "min"] = wy_daily[var].min()
         summary.loc[wy, "mean"] = wy_daily[var].mean()
         summary.loc[wy, "median"] = wy_daily[var].median()
-    return site_daily,summary
+        summary.loc[wy, "sd"] = wy_daily[var].std()
+
+    return summary
 
 def csv_peak_import(filename):
     """
