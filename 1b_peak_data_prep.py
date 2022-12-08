@@ -22,9 +22,9 @@ from src.functions import check_dir,simple_plot
 #os.chdir("")
 
 # Site information and user selections
-sites = ['UNREGsanmarcial','REGsanmarcial','GAGEsanmarcial']  # list, site or dam names
+sites = ['08329500']  # list, site or dam names
 wy_division = "WY" # USGS Peaks are only available for WY
-site_sources = [None,None,"08358400"] # usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ['08329500'] # usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
 # Dictionary of seasons and months {"name":[months],etc.}

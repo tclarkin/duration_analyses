@@ -216,7 +216,7 @@ def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
         data = site_dur[d]
         data = data.dropna()
 
-        if eventdate not in str(data.columns):
+        if eventdate not in list(data.columns):
             date_used = "date"
         else:
             date_used = eventdate

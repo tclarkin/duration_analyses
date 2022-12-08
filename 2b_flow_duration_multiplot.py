@@ -19,8 +19,8 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08279500unreg','UNREGembudo','08290000unreg','UNREGchamita','08358500unreg','UNREGsanmarcial']  # list, site or dam names
-labels = ["Embudo OBS","URGWOM UNREG",'Chamita OBS',"URGWOM UNREG","San Marcial OBS","URGWOM UNREG"] # labels for sites
+sites = ['08358500unregplot',]  # list, site or dam names
+labels = ["San Marcial USGS","San Marcial URGWOM"] # labels for sites
 ylabel = ["Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)"] # If str, single ylabel, if list, will assign to each row
 
 # Plot water year traces?

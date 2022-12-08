@@ -22,7 +22,7 @@ from statsmodels.graphics import tsaplots
 #os.chdir("")
 
 # Site information and user selections
-sites = ['REGelephant']  # list, site or dam names
+sites = ['REGembudo']  # list, site or dam names
 seasons = [None] # None returns all data, otherwise "season name"
 durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
@@ -50,14 +50,20 @@ for site in sites:
     # Check seasonality
     if seasons is None:
         seasons = [None]
+    else:
+        # If seasons are identified, make sure the annual is also considered
+        if None not in seasons:
+            seasons.append(None)
     for s in seasons:
         if s is None:
             s=""
         else:
             s=f"_{s}"
+        print(s)
 
         # Begin analysis
         site_dur = list()
+        remove_dur = list()
         site_sum = pd.DataFrame()
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
 
@@ -81,18 +87,22 @@ for site in sites:
             durations_sel.remove("WY")
 
         for dur in durations_sel:
+            print(dur)
             if dur == "peak":
                 df_dur = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv",index_col=0)
-                df_dur["date"] = pd.to_datetime(df_dur["date"])
             else:
                 df_dur = pd.read_csv(f"{voldir}/{site}{s}_{dur}.csv",index_col=0)
 
-                if eventdate not in str(data.columns):
+            if df_dur.empty:
+                remove_dur.append(dur)
+                continue
+            else:
+                if eventdate not in list(df_dur.columns):
                     date_used = "date"
                 else:
                     date_used = eventdate
 
-                df_dur[eventdate] = pd.to_datetime(df_dur[eventdate])
+                df_dur[date_used] = pd.to_datetime(df_dur[date_used])
 
             df_dur = df_dur.dropna()
             site_dur.append(df_dur)
@@ -108,15 +118,15 @@ for site in sites:
             site_sum.loc[dur, "log_sd"] = np.log10(df_dur[var]).std()
             site_sum.loc[dur, "log_skew"] = np.log10(df_dur[var]).skew()
 
+        for r in remove_dur:
+            durations_sel.remove(r)
         site_sum.to_csv(f"{voldir}/{site}{s}_stats_summary.csv")
 
         # Plot data
         if idaplot:
             print("Conducting initial data analysis...")
             # Check for output directory
-            for d in range(0,len(durations_sel)):
-                evs = site_dur[d]
-                dur = durations_sel[d]
+            for evs,dur in zip(site_dur,durations_sel):
                 var = evs.columns[1]
                 print(f'{dur}...')
 

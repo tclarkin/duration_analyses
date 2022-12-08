@@ -38,23 +38,21 @@ def analyze_voldur(data, dur):
                     evs.loc[wy, "max"] = max_idx
                     evs.loc[wy, f"max_{var}"] = round(data.loc[max_idx, var], 0)
     else:
-        dur_data = data[var].rolling(dur,min_periods=int(np.ceil(dur*0.90))).mean()
-        data["wy_shift"] = data["wy"].shift(+(int(dur/2)))
-
         for wy in WYs:
-                try:
-                    max_idx = dur_data.loc[data["wy_shift"]==wy].idxmax()
-                except ValueError:
-                    continue
-                if pd.isna(max_idx):
-                    continue
-                evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as start of window
-                evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
-                evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=int(dur / 2) - 1)  # place date as middle of window
-                evs.loc[wy, "end"] = max_idx  # place date as end of window
-                evs.loc[wy, "max"] = data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"],var].idxmax()
-                evs.loc[wy,f"max_{var}"] = data.loc[evs.loc[wy,"max"],var]
-                evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
+            dur_data = data.loc[data["wy"]==wy,var].rolling(dur, min_periods=int(np.ceil(dur))).mean()
+            try:
+                max_idx = dur_data.idxmax()
+            except ValueError:
+                continue
+            if pd.isna(max_idx):
+                continue
+            evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as start of window
+            evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
+            evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=int(dur / 2) - 1)  # place date as middle of window
+            evs.loc[wy, "end"] = max_idx  # place date as end of window
+            evs.loc[wy, "max"] = data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"],var].idxmax()
+            evs.loc[wy,f"max_{var}"] = data.loc[evs.loc[wy,"max"],var]
+            evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
 
 
     return (evs)

@@ -21,9 +21,9 @@ from src.data_functions import import_daily,season_subset,summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08358500']  # list, site or dam names
+sites = ['08329500']  # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ['08358500'] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
+site_sources = ['08329500'] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
 
 # Optional data cleaning (remove sub "zero" values)
 clean = False # remove any WYs with less than 300 days of data
