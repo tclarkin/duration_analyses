@@ -22,11 +22,11 @@ from src.vol_functions import analyze_voldur,plot_voldur
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08329500']  # list, site or dam names
+sites = ['08361000']  # list, site or dam names
 seasons = [None] # None returns all data, otherwise "season name"
 durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-plot = True  # Will plot each WY with all durations
+plot = False  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
 ### Begin Script ###
@@ -65,33 +65,36 @@ for site in sites:
         if concat:
             site_df = pd.DataFrame()
 
-        # Loop through durations and analyze
-        if "peak" in durations:
-            durations_sel = durations
-            if os.path.isfile(f"{indir}/{site}{s}_site_peak.csv"):
-                peaks = True
-                print("Importing peak data")
-                site_peaks = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv", index_col=0)
-                site_peaks["date"] = pd.to_datetime(site_peaks["date"])
-                durations_sel.remove("peak")
-
-                if concat:
-                    site_df[pd.MultiIndex.from_product([["peaks"],list(site_peaks.columns)],names=["dur","col"])] = site_peaks
-            else:
-                peaks = False
-                durations_sel.remove("peak")
-
+        # Add WY to durations
+        durations_sel = durations
         durations_sel.insert(0,"WY")
 
+        # Loop through durations and analyze
         for dur in durations_sel:
-            print(f'Analyzing duration for {dur} days')
-            df_dur = analyze_voldur(data,dur)
-            site_dur.append(df_dur)
-            df_dur.to_csv(f"{outdir}/{site}{s}_{dur}.csv")
+            # handle peaks
+            if dur=="peak":
+                if os.path.isfile(f"{indir}/{site}{s}_site_peak.csv"):
+                    peaks = True
+                    print("Importing peak data")
+                    site_peaks = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv", index_col=0)
+                    site_peaks["date"] = pd.to_datetime(site_peaks["date"])
+                    if concat:
+                        site_df[pd.MultiIndex.from_product([["peaks"], list(site_peaks.columns)],
+                                                           names=["dur", "col"])] = site_peaks
+                else:
+                    peaks = False
+                    durations_sel.remove("peak")
 
-            if concat:
-                site_df[pd.MultiIndex.from_product([[dur], list(df_dur.columns)],
-                                                   names=["dur", "col"])] = df_dur
+            else:
+                # handle volumes
+                print(f'Analyzing duration for {dur}')
+                df_dur = analyze_voldur(data,dur)
+                site_dur.append(df_dur)
+                df_dur.to_csv(f"{outdir}/{site}{s}_{dur}.csv")
+
+                if concat:
+                    site_df[pd.MultiIndex.from_product([[dur], list(df_dur.columns)],
+                                                       names=["dur", "col"])] = df_dur
         if concat:
             # Fix index and multiindex, export
             site_df = site_df.sort_index()
