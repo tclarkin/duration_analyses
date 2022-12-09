@@ -141,13 +141,13 @@ if concat and len(sites)>1:
                     peak_concat[pd.MultiIndex.from_product([[site], list(site_peaks.columns)],
                                                            names=["dur", "col"])] = site_peaks
             # Fix index and multiindex, export
-            peak_concat = peak_concat .sort_index()
+            peak_concat = peak_concat.sort_index()
             peak_concat .columns = pd.MultiIndex.from_tuples(peak_concat .columns, names=("dur", "col"))
             peak_concat .to_csv(f"{outdir}/{site}{s}_all_peaks.csv")
 
         # Next for volumes
-        dur_concat = pd.DataFrame()
         for dur in durations_sel:
+            dur_concat = pd.DataFrame()
             for site in sites:
                 indir = f"{site}/volume"
                 if os.path.isfile(f"{indir}/{site}{s}_{dur}.csv"):
