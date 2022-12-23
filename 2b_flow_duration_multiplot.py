@@ -19,15 +19,16 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08358500unregplot',]  # list, site or dam names
-labels = ["San Marcial USGS","San Marcial URGWOM"] # labels for sites
-ylabel = ["Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)","Flow ($ft^3/s$)"] # If str, single ylabel, if list, will assign to each row
+sites = ['bt_prec','bt_wteq','08290000unreg','08279500unreg']  # list, site or dam names
+labels = ["Beartown (327) (11,600 ft)","Beartown (327) (11,600 ft)",'08290000 - Rio Chama near Chamita (3,144 sq.mi.)',"08279500 - Rio Grande at Embudo (7,460 sq.mi.)"] # labels for sites
+ylabel = ["Precip (in)","SWE (in)","Flow ($ft^3/s$)","Flow ($ft^3/s$)"] # If str, single ylabel, if list, will assign to each row
+
 
 # Plot water year traces?
 wytrace = True
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
-sharey = True
+sharey = False
 
 # Plot box plots?
 boxplot = True

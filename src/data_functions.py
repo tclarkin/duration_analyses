@@ -7,12 +7,12 @@ This script contains the data preparation functions and pre-defined variables us
 
 """
 import dataretrieval.nwis as nwis
+import dataretrieval as dr
 import pandas as pd
 import numpy as np
 import datetime as dt
 from requests import get as r_get
 from io import StringIO
-
 ### DATA PREP FUNCTIONS ###
 def csv_daily_import(filename,wy="WY",single=True):
     """
@@ -75,33 +75,35 @@ def nwis_import(site, dtype, start=None, end=None, wy="WY"):
     if (start!=None) & (end!=None):
         try:
             data = nwis.get_record(sites=site, start=start, end=end, service=dtype, parameterCd='00060')
-        except ValueError:
+        except [ValueError,dr.utils.NoSitesError] as error:
             data["flow"] = np.nan
     else:
         if (start==None) & (end==None):
             try:
                 data = nwis.get_record(sites=site, start="1800-01-01",service=dtype, parameterCd='00060')
-            except ValueError:
+            except [ValueError, dr.utils.NoSitesError] as error:
                 data["flow"] = np.nan
         else:
             if end==None:
                 try:
                     data = nwis.get_record(sites=site, start=start, end="3000-01-01", service=dtype, parameterCd='00060')
-                except ValueError:
+                except [ValueError, dr.utils.NoSitesError] as error:
                     data["flow"] = np.nan
             if start==None:
                 try:
                     data = nwis.get_record(sites=site, start="1800-01-01", end=end, service=dtype, parameterCd='00060')
-                except ValueError:
+                except [ValueError, dr.utils.NoSitesError] as error:
                     data["flow"] = np.nan
 
-        data = data.tz_localize(None)
-        end = data.index.max()
-        start = data.index.min()
+    data = data.tz_localize(None)
+    end = data.index.max()
+    start = data.index.min()
 
     if dtype == "dv":
         date_index = pd.date_range(start, end, freq="D")
     elif dtype == "iv":
+        if start==end:
+            end = dt.datetime.strftime((dt.datetime.strptime(start,"%Y-%m-%d") + dt.timedelta(hours=24)),"%Y-%m-%d")
         date_index = pd.date_range(start, end, freq="15T")
 
     out = pd.DataFrame(index=date_index)
@@ -237,7 +239,6 @@ def snotel_import(site_triplet,vars=["WTEQ", "SNWD", "PREC", "TAVG"],wy="WY",ver
 
     return out
 
-
 def import_daily(site_source,wy_division,clean=False,zero=False):
     if ".csv" in site_source:
         # Load from .csv file
@@ -339,7 +340,11 @@ def nwis_peak_import(site):
     parameter = "00060"
     dtype = "peaks"
 
-    data = nwis.get_record(sites=site, service=dtype, parameterCd=parameter)
+    try:
+        data = nwis.get_record(sites=site, service=dtype, parameterCd=parameter)
+    except dr.utils.NoSitesError:
+        data = pd.DataFrame()
+        data["peak_va"] = np.nan
 
     out = pd.DataFrame(index=data.index)
     out["date"] = pd.DatetimeIndex(out.index).date

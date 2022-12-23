@@ -22,8 +22,8 @@ from src.vol_functions import analyze_voldur,plot_voldur
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08361000']  # list, site or dam names
-seasons = [None] # None returns all data, otherwise "season name"
+sites = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"]  # list, site or dam names
+seasons = {"spring":[3,4,5,6,7],"fall":[8,9,10,11]} # None returns all data, otherwise "season name"
 durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 plot = False  # Will plot each WY with all durations
@@ -49,8 +49,8 @@ for site in sites:
         seasons = [None]
     else:
         # If seasons are identified, make sure the annual is also considered
-        if None not in seasons:
-            seasons.append(None)
+        if None not in seasons.keys():
+            seasons[None] = None
     for s in seasons:
         if s is None:
             s=""
@@ -66,7 +66,7 @@ for site in sites:
             site_df = pd.DataFrame()
 
         # Add WY to durations
-        durations_sel = durations
+        durations_sel = durations.copy()
         durations_sel.insert(0,"WY")
 
         # Loop through durations and analyze
@@ -123,6 +123,7 @@ for site in sites:
                     plt.savefig(f"{outdir}/{site}{s}_{wy}.jpg", bbox_inches="tight", dpi=300)
 
 if concat and len(sites)>1:
+    print("Preparing concatination tables")
     # Check for output directory
     outdir = check_dir("volume_concat")
 
@@ -133,34 +134,52 @@ if concat and len(sites)>1:
         else:
             s = f"_{s}"
 
-        # Peaks
-        if peaks:
-            peak_concat = pd.DataFrame()
-            for site in sites:
-                indir = f"{site}/data"
-                if os.path.isfile(f"{indir}/{site}{s}_site_peak.csv"):
-                    site_peaks = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv", index_col=0)
-                    site_peaks["date"] = pd.to_datetime(site_peaks["date"])
-                    peak_concat[pd.MultiIndex.from_product([[site], list(site_peaks.columns)],
-                                                           names=["dur", "col"])] = site_peaks
-            # Fix index and multiindex, export
-            peak_concat = peak_concat.sort_index()
-            peak_concat .columns = pd.MultiIndex.from_tuples(peak_concat .columns, names=("dur", "col"))
-            peak_concat .to_csv(f"{outdir}/{site}{s}_all_peaks.csv")
-
-        # Next for volumes
         for dur in durations_sel:
-            dur_concat = pd.DataFrame()
-            for site in sites:
-                indir = f"{site}/volume"
-                if os.path.isfile(f"{indir}/{site}{s}_{dur}.csv"):
-                    site_dur = pd.read_csv(f"{indir}/{site}{s}_{dur}.csv",index_col=0)
-                    dur_concat[pd.MultiIndex.from_product([[site], list(site_dur.columns)],
-                                                           names=["dur", "col"])] = site_dur
-            # Fix index and multiindex, export
-            dur_concat = dur_concat.sort_index()
-            dur_concat.columns = pd.MultiIndex.from_tuples(dur_concat.columns, names=("dur", "col"))
-            dur_concat.to_csv(f"{outdir}/{site}{s}_all_{dur}.csv")
+            print(dur)
+            # If Peaks
+            if dur=="peak" and peaks:
+                peak_concat = pd.DataFrame()
+                for site in sites:
+                    indir = f"{site}/data"
+                    if os.path.isfile(f"{indir}/{site}{s}_site_peak.csv"):
+                        site_peaks = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv", index_col=0)
+                        site_peaks["date"] = pd.to_datetime(site_peaks["date"])
+                        if peak_concat.empty:
+                            peak_concat[pd.MultiIndex.from_product([[site], list(site_peaks.columns)],
+                                                                   names=["dur", "col"])] = site_peaks
+                        else:
+                            site_peaks.columns = pd.MultiIndex.from_product([[site], list(site_peaks.columns)],
+                                                                   names=["dur", "col"])
+                            peak_concat = peak_concat.merge(site_peaks,left_index=True,right_index=True,how="outer")
 
+                # Fix index and multiindex, export
+                peak_final = pd.DataFrame(index=pd.Index(range(peak_concat.index.min(),peak_concat.index.max()+1)))
+                peak_final = peak_final.merge(peak_concat,left_index=True,right_index=True,how="left")
+                peak_final.columns = pd.MultiIndex.from_tuples(peak_concat.columns, names=("dur", "col"))
+                peak_final.to_csv(f"{outdir}/{site}{s}_all_peaks.csv")
+
+            # Volumes
+            else:
+                dur_concat = pd.DataFrame()
+                for site in sites:
+                    indir = f"{site}/volume"
+                    if os.path.isfile(f"{indir}/{site}{s}_{dur}.csv"):
+                        site_dur = pd.read_csv(f"{indir}/{site}{s}_{dur}.csv",index_col=0)
+                        if dur_concat.empty:
+                            dur_concat[pd.MultiIndex.from_product([[site], list(site_dur.columns)],
+                                                                   names=["dur", "col"])] = site_dur
+                        else:
+                            site_dur.columns = pd.MultiIndex.from_product([[site], list(site_dur.columns)],
+                                                                            names=["dur", "col"])
+                            dur_concat = dur_concat.merge(site_dur, left_index=True, right_index=True, how="outer")
+
+                if dur_concat.empty:
+                    print("Nothing")
+                else:
+                    # Fix index and multiindex, export
+                    dur_final = pd.DataFrame(index=pd.Index(range(dur_concat.index.min(),dur_concat.index.max()+1)))
+                    dur_final = dur_final.merge(dur_concat,left_index=True,right_index=True,how="left")
+                    dur_final.columns = pd.MultiIndex.from_tuples(dur_concat.columns, names=("dur", "col"))
+                    dur_concat.to_csv(f"{outdir}/{site}{s}_all_{dur}.csv")
 
 

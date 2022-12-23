@@ -15,23 +15,22 @@ date: (dd-mmm-yyyy)
 
 """
 import matplotlib.pyplot as plt
-from src.data_functions import import_peaks,season_subset
+import pandas as pd
+import numpy as np
+from src.data_functions import import_peaks,season_subset,nwis_import
 from src.functions import check_dir,simple_plot
 
 ### User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08329500']  # list, site or dam names
+sites = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"]  # list, site or dam names
 wy_division = "WY" # USGS Peaks are only available for WY
-site_sources = ['08329500'] # usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"] # usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
 # Dictionary of seasons and months {"name":[months],etc.}
-seasons = {"winter":[1,2,11,12],
-            "spring":[3,4,5],
-            "summer":[6,7,8,9,10],
-           "doy":[30,150]}
+seasons = {"spring":[3,4,5,6,7],"fall":[8,9,10,11]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):
@@ -45,6 +44,19 @@ for site,site_source in zip(sites,site_sources):
     simple_plot(site_peaks,"Site Peaks",marker="o")
     plt.legend()
     plt.savefig(f"{outdir}/{site}_site_peak.jpg",bbox_inches='tight',dpi=300)
+
+    # Find daily max to match peak
+    data = pd.read_csv(f"{outdir}/{site}_site_daily.csv", parse_dates=True, index_col=0)
+    dvar = data.columns[0]
+    if data.wy.max() > site_peaks.index.max():
+        for wy in range(site_peaks.index.max()+1,data.wy.max()):
+            site_peaks.loc[wy,:] = [np.nan]*len(site_peaks.columns)
+
+    for wy in site_peaks.index:
+        peak_date = pd.to_datetime(site_peaks.loc[wy,"date"])
+        if (peak_date>=data.index.min()) and (peak_date<=data.index.max()):
+            site_peaks.loc[wy,"daily_flow"] = data.loc[peak_date,dvar]
+
     site_peaks.to_csv(f"{outdir}/{site}_site_peak.csv")
     print(f"Site data saved to {outdir}/{site}_site_peak.csv")
 
@@ -53,8 +65,32 @@ for site,site_source in zip(sites,site_sources):
             # Subset, plot, and save seasonal data
             for s in seasons.keys():
                 season_peaks = season_subset(site_peaks,seasons[s],var)
+
+                # Find other peaks (if available)
+                data = pd.read_csv(f"{outdir}/{site}_{s}_site_daily.csv", parse_dates=True, index_col=0)
+                dvar = data.columns[0]
+
+                for wy in season_peaks.loc[pd.isna(season_peaks.peak)].index:
+                    if wy not in data.wy.unique():
+                        continue
+                    daily_date = data.loc[data["wy"] == wy, dvar].idxmax()
+                    if pd.isna(daily_date):
+                        continue
+                    daily_flow = data.loc[daily_date, dvar].item()
+                    season_peaks.loc[wy,"date"] = daily_date
+                    season_peaks.loc[wy,"daily_flow"] = daily_flow
+                    if wy>=1990:
+                        try:
+                            inst_flow = nwis_import(site,"iv",daily_date.strftime("%Y-%m-%d"),daily_date.strftime("%Y-%m-%d"))
+                        except ValueError:
+                            continue
+                        if inst_flow.empty:
+                            continue
+                        inst_peak = inst_flow.flow.max()
+                        season_peaks.loc[wy,"peak"] = inst_peak
+
                 simple_plot(season_peaks, f"{s} Peaks", marker="o")
                 season_peaks.to_csv(f"{outdir}/{site}_{s}_site_peak.csv")
                 print(f"Seasonal data saved to {outdir}/{site}_{s}_site_peak.csv")
-            plt.legend()
-            plt.savefig(f"{outdir}/{site}_{s}_site_peak.jpg", bbox_inches='tight', dpi=300)
+                plt.legend()
+                plt.savefig(f"{outdir}/{site}_{s}_site_peak.jpg", bbox_inches='tight', dpi=300)
