@@ -24,9 +24,9 @@ from src.functions import check_dir,simple_plot
 #os.chdir("")
 
 # Site information and user selections
-sites = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"]  # list, site or dam names
+sites = ["08284100"]  # list, site or dam names
 wy_division = "WY" # USGS Peaks are only available for WY
-site_sources = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"] # usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ["08284100"] # usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
 # Dictionary of seasons and months {"name":[months],etc.}

@@ -17,21 +17,21 @@ from src.functions import getsites,createclone
 wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
-script1a = True
+script1a = False
 script1a_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"]  # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
-                "seasons": {"spring":[3,4,5,6,7],"fall":[8,9,10,11]}}# # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
+                "seasons": {"spring":[3,4,5,6],"fall":[7,8,9,10,11]}}# # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
 
 ## Script 1b Settings
-script1b = True
-script1b_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"]  # single file with columns for each site OR list of USGS gages and/or site names
+script1b = False
+script1b_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"] # single file with columns for each site OR list of USGS gages and/or site names
 
 ## Script 2a Settings
 script2a = False
 script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasons" or "all"
-                "wytrace":True, # Boolean to plot wy traces
-                "boxplot":True} # Boolean to plot boxplot
+                "wytrace":False, # Boolean to plot wy traces
+                "boxplot":False} # Boolean to plot boxplot
 
 ## Script 2b Settings
 script2b = False
@@ -46,12 +46,12 @@ script3 = False
 
 ## Script 4 Settings
 script4 = True
-script4_dict = {"durations":["peak",1,3,5,15,30,60,90,120], # Duration in days ("peak" can also be included)
-               "plot":False,  # Will plot each WY with all durations
+script4_dict = {"durations":["peak",1], # Duration in days ("peak" can also be included)
+               "plot":True,  # Will plot each WY with all durations
                "concat":True} # Create concat table of all durations and locations
 
 ## Script 5 Settings
-script5 = False
+script5 = True
 script5_dict = {"idaplot":True,     # Will create initial data analysis plots
                 "ppplot":True,      # Will create a plot with all durations plotted with plotting positions (using alpha below)
                 "pdfplot":True,      # Plot probability density function of data
@@ -147,7 +147,7 @@ if script4:
     script4_dict["wy_division"] = wy_division
     if isinstance(script1a_dict["seasons"],bool)==False:
         if all(script1a_dict["seasons"]):
-            script4_dict["seasons"] = list(script1a_dict["seasons"].keys())
+            script4_dict["seasons"] = script1a_dict["seasons"]
     else:
         script4_dict["seasons"] = [None]
 

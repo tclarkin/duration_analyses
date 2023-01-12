@@ -21,9 +21,9 @@ from src.data_functions import import_daily,season_subset,summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ['eb_vol']  # list, site or dam names
+sites = ['08290000proxy']  # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ['input_data/elephantbutte_vol.csv'] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
+site_sources = ['input_data/chamitaproxy.csv'] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
 
 # Optional data cleaning (remove sub "zero" values)
 clean = False # remove any WYs with less than 300 days of data
@@ -31,7 +31,7 @@ zero = "average" # minimum flow value or "average"
 
 # Optional seasonal selection
 # Dictionary of seasons and months {"name":[months],etc.} OR False
-seasons = False#{"spring":[1,2,3,4,5,6,7],"fall":[8,9,10,11,12]}
+seasons = {"spring":[1,2,3,4,5,6,7],"fall":[8,9,10,11,12]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):

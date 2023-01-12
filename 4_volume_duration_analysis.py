@@ -16,17 +16,17 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from src.functions import check_dir
-from src.vol_functions import analyze_voldur,plot_voldur
+from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur
 
 ### Begin User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"]  # list, site or dam names
-seasons = {"spring":[3,4,5,6,7],"fall":[8,9,10,11]} # None returns all data, otherwise "season name"
-durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
+sites = ["08279500"]  # list, site or dam names
+seasons = {"spring":[3,4,5,6],"fall":[7,8,9,10]} # None returns all data, otherwise "season name"
+durations = ["peak",1] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-plot = False  # Will plot each WY with all durations
+plot = True  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
 ### Begin Script ###
@@ -69,56 +69,57 @@ for site in sites:
         durations_sel = durations.copy()
         durations_sel.insert(0,"WY")
 
+        # Import peaks
+        if "peak" in durations_sel:
+            if os.path.isfile(f"{indir}/{site}{s}_site_peak.csv"):
+                peaks = True
+                print("Importing peak data")
+                site_peaks = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv", index_col=0)
+                site_peaks["date"] = pd.to_datetime(site_peaks["date"])
+                if concat:
+                    site_df[pd.MultiIndex.from_product([["peaks"], list(site_peaks.columns)],
+                                                       names=["dur", "col"])] = site_peaks
+            else:
+                peaks = False
+            durations_sel.remove("peak")
+
         # Loop through durations and analyze
         for dur in durations_sel:
-            # handle peaks
-            if dur=="peak":
-                if os.path.isfile(f"{indir}/{site}{s}_site_peak.csv"):
-                    peaks = True
-                    print("Importing peak data")
-                    site_peaks = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv", index_col=0)
-                    site_peaks["date"] = pd.to_datetime(site_peaks["date"])
-                    if concat:
-                        site_df[pd.MultiIndex.from_product([["peaks"], list(site_peaks.columns)],
-                                                           names=["dur", "col"])] = site_peaks
-                else:
-                    peaks = False
-                    durations_sel.remove("peak")
+            # handle volumes
+            print(f'Analyzing duration for {dur}')
+            df_dur = analyze_voldur(data,dur)
+            site_dur.append(df_dur)
+            df_dur.to_csv(f"{outdir}/{site}{s}_{dur}.csv")
 
-            else:
-                # handle volumes
-                print(f'Analyzing duration for {dur}')
-                df_dur = analyze_voldur(data,dur)
-                site_dur.append(df_dur)
-                df_dur.to_csv(f"{outdir}/{site}{s}_{dur}.csv")
-
-                if concat:
-                    site_df[pd.MultiIndex.from_product([[dur], list(df_dur.columns)],
-                                                       names=["dur", "col"])] = df_dur
+            if concat:
+                site_df[pd.MultiIndex.from_product([[dur], list(df_dur.columns)],
+                                                   names=["dur", "col"])] = df_dur
         if concat:
             # Fix index and multiindex, export
             site_df = site_df.sort_index()
             site_df.columns = pd.MultiIndex.from_tuples(site_df.columns, names=("dur", "col"))
             site_df.to_csv(f"{outdir}/{site}{s}_all_durations.csv")
 
-        if (plot):
+        if plot:
             print("Plotting WYs")
-
 
             for wy in df_dur.index:
                 print(f"  {wy}")
+
                 # plot flows and durations
                 if pd.isna(data.loc[data["wy"]==wy]).all().any():
                     print("  Missing data. Skipping...")
                     continue
                 else:
-                    plot_voldur(data,wy,site_dur,durations_sel)
+                    # Initialize plot
+                    init_voldurplot(data,wy)
+                    plot_voldur(f"{s.replace('_','')}",wy,site_dur,durations_sel)
 
                     # plot peaks
                     if peaks:
                         if (wy not in site_peaks.index) or (pd.isnull(site_peaks.loc[wy, "date"])):
                             continue
-                        plt.plot(site_peaks.loc[wy,"date"],site_peaks.loc[wy,"peak"],marker="x",linewidth=0,label="Peak")
+                        plt.plot(site_peaks.loc[wy,"date"],site_peaks.loc[wy,f"peak"],marker="x",linewidth=0,label=f"{s.replace('_','')} Peak")
                     plt.legend()
                     plt.savefig(f"{outdir}/{site}{s}_{wy}.jpg", bbox_inches="tight", dpi=300)
 

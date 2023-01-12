@@ -57,33 +57,45 @@ def analyze_voldur(data, dur):
 
     return (evs)
 
-def plot_voldur(data,wy,site_dur,durations):
+def init_voldurplot(data,wy):
+    """
+
+    :param data: df, flow timeseries
+    :param wy: int, selected wy
+    :return: figure
+    """
+    var = data.columns[0]
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+    plt.title(wy)
+    plt.ylabel(get_varlabel(var))
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    plt.xticks(rotation=90)
+    dates = data.index[data["wy"]==wy]
+    inflow = data.loc[dates,var]
+    plt.plot(dates, inflow, color='black',label=var)
+
+def plot_voldur(s,wy,site_dur,durations):
     """
     This function produces the duration plots for all durations for WY provided
-    :param data: df, inflows including at least date, flow
     :param wy: int, the event or wy index
     :param site_dur: list,
         contains dfs, output from analyze_voldur() for each duration listed in durations
     :param durations: list, durations to plot
     :return: figure
     """
-    var = data.columns[0]
     for d in range(0,len(durations)):
         dur = durations[d]
         if dur=="WY":
-            fig, ax = plt.subplots(figsize=(6.25, 4))
-            plt.title(wy)
-            plt.ylabel(get_varlabel(var))
-            ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-            plt.xticks(rotation=90)
-            dates = data.index[data["wy"]==wy]
-            inflow = data.loc[dates,var]
-            plt.plot(dates, inflow, color='black',label=var)
+            continue
         else:
             evs = site_dur[d]
+            var = evs.columns[1]
             if pd.isna(evs.loc[wy,:]).all():
                 continue
             idx_s = evs.loc[wy,"start"]
             idx_e = evs.loc[wy,"end"]
-            avg_val = evs.loc[wy,f"avg_{var}"]
-            plt.plot([idx_s,idx_s,idx_e,idx_e],[0,avg_val,avg_val,0],label=f"{dur}-day {var}",alpha=0.75)
+            avg_val = evs.loc[wy,var]
+            if s is None:
+                plt.plot([idx_s,idx_s,idx_e,idx_e],[0,avg_val,avg_val,0],label=f"{dur}-day {var}",alpha=0.75)
+            else:
+                plt.plot([idx_s, idx_s, idx_e, idx_e], [0, avg_val, avg_val, 0], label=f"{s} {dur}-day {var}",alpha=0.75)

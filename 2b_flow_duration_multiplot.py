@@ -19,19 +19,20 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ['bt_prec','bt_wteq','08290000unreg','08279500unreg']  # list, site or dam names
-labels = ["Beartown (327) (11,600 ft)","Beartown (327) (11,600 ft)",'08290000 - Rio Chama near Chamita (3,144 sq.mi.)',"08279500 - Rio Grande at Embudo (7,460 sq.mi.)"] # labels for sites
-ylabel = ["Precip (in)","SWE (in)","Flow ($ft^3/s$)","Flow ($ft^3/s$)"] # If str, single ylabel, if list, will assign to each row
-
+sites = ['unreg08279500','unreg08290000','unreg08313000','unreg08319000','unreg08358400']
+labels = ['Embudo (site 1)', 'Chamita (site 3)','Otowi (site 4)','San Felipe (site 5)','San Marcial (site 9)']
+ylabel = "Flow (ft$^3$/s)"
+colors = ["red","grey","goldenrod","lime","purple"]
+linestyles = ["dashed","dotted","solid","dashdot","dashed"]
 
 # Plot water year traces?
-wytrace = True
+wytrace = False
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
 sharey = False
 
 # Plot box plots?
-boxplot = True
+boxplot = False
 outliers = True
 
 # Summary table?
@@ -65,7 +66,7 @@ for n,site,label in zip(range(0,len(sites)),sites,labels):
         if data.columns[1]!=var:
             var = data.columns[1]
             var_label = f"{var_label} | {get_varlabel(var)}"
-    plt.plot(data.exceeded*100,data[var],label=label)
+    plt.plot(data.exceeded*100,data[var],color=colors[n],linestyle=linestyles[n],label=label)
 plt.ylabel(var_label)
 plt.legend()
 plt.savefig(f"{outdir}/{site}_all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)

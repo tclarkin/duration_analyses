@@ -26,18 +26,18 @@ from src.flow_functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces,plo
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08279500unreg','08313000reg','08313000unreg']  # list, site or dam names
+sites = ['08279500unreg']  # list, site or dam names
 seasons = [None] # None returns all data, otherwise "season name"
-analyze = ["annual"]#,"monthly"] # list of "annual", "monthly", "seasons" or "all"
+analyze = ["annual","monthly"] # list of "annual", "monthly", "seasons" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)
 
 # Plot water year traces?
-wytrace = True
+wytrace = False
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
 
 # Plot box plots?
-boxplot = True
+boxplot = False
 
 ### Begin Script ###
 # Loop through sites

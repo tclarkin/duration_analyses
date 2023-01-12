@@ -153,11 +153,13 @@ def plot_monthly_dur_ep(durtable,combos,var):
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 
     pcts = [0.001,0.01,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.99,0.999]
-    for p in pcts:
+    cols = ["#08306b","#08519c","#4292c6","#9ecae1","#deebf7","#000000","#fee090","#fdae61","#f46d43","#d73027","#67000d"]
+
+    for i,p in enumerate(pcts):
         if pd.isna(durtable.loc[p,:]).all():
-            plt.plot(list(combos.values()),durtable.loc[p,:], linestyle="dashed", label=f"{p} (zero)")
+            plt.plot(list(combos.values()),durtable.loc[p,:],color=cols[i],linestyle="dashed", label=f"{p} (zero)")
         else:
-            plt.plot(list(combos.values()),durtable.loc[p,:],label=p)
+            plt.plot(list(combos.values()),durtable.loc[p,:],color=cols[i],label=p)
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
     plt.legend(title="Ex. Prob.",bbox_to_anchor=(1, 0.5), loc='center left',prop={'size': 10})
@@ -177,15 +179,25 @@ def analyze_dur(data,combos,pcts,var):
     b = -1
 
     all_durflows = list()
+
+    if len(combos)==12:
+        colors = ["#d9d9d9","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#08519c","#08306b","#081d58","#222222","#000000"]
+    elif len(combos)==1:
+        colors = ["black"]
+    else:
+        colors = None
     for key in combos:
         b += 1
         print(key)
         combo = combos[key]
-        dur_ep = calculate_ep(data, combo)
+        dur_ep = calculate_ep(data,combo)
         all_durflows.append(dur_ep)
-        table = summarize_ep(dur_ep, pcts)
-        full_table.loc[:, key] = table[var]
-        plt.plot(dur_ep["exceeded"] * 100, dur_ep[var], label=key)
+        table = summarize_ep(dur_ep,pcts)
+        full_table.loc[:,key] = table[var]
+        if colors is None:
+            plt.plot(dur_ep["exceeded"] * 100, dur_ep[var], label=key)
+        else:
+            plt.plot(dur_ep["exceeded"] * 100, dur_ep[var], color=colors[b],label=key)
         plt.ylabel(get_varlabel(var))
 
     if len(combos) > 4:
