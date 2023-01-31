@@ -61,7 +61,8 @@ for m in range(1, 13):
         allcombos.update({title: vals})
 
 # Standard precentages
-standard = [0.001,
+standard = ["Max",
+            0.001,
             0.002,
             0.005,
             0.01,
@@ -82,7 +83,8 @@ standard = [0.001,
             0.99,
             0.995,
             0.998,
-            0.999]
+            0.999,
+            "Min"]
 
 # Define functions
 def calculate_ep(data, combo):
@@ -115,8 +117,12 @@ def summarize_ep(dur_ep, pcts):
     durtable = pd.DataFrame(index=pcts)
     durtable[var] = np.zeros(len(pcts))
     for p in pcts:
-        idx = (np.abs(dur_ep["exceeded"] - p)).idxmin()
-        durtable.loc[p, var] = round(dur_ep.loc[idx, var], 0)
+        if p=="Max":
+            durtable.loc[p, var] = round(dur_ep[var].max(),0)
+        elif p=="Min":
+            durtable.loc[p, var] = round(dur_ep[var].min(),0)
+        else:
+            durtable.loc[p,var] = round(np.interp(p,dur_ep["exceeded"],dur_ep[var],p), 0)
     return (durtable)
 
 def plot_dur_ep():
@@ -155,9 +161,14 @@ def plot_monthly_dur_ep(durtable,combos,var):
     pcts = [0.001,0.01,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.99,0.999]
     cols = ["#08306b","#08519c","#4292c6","#9ecae1","#deebf7","#000000","#fee090","#fdae61","#f46d43","#d73027","#67000d"]
 
+
+
     for i,p in enumerate(pcts):
-        if pd.isna(durtable.loc[p,:]).all():
-            plt.plot(list(combos.values()),durtable.loc[p,:],color=cols[i],linestyle="dashed", label=f"{p} (zero)")
+        # replace zeros with NaNs
+        durtable.loc[p,durtable.loc[p,:]<=0] = np.nan
+
+        if pd.isna(durtable.loc[p,:]).any():
+            plt.plot(list(combos.values()),durtable.loc[p,:],color=cols[i],linestyle="dashed", label=f"{p}*")
         else:
             plt.plot(list(combos.values()),durtable.loc[p,:],color=cols[i],label=p)
     box = ax.get_position()

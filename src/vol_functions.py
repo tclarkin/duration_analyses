@@ -48,6 +48,7 @@ def analyze_voldur(data, dur):
                 continue
             evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as start of window
             evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
+            evs.loc[wy,f"volume_acft"] = evs.loc[wy,f"avg_{var}"]*dur * 86400 / 43560
             evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=max([0,int(dur / 2) - 1]))  # place date as middle of window
             evs.loc[wy, "end"] = max_idx  # place date as end of window
             evs.loc[wy, "max"] = data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"],var].idxmax()

@@ -94,6 +94,10 @@ def nwis_import(site, dtype, start=None, end=None, wy="WY"):
                     data = nwis.get_record(sites=site, start="1800-01-01", end=end, service=dtype, parameterCd='00060')
                 except [ValueError, dr.utils.NoSitesError] as error:
                     data["flow"] = np.nan
+    try:
+        data.index = pd.to_datetime(data.index,utc=True)
+    except ValueError:
+        print("Unable to convert to datetime")
 
     data = data.tz_localize(None)
     end = data.index.max()

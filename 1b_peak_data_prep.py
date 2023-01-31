@@ -24,13 +24,13 @@ from src.functions import check_dir,simple_plot
 #os.chdir("")
 
 # Site information and user selections
-sites = ["08284100"]  # list, site or dam names
+sites = ["08319000"]  # list, site or dam names "08279500",
 wy_division = "WY" # USGS Peaks are only available for WY
-site_sources = ["08284100"] # usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ["08319000"] # usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
 # Dictionary of seasons and months {"name":[months],etc.}
-seasons = {"spring":[3,4,5,6,7],"fall":[8,9,10,11]}
+seasons = {"spring":[3,4,5,6],"fall":[7,8,9,10]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):
@@ -81,13 +81,18 @@ for site,site_source in zip(sites,site_sources):
                     season_peaks.loc[wy,"daily_flow"] = daily_flow
                     if wy>=1990:
                         try:
-                            inst_flow = nwis_import(site,"iv",daily_date.strftime("%Y-%m-%d"),daily_date.strftime("%Y-%m-%d"))
+                            inst_flow = nwis_import(site,"iv",f"{wy-1}-10-01",f"{wy}-09-30")
                         except ValueError:
                             continue
                         if inst_flow.empty:
                             continue
-                        inst_peak = inst_flow.flow.max()
-                        season_peaks.loc[wy,"peak"] = inst_peak
+                        season_inst = season_subset(inst_flow,seasons[s],dvar)
+                        inst_date = season_inst.flow.idxmax()
+                        if pd.isna(inst_date):
+                            continue
+                        season_peaks.loc[wy,"peak"] = season_inst.loc[inst_date,dvar]
+                        season_peaks.loc[wy, "date"] = inst_date
+                        season_peaks.loc[wy, "daily_flow"] = data.loc[pd.to_datetime(inst_date.date()), dvar].item()
 
                 simple_plot(season_peaks, f"{s} Peaks", marker="o")
                 season_peaks.to_csv(f"{outdir}/{site}_{s}_site_peak.csv")

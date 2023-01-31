@@ -18,10 +18,10 @@ wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
 script1a = False
-script1a_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"]  # single file with columns for each site OR list of USGS gages and/or site names
+script1a_input_file = "input_data/gage_reg.csv"  # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
-                "seasons": {"spring":[3,4,5,6],"fall":[7,8,9,10,11]}}# # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
+                "seasons": {"spring":[3,4,5,6],"fall":[7,8,9,10]}}# # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
 
 ## Script 1b Settings
 script1b = False
@@ -45,17 +45,17 @@ script2b_dict = {"wytrace":True, # Boolean to plot wy traces
 script3 = False
 
 ## Script 4 Settings
-script4 = True
-script4_dict = {"durations":["peak",1], # Duration in days ("peak" can also be included)
-               "plot":True,  # Will plot each WY with all durations
+script4 = False
+script4_dict = {"durations":[90], # Duration in days ("peak" can also be included)
+               "plot":False,  # Will plot each WY with all durations
                "concat":True} # Create concat table of all durations and locations
 
 ## Script 5 Settings
 script5 = True
 script5_dict = {"idaplot":True,     # Will create initial data analysis plots
                 "ppplot":True,      # Will create a plot with all durations plotted with plotting positions (using alpha below)
-                "pdfplot":True,      # Plot probability density function of data
-                "monthplot":True,    # Plot monthly distribution of annual peaks
+                "pdfplot":False,      # Plot probability density function of data
+                "monthplot":False,    # Plot monthly distribution of annual peaks
                 "eventdate":"start"   # When to plot seasonality: "start", "mid", "end", or "max"
                 }
 

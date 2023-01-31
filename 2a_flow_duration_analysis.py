@@ -26,7 +26,7 @@ from src.flow_functions import analyze_dur,plot_monthly_dur_ep,plot_wytraces,plo
 #os.chdir("")
 
 # Site information and user selections
-sites = ['08279500unreg']  # list, site or dam names
+sites = ['unreg08313000']  # list, site or dam names
 seasons = [None] # None returns all data, otherwise "season name"
 analyze = ["annual","monthly"] # list of "annual", "monthly", "seasons" or "all"
 pcts = standard         # list of fractional exceedance probabilities or standard (no quotes)

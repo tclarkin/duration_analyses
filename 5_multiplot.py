@@ -22,15 +22,16 @@ from statsmodels.graphics import tsaplots
 #os.chdir("")
 
 # Site information and user selections
-sites = ['REGembudo']  # list, site or dam names
-seasons = [None] # None returns all data, otherwise "season name"
-durations = ["peak",1,5,15,30,60,90,120] # Duration in days ("peak" can also be included)
+sites = ["reg08279500","reg08281100","reg08290000","reg08313000","reg08319000","reg08330000","reg08332010","reg08354900","reg08358400","reg08361000",
+         "unreg08279500","unreg08290000","unreg08313000","unreg08319000","unreg08358400"]  # list, site or dam names
+seasons = None#{"spring":[3,4,5,6],"fall":[7,8,9,10]} # None returns all data, otherwise "season name"
+durations = [122] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
-pdfplot = True      # Plot probability density function of data
-monthplot = True    # Plot monthly distribution of annual peaks
+pdfplot = False      # Plot probability density function of data
+monthplot = False    # Plot monthly distribution of annual peaks
 eventdate = "start"   # When to plot seasonality: "start", "mid", "end", or "max"
 
 ### Begin Script ###
@@ -48,7 +49,7 @@ for site in sites:
         print("Input volume directory not found.")
 
     # Check seasonality
-    if seasons is None:
+    if seasons is None or seasons == [None]:
         seasons = [None]
     else:
         # If seasons are identified, make sure the annual is also considered

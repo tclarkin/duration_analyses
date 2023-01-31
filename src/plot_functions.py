@@ -148,7 +148,7 @@ def plot_voldurpp(site,site_dur,durations,alpha=0):
             continue
         else:
             peaks_sorted = calc_pp(evs[var],alpha)
-            peaks_sorted.to_csv(f"plot/{site}_{dur}_pp.csv")
+            peaks_sorted.to_csv(f"{site}/plot/{site}_{dur}_pp.csv")
             plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[var],label=f"{dur}-day {var}")
 
             if peaks_sorted[var].min() < minp:
