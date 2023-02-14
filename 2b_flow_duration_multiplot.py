@@ -19,11 +19,11 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ['unreg08279500','unreg08290000','unreg08313000','unreg08319000','unreg08358400']
-labels = ['Embudo (site 1)', 'Chamita (site 3)','Otowi (site 4)','San Felipe (site 5)','San Marcial (site 9)']
+sites = ['reg08279500', 'reg08281100', 'reg08290000', 'reg08313000', 'reg08319000', 'reg08330000', 'reg08332010', 'reg08354900', 'reg08358400', 'reg08361000']
+labels = ['Embudo (site 1)', 'San Juan (site 2)', 'Chamita (site 3)', 'Otowi (site 4)','San Felipe (site 5)','Albuquerqeu (site 6)','Bernardo (site 7)', 'San Acacia (site 8)','San Marcial (site 9)','Elephant Butte (site 10)']
 ylabel = "Flow (ft$^3$/s)"
-colors = ["red","grey","goldenrod","lime","purple"]
-linestyles = ["dashed","dotted","solid","dashdot","dashed"]
+colors = ["red","orange","grey","goldenrod","lime","green","blue","cyan","purple","magenta"]
+linestyles = ["dashed","dashdot","dotted","solid","dashdot","dashed","solid","dotted","dashed","solid"]
 
 # Plot water year traces?
 wytrace = False

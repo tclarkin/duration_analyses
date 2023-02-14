@@ -243,8 +243,74 @@ def snotel_import(site_triplet,vars=["WTEQ", "SNWD", "PREC", "TAVG"],wy="WY",ver
 
     return out
 
+def import_hydromet(site,var,region,wy="WY",verbose=False):
+    if region=="CPN" or region=="cpn":
+        today = dt.datetime.today()
+
+        # Cycle through variables
+        if verbose == True:
+            print(f"Importing {var} data")
+        site_url = f"https://www.usbr.gov/pn-bin/daily.pl?station={site}&format=html&year={1900}&month={10}&day={1}&year={today.year}&month={today.month}&day={today.day}&pcode={var}"
+        if verbose == True:
+            print(site_url)
+        failed = True
+        tries = 0
+        while failed:
+            try:
+                csv_str = r_get(site_url, timeout=10, verify=False).text
+                failed = False
+            except ConnectionError:
+                raise Exception("Timeout; Data unavailable?")
+                tries += 1
+                print(tries)
+                if tries > 10:
+                    return
+            if "not found on this server" in csv_str:
+                print("Site URL incorrect.")
+                return
+        csv_io = StringIO(csv_str)
+        f = pd.read_html(csv_io,flavor="lxml",parse_dates=True,index_col=0)
+
+        # Fix if list
+        if isinstance(f,list):
+            hydro_in = f[0]
+        else:
+            hydro_in = f
+
+        # Fix variable name
+        var = hydro_in.columns[0].split("_")[1]
+        hydro_in.columns = [var]
+
+        # Check for start and end dates
+        hydro_in_true = hydro_in[hydro_in[var].notna()==True].index
+        begin = hydro_in_true.min()
+        end = hydro_in_true.max()
+        hydro_in = hydro_in.loc[begin:end]
+
+        dates = pd.date_range(begin, end, freq="D")
+        out = pd.DataFrame(index=dates)
+
+        out = out.merge(hydro_in[var], left_index=True, right_index=True, how="left")
+
+        # Add year, month and wy
+        out["doy"] = pd.DatetimeIndex(out.index).dayofyear
+        out["year"] = pd.DatetimeIndex(out.index).year
+        out["month"] = pd.DatetimeIndex(out.index).month
+        out["wy"] = out["year"]
+        if wy == "WY":
+            out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
+
+        return out
+
 def import_daily(site_source,wy_division,clean=False,zero=False):
-    if ".csv" in site_source:
+    if isinstance(site_source,list):
+        # Load hydromet data
+        site = site_source[0]
+        var = site_source[1]
+        region = site_source[2]
+        site_daily = import_hydromet(site,var,region,wy_division)
+        var = site_daily.columns[0]
+    elif ".csv" in site_source:
         # Load from .csv file
         site_daily = csv_daily_import(site_source, wy=wy_division)
         var = site_daily.columns[0]  # infer variable by column name
@@ -252,7 +318,6 @@ def import_daily(site_source,wy_division,clean=False,zero=False):
         var = site_source.split("+")[1]
         site_source = site_source.split("+")[0]
         site_daily = snotel_import(site_source,[var])
-
     else:
         # Load from usgs website
         if len(site_source) != 8:

@@ -22,10 +22,9 @@ from statsmodels.graphics import tsaplots
 #os.chdir("")
 
 # Site information and user selections
-sites = ["reg08279500","reg08281100","reg08290000","reg08313000","reg08319000","reg08330000","reg08332010","reg08354900","reg08358400","reg08361000",
-         "unreg08279500","unreg08290000","unreg08313000","unreg08319000","unreg08358400"]  # list, site or dam names
-seasons = None#{"spring":[3,4,5,6],"fall":[7,8,9,10]} # None returns all data, otherwise "season name"
-durations = [122] # Duration in days ("peak" can also be included)
+sites = ["reg08279500","reg08281100","reg08290000","reg08313000","reg08319000","reg08330000","reg08332010","reg08354900","reg08358400","reg08361000","unreg08279500","unreg08290000","unreg08313000","unreg08319000","unreg08358400"]  # list, site or dam names
+seasons = None#["spring"] # None returns all data, otherwise "season name"
+durations = [1,90] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
@@ -51,10 +50,7 @@ for site in sites:
     # Check seasonality
     if seasons is None or seasons == [None]:
         seasons = [None]
-    else:
-        # If seasons are identified, make sure the annual is also considered
-        if None not in seasons:
-            seasons.append(None)
+
     for s in seasons:
         if s is None:
             s=""
@@ -90,9 +86,17 @@ for site in sites:
         for dur in durations_sel:
             print(dur)
             if dur == "peak":
-                df_dur = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv",index_col=0)
+                try:
+                    df_dur = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv",index_col=0)
+                except FileNotFoundError:
+                    print(f"{indir}/{site}{s}_site_peak.csv no found...")
+                    continue
             else:
-                df_dur = pd.read_csv(f"{voldir}/{site}{s}_{dur}.csv",index_col=0)
+                try:
+                    df_dur = pd.read_csv(f"{voldir}/{site}{s}_{dur}.csv",index_col=0)
+                except FileNotFoundError:
+                    print(f"{voldir}/{site}{s}_{dur}.csv no found...")
+                    continue
 
             if df_dur.empty:
                 remove_dur.append(dur)

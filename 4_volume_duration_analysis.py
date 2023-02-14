@@ -25,9 +25,9 @@ from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur
 sites = ["reg08279500","reg08281100","reg08290000","reg08313000","reg08319000","reg08330000","reg08332010","reg08354900","reg08358400","reg08361000",
          "unreg08279500","unreg08290000","unreg08313000","unreg08319000","unreg08358400"]  # list, site or dam names
 seasons = None#{"spring":[3,4,5,6],"fall":[7,8,9,10]} # None returns all data, otherwise "season name"
-durations = ["peak",122] # Duration in days ("peak" can also be included)
+durations = ["peak",1,90] # Duration in days ("peak" can also be included)
 wy_division = "WY" # "WY" or "CY"
-plot = True  # Will plot each WY with all durations
+plot = False  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
 ### Begin Script ###
@@ -83,6 +83,8 @@ for site in sites:
             else:
                 peaks = False
             durations_sel.remove("peak")
+        else:
+            peaks = False
 
         # Loop through durations and analyze
         for dur in durations_sel:
