@@ -11,7 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import datetime as dt
-from src.functions import get_varlabel
+from src.vol_functions import analyze_voldur
+from src.plot_functions import calc_pp
+from src.functions import interp
 
 def identify_thresh_events(data, thresh):
     """

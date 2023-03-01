@@ -27,34 +27,34 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from src.functions import check_dir
 from src.data_functions import csv_daily_import
-from src.crit_functions import identify_thresh_events,init_duration_plot,plot_and_calc_durations,plot_thresh_duration,analyze_volwindow_duration,analyze_cvhs_duration
+from src.crit_functions import identify_thresh_events,init_duration_plot,plot_and_calc_durations,plot_thresh_duration,analyze_cvhs_duration
 
 ### Begin User Input ###
 # Set Working Directory
 #os.chdir("")
 
 # Site information and user selections
-site = "unreg08313000" # site or dam name
-event_thresh = 1000 # threshold flow for defining flood events
+site = "cc" # site or dam name
+event_thresh = 4500 # threshold flow for defining flood events
 min_dur = None      # minimum duration acceptable for analysis (or None)
-min_peak = 5000   # minimum duration acceptable for analysis (or None)
+min_peak = 30000   # minimum duration acceptable for analysis (or None)
 plot_max = 0        # maximum duration to show in peak vs duration plot (will use max if 0)
 mean_type = "arithmetic" # "arithmetic", "geometric", "peak-weight"
 
 # Standard Duration
-analyze_standard = True
-standard_plots = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+analyze_standard = False
+standard_plots = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 buffer = 5                 # int, number of days before and after duration to plot
 tangent = False              # boolean, including cumulative flows and tangent line
 
 # Volume-Window Duration
 analyze_volwindow = False    # Analyze using volume-window method
-volwindow_plots = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
+volwindow_plots = True     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 res_file = "daily_res.csv"  # .csv filename or None. If file, QD (discharge) and AF (storage) are expected.
 
 # CVHS Duration
-analyze_cvhs = False
-cvhs_plots = False            # include plots...
+analyze_cvhs = True
+cvhs_plots = True            # include plots...
 hydro_dur = 30               # max duration to analyze
 by = 1
 rating_file = "rating.csv"   # .csv file. If file, FB (elevation), QD (discharge), AF (storage) expected
@@ -62,12 +62,11 @@ start = 220.5                # must be in rating_file
 
 ### Begin Script ###
 # Check for output directory
-outdir = check_dir(site, "critical")
+outdir = check_dir(site,"critical")
 threshdir = check_dir(outdir,"thresh")
-indir = check_dir(site, "data")
 
 # Load data
-data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
+data = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
 
 # Determine periods in excess of event threshold
 print(f'Analyzing critical duration for events above {event_thresh} ft^3/s.')
@@ -183,7 +182,8 @@ if analyze_cvhs:
     plt.ylabel("Max Stage")
     for h in cvhs.iloc[:,2:].columns:
         if h=="mean":
-            plt.plot(cvhs[h],label=h,color="black")
+
+            plt.plot(cvhs[h],label=h,color="black",linestyle="dashed")
             plt.plot([cvhs[h].idxmax()]*2,[cvhs[h].min(),cvhs[h].max()],color="black",linestyle="dashed",label=f"Mean Crit. Duration ({cvhs[h].idxmax()}-days)")
         else:
             plt.plot(cvhs[h],label=h)
