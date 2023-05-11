@@ -101,9 +101,9 @@ def calculate_ep(data, combo):
     dur_ep = dur_ep.reset_index()
     dur_ep["exceeded"] = (dur_ep.index.values+1)/(len(dur_ep)+1)
 
-    if dur_ep.empty:
-        dur_ep["exceeded"] = [0,1]
-        dur_ep["flow"] = [0,0]
+    #if dur_ep.empty:
+    #    dur_ep["exceeded"] = [0,1]
+    #    dur_ep["flow"] = [0,0]
     return (dur_ep)
 
 def summarize_ep(dur_ep, pcts):
@@ -152,8 +152,6 @@ def plot_monthly_dur_ep(durtable,combos,var):
     plt.xlabel('Month')
     plt.ylabel(get_varlabel(var))
     plt.yscale('log')
-    ax.set_xticks([1,2,3,4,5,6,7,8,9,10,11,12])
-    ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
     ax.grid()
     ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
@@ -161,17 +159,28 @@ def plot_monthly_dur_ep(durtable,combos,var):
     pcts = [0.001,0.01,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.99,0.999]
     cols = ["#08306b","#08519c","#4292c6","#9ecae1","#deebf7","#000000","#fee090","#fdae61","#f46d43","#d73027","#67000d"]
 
-
+    if len(durtable.columns)<len(combos):
+        durtable_temp = pd.DataFrame(index=pcts)
+        for col in combos.keys():
+            if col not in durtable.columns:
+                durtable_temp[col] = np.nan
+            else:
+                durtable_temp[col] = durtable[col]
+        durtable = durtable_temp
 
     for i,p in enumerate(pcts):
         # replace zeros with NaNs
         durtable.loc[p,durtable.loc[p,:]<=0] = np.nan
 
-        if pd.isna(durtable.loc[p,:]).any():
+        if pd.isna(durtable.loc[p,:]).all():
+            continue
+        elif pd.isna(durtable.loc[p,:]).any():
             plt.plot(list(combos.values()),durtable.loc[p,:],color=cols[i],linestyle="dashed", label=f"{p}*")
         else:
             plt.plot(list(combos.values()),durtable.loc[p,:],color=cols[i],label=p)
     box = ax.get_position()
+    ax.set_xticks([1,2,3,4,5,6,7,8,9,10,11,12])
+    ax.set_xticklabels(["J","F","M","A","M","J","J","A","S","O","N","D"])
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
     plt.legend(title="Ex. Prob.",bbox_to_anchor=(1, 0.5), loc='center left',prop={'size': 10})
 
@@ -202,6 +211,8 @@ def analyze_dur(data,combos,pcts,var):
         print(key)
         combo = combos[key]
         dur_ep = calculate_ep(data,combo)
+        if dur_ep[var].empty:
+            continue
         all_durflows.append(dur_ep)
         table = summarize_ep(dur_ep,pcts)
         full_table.loc[:,key] = table[var]

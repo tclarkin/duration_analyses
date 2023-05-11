@@ -110,7 +110,7 @@ def calc_pp(peaks,alpha=0):
     peaks_sorted["pp"] = (peaks_sorted.index+1-alpha)/(len(peaks_sorted)+1-2*alpha)
     return(peaks_sorted)
 
-def plot_voldurpp(site,site_dur,durations,alpha=0,bestfit=True):
+def plot_voldurpp(site,site_dur,durations,alpha=0):
     """
     This function produces the plots for all durations using plotting positions
     :param data: df, inflows including at least date, variable
@@ -148,7 +148,10 @@ def plot_voldurpp(site,site_dur,durations,alpha=0,bestfit=True):
             continue
         else:
             peaks_sorted = calc_pp(evs[var],alpha)
-            peaks_all = pd.merge(peaks_sorted,evs,left_on="index",right_index=True,how="outer")
+            if "index" in peaks_sorted.columns:
+                peaks_all = peaks_sorted.merge(evs, left_on="index", right_index=True, how="outer")
+            else:
+                peaks_all = peaks_sorted.merge(evs,left_on="wy",right_index=True,how="outer")
             peaks_all.to_csv(f"{site}/plot/{site}_{dur}_pp.csv")
             plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[var],label=f"{dur}-day {var}")
 
@@ -156,13 +159,6 @@ def plot_voldurpp(site,site_dur,durations,alpha=0,bestfit=True):
                 minp = peaks_sorted[var].min()
             if peaks_sorted[var].max() > maxp:
                 maxp = peaks_sorted[var].max()
-
-            if bestfit:
-                bestfit_out = pd.DataFrame()
-                bestfit_out.loc[:,"Systematic Data_x"] = peaks_all["pp"]
-                bestfit_out.loc[:,"Systematic Data_y"] = peaks_all["volume_acft"]
-                bestfit_out.to_csv(f"{site}/plot/{site}_{dur}_bf.csv")
-
 
     plt.ylim(minp,maxp)
     plt.legend()
