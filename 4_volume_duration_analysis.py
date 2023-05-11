@@ -17,17 +17,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from src.functions import check_dir
 from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur
+from itertools import chain
 
 ### Begin User Input ###
 #os.chdir("")
 
 # Site information and user selections #
-sites = ["reg08279500","reg08281100","reg08290000","reg08313000","reg08319000","reg08330000","reg08332010","reg08354900","reg08358400","reg08361000",
-         "unreg08279500","unreg08290000","unreg08313000","unreg08319000","unreg08358400"]  # list, site or dam names
-seasons = None#{"spring":[3,4,5,6],"fall":[7,8,9,10]} # None returns all data, otherwise "season name"
-durations = ["peak",1,90] # Duration in days ("peak" can also be included)
+sites = ['UKL']  # list, site or dam names
+seasons = {"winter":[11,12,1],"spring":[2,3,4,5,6]}#{"spring":[3,4,5,6],"fall":[7,8,9,10]} # None returns all data, otherwise "season name"
+durations = ["peak",1,5,7,10,30,90] # Duration in days ("peak" can also be included)
+durations = {"winter":["peak",1,5,7,10,15],"spring":["peak",1,15,30,50,90]}
 wy_division = "WY" # "WY" or "CY"
-plot = False  # Will plot each WY with all durations
+plot = True  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
 ### Begin Script ###
@@ -52,7 +53,12 @@ for site in sites:
         # If seasons are identified, make sure the annual is also considered
         if None not in seasons.keys():
             seasons[None] = None
-    for s in seasons:
+            # also add annual durations
+            all_durs = []
+            for dur in durations.values():
+                all_durs.append(dur)
+            durations[None] = list(set(chain(*all_durs)))
+    for i,s in enumerate(seasons):
         if s is None:
             s=""
         else:
@@ -68,6 +74,7 @@ for site in sites:
 
         # Add WY to durations
         durations_sel = durations.copy()
+        durations_sel = list(durations_sel.values())[i]
         durations_sel.insert(0,"WY")
 
         # Import peaks
@@ -79,7 +86,7 @@ for site in sites:
                 site_peaks["date"] = pd.to_datetime(site_peaks["date"])
                 if concat:
                     site_df[pd.MultiIndex.from_product([["peaks"], list(site_peaks.columns)],
-                                                       names=["dur", "col"])] = site_peaks
+                                                names=["dur", "col"])] = site_peaks
             else:
                 peaks = False
             durations_sel.remove("peak")
