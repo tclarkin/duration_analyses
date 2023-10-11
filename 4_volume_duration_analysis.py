@@ -23,12 +23,11 @@ from itertools import chain
 #os.chdir("")
 
 # Site information and user selections #
-sites = ['UKL']  # list, site or dam names
-seasons = {"winter":[11,12,1],"spring":[2,3,4,5,6]}#{"spring":[3,4,5,6],"fall":[7,8,9,10]} # None returns all data, otherwise "season name"
-durations = ["peak",1,5,7,10,30,90] # Duration in days ("peak" can also be included)
-durations = {"winter":["peak",1,5,7,10,15],"spring":["peak",1,15,30,50,90]}
+sites = ["06468170","06468250","jamr","06470000"]  # list, site or dam names
+seasons = None#{"spring":[3,4,5,6],"summer":[7,8,9,10]} # None returns all data, otherwise "season name"
+durations = ["peak",1,7,15,30]#{"spring":[1,3,5,7,15],"summer":[1,3,5,7,15]}
 wy_division = "WY" # "WY" or "CY"
-plot = True  # Will plot each WY with all durations
+plot = False  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
 ### Begin Script ###
@@ -49,6 +48,7 @@ for site in sites:
     # Check seasonality
     if seasons is None or seasons == [None]:
         seasons = [None]
+        durations = durations
     else:
         # If seasons are identified, make sure the annual is also considered
         if None not in seasons.keys():
@@ -58,11 +58,16 @@ for site in sites:
             for dur in durations.values():
                 all_durs.append(dur)
             durations[None] = list(set(chain(*all_durs)))
+
     for i,s in enumerate(seasons):
         if s is None:
             s=""
+            durations_sel = durations.copy()
         else:
             s=f"_{s}"
+            durations_sel = durations.copy()
+            durations_sel = list(durations_sel.values())[i]
+        durations_sel.insert(0, "WY")
 
         # Load data
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv",parse_dates=True,index_col=0)
@@ -71,11 +76,6 @@ for site in sites:
         site_dur = list()
         if concat:
             site_df = pd.DataFrame()
-
-        # Add WY to durations
-        durations_sel = durations.copy()
-        durations_sel = list(durations_sel.values())[i]
-        durations_sel.insert(0,"WY")
 
         # Import peaks
         if "peak" in durations_sel:

@@ -19,20 +19,20 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ['reg08279500', 'reg08281100', 'reg08290000', 'reg08313000', 'reg08319000', 'reg08330000', 'reg08332010', 'reg08354900', 'reg08358400', 'reg08361000']
-labels = ['Embudo (site 1)', 'San Juan (site 2)', 'Chamita (site 3)', 'Otowi (site 4)','San Felipe (site 5)','Albuquerqeu (site 6)','Bernardo (site 7)', 'San Acacia (site 8)','San Marcial (site 9)','Elephant Butte (site 10)']
+sites = ["06468170","06468250","jamr","06470000"]  # list, site or dam names
+labels = ["Grace City","Kensal","Jamestown Res","Jamestown City"]
 ylabel = "Flow (ft$^3$/s)"
-colors = ["red","orange","grey","goldenrod","lime","green","blue","cyan","purple","magenta"]
-linestyles = ["dashed","dashdot","dotted","solid","dashdot","dashed","solid","dotted","dashed","solid"]
+colors = ["black","blue","red","green"]
+linestyles = ["solid","dashed","dotted","dashdot"]
 
 # Plot water year traces?
-wytrace = False
+wytrace = True
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
-sharey = False
+sharey = True
 
 # Plot box plots?
-boxplot = False
+boxplot = True
 outliers = True
 
 # Summary table?

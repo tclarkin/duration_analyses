@@ -24,13 +24,13 @@ from src.functions import check_dir,simple_plot
 #os.chdir("")
 
 # Site information and user selections
-sites = ["08319000"]  # list, site or dam names "08279500",
-wy_division = "WY" # USGS Peaks are only available for WY
-site_sources = ["08319000"] # usgs site numbers (e.g., "09445000") or .csv data files
+sites = ["06468170","06468250","06470000"]  # list, site or dam names
+wy_division = "WY" # "WY" or "CY"
+site_sources = ["06468170","06468250","06470000"] # .csv file, usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
 # Dictionary of seasons and months {"name":[months],etc.}
-seasons = {"spring":[3,4,5,6],"fall":[7,8,9,10]}
+seasons = False#{"spring":[3,4,5,6],"summer":[7,8,9,10]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):

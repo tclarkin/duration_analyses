@@ -25,7 +25,7 @@ script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of d
 
 ## Script 1b Settings
 script1b = False
-script1b_input_file = ["08279500","08281100","08290000","08313000","08319000","08330000","08329500","08331990","08332010","08354900","08355000","08358400","08358500","08358300","08361000"] # single file with columns for each site OR list of USGS gages and/or site names
+script1b_input_file = ["10139500"] # single file with columns for each site OR list of USGS gages and/or site names
 
 ## Script 2a Settings
 script2a = False

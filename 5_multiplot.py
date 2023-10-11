@@ -22,15 +22,15 @@ from statsmodels.graphics import tsaplots
 #os.chdir("")
 
 # Site information and user selections
-sites = ["reg08279500","reg08281100","reg08290000","reg08313000","reg08319000","reg08330000","reg08332010","reg08354900","reg08358400","reg08361000","unreg08279500","unreg08290000","unreg08313000","unreg08319000","unreg08358400"]  # list, site or dam names
-seasons = None#["spring"] # None returns all data, otherwise "season name"
-durations = [1,90] # Duration in days ("peak" can also be included)
+sites = ["06468170","06468250","jamr","06470000"]  # list, site or dam names
+seasons = None#["spring","summer"] # None returns all data, otherwise "season name"
+durations = ["peak",1,7,15,30]#{"spring":[1,3,5,7,15],"summer":[1,3,5,7,15]}
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
 alpha = 0           # alpha for plotting positions
-pdfplot = False      # Plot probability density function of data
-monthplot = False    # Plot monthly distribution of annual peaks
+pdfplot = True      # Plot probability density function of data
+monthplot = True    # Plot monthly distribution of annual peaks
 eventdate = "start"   # When to plot seasonality: "start", "mid", "end", or "max"
 
 ### Begin Script ###
@@ -134,6 +134,8 @@ for site in sites:
             for evs,dur in zip(site_dur,durations_sel):
                 var = evs.columns[1]
                 print(f'{dur}...')
+
+                #TODO Need to improve the trends, shifts tests
 
                 # Check for trends and shifts
                 plot_trendsshifts(evs,dur,var)

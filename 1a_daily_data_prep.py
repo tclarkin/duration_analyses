@@ -21,12 +21,12 @@ from src.data_functions import import_daily,season_subset,summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["jamr","andi"]  # list, site or dam names
+sites = ["06468170","06468250","06470000","jamr"]  # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = [["jamr","in","gp"],["andi","qu","cpn"]] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
+site_sources = ["06468170","06468250","06470000",["jamr","in","gp"]] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
 
 # Optional data cleaning (remove sub "zero" values)
-clean = False # remove any WYs with less than 300 days of data
+clean = True # remove any WYs with less than 300 days of data
 zero = "average" # minimum flow value or "average"
 
 # Optional seasonal selection
