@@ -19,8 +19,9 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170","06468250","jamr","06470000"]  # list, site or dam names
-labels = ["Grace City","Kensal","Jamestown Res","Jamestown City"]
+sites = ["06468170","06468170"]  # list, site (cannot handle seasonal)
+seasonal = [False,"spring"] # False or single item or list matched to sites ("all" for annual)
+labels = ["Grace City","Grace City Spring"]
 ylabel = "Flow (ft$^3$/s)"
 colors = ["black","blue","red","green"]
 linestyles = ["solid","dashed","dotted","dashdot"]
@@ -44,15 +45,24 @@ for site in sites:
     sitedir = check_dir(site,"flow")
 outdir = check_dir("flow_comparison")
 
+# Check Seasonal List
+if isinstance(seasonal,list)==False:
+    seasonal = [seasonal]*len(sites)
+
 # Initiate plot
 plot_dur_ep()
 
 # Loop through sites
 var = None
-for n,site,label in zip(range(0,len(sites)),sites,labels):
+for n,site,season,label in zip(range(0,len(sites)),sites,seasonal,labels):
     print(f"{n} Adding {site} to flow duration multiplot...")
 
-    data = pd.read_csv(f"{site}/flow/{site}_annual_raw.csv",parse_dates=True,index_col=0)
+    if season=="all" or season==False:
+        s = ""
+    else:
+        s = f"_{season}"
+
+    data = pd.read_csv(f"{site}/flow/{site}{s}_annual_raw.csv",parse_dates=True,index_col=0)
     if var is None and ylabel is None:
         var = data.columns[1]
         var_label = get_varlabel(var)
@@ -76,7 +86,12 @@ all_data = pd.DataFrame(index=standard)
 for site in sites:
     print(site)
 
-    data = pd.read_csv(f"{site}/flow/{site}_annual.csv",parse_dates=True,index_col=0)
+    if season=="all" or season==False:
+        s = "annual"
+    else:
+        s = f"{season}_seasonal"
+
+    data = pd.read_csv(f"{site}/flow/{site}_{s}.csv",parse_dates=True,index_col=0)
     all_data.loc[:,site] = data["Annual"]
 all_data.to_csv(f"{outdir}/{site}_allplot_combine.csv")
 
@@ -98,7 +113,14 @@ if wytrace:
     for n,site in enumerate(sites):
         ax = plt.subplot(nrow,ncol,n+1)
         indir = f"{site}/data"
-        data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
+
+        season = seasonal[n]
+        if season == "all" or season == False:
+            s = ""
+        else:
+            s = f"_{season}"
+
+        data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv",parse_dates=True,index_col=0)
         data = data.dropna()
         ax = plot_wytraces(data,wy_division,quantiles,ax=ax,legend=False)
         plt.annotate(f"({alphabet[n]}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
@@ -142,7 +164,14 @@ if boxplot:
     for n,site in enumerate(sites):
         ax = plt.subplot(nrow,ncol,n+1)
         indir = f"{site}/data"
-        data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
+
+        season = seasonal[n]
+        if season == "all" or season == False:
+            s = ""
+        else:
+            s = f"_{season}"
+
+        data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
         data = data.dropna()
         plot_boxplot(data,wy_division,outliers,ax=ax,legend=False)
         plt.annotate(f"({alphabet[n]}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
@@ -167,9 +196,18 @@ if summarize:
     summary_df = pd.DataFrame()
     for n,site in enumerate(sites):
         indir = f"{site}/data"
-        data = pd.read_csv(f"{indir}/{site}_site_daily.csv",parse_dates=True,index_col=0)
+
+        season = seasonal[n]
+        if season == "all" or season == False:
+            s = ""
+        else:
+            s = f"_{season}"
+
+        data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
         data = data.dropna()
         data_summary = summarize_daily(data)
         summary_df[site] = data_summary.loc["all",:]
 
     summary_df.to_csv(f"{outdir}/{site}_all_summaries.csv")
+
+print("Complete")

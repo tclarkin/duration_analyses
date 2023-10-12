@@ -1,37 +1,46 @@
 # -*- coding: utf-8 -*-
 """
 Created on May 25 2021
-Updated on Oct 3, 2022
-Daily Data Preparation Script (v1)
+Updated on Oct 12, 2023
+Daily Data Preparation Script
 @author: tclarkin (USBR 2021)
 
-This script takes user .csv format, usgs gage, or snotel site and compresses into a continuous timeseries
-for use in flow, critical and volume duration analyses. Option to "clean" data, by removing WYs with less than 300 days
+This script takes user input data and formats in a continuous timeseries for use in the remainin duration analyses.
+scripts. This script should be run once for each site being analyzed.
 
-This script should be run once for each site being analyzed. If input csv files are used, suggest having two columns:
+If input csv files are used, suggest having two columns:
 date: (dd-mmm-yyyy)
-variable, where variable is "flow", "swe", or "stage" (no spaces)
+variable, where variable is "flow", "swe", or "stage" (no spaces): no commas
+
+Alternatively, it can handle daily data from online sources:
+ - usgs: site number (e.g., "09445000"),
+ - hydromet: list of site, var, and region (e.g., ["site","var","region"]), and
+ - snotel: triplets and params (e.g., 327_CO_SNTL+PRCP)
+
+Seasons are either False (use entire year) or specified using a dictionary:
+ - months {"name":[months],etc.}, or
+ - start,stop {"name":[doy,doy]}
 
 """
 import matplotlib.pyplot as plt
-from src.functions import check_dir,simple_plot,get_varlabel
+from src.functions import check_dir,simple_plot,get_varlabel,save_seasons
 from src.data_functions import import_daily,season_subset,summarize_daily
 
 ### User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170","06468250","06470000","jamr"]  # list, site or dam names
+sites = ["06468170"] # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ["06468170","06468250","06470000",["jamr","in","gp"]] # .csv file, usgs site numbers (e.g., "09445000") and/or snotel triplets and params (e.g., 327_CO-SNTL+PRCP)
+site_sources = ["06468170"] # .csv file or other site info for supported data
 
 # Optional data cleaning (remove sub "zero" values)
 clean = True # remove any WYs with less than 300 days of data
 zero = "average" # minimum flow value or "average"
 
 # Optional seasonal selection
-# Dictionary of seasons and months {"name":[months],etc.} OR False
-seasons = False#{"spring":[3,4,5,6],"summer":[7,8,9,10]}#{"spring":[1,2,3,4,5,6,7],"fall":[8,9,10,11,12]}
+# Dictionary of seasons by months {"name":[months],etc.}, start/stop {"name":[start,stop]}, OR False
+seasons = {"spring":[3,4,5,6]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):
@@ -59,6 +68,11 @@ for site,site_source in zip(sites,site_sources):
                 season_daily.to_csv(f"{outdir}/{site}_{s}_site_daily.csv")
                 print(f"Seasonal data saved to {outdir}/{site}_{s}_site_daily.csv")
 
+    # Save list of seasons
+    save_seasons(site,seasons)
+
     # Complete and save plot
     plt.legend()
     plt.savefig(f"{outdir}/{site}_site_daily.jpg",bbox_inches='tight',dpi=600)
+
+print("Complete")

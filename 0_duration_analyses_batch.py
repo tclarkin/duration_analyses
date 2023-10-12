@@ -21,7 +21,7 @@ script1a = True
 script1a_input_file = "input_data/gage_unreg.csv"  # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
                 "zero":'average', # minimum flow value or 'average'
-                "seasons": {"spring":[45,196]}}# # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
+                "seasons": {"spring":[45,196]}} # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
 
 ## Script 1b Settings
 script1b = False
@@ -29,13 +29,15 @@ script1b_input_file = ["10139500"] # single file with columns for each site OR l
 
 ## Script 2a Settings
 script2a = False
-script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasons" or "all"
+script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasonal" or "all"
                 "wytrace":False, # Boolean to plot wy traces
                 "boxplot":False} # Boolean to plot boxplot
 
 ## Script 2b Settings
+# No seasonal ability in batch run
 script2b = False
-script2b_dict = {"wytrace":True, # Boolean to plot wy traces
+script2b_dict = {"seasonal":False, # Boolean, season str, or list
+                 "wytrace":True, # Boolean to plot wy traces
                  "boxplot":True, # Boolean to plot boxplot
                  "ylabel":"Flow (ft$^3$/s)", # If str, single ylabel, if list, will assign to each row
                  "outliers":False, # Boolean to show outliers in boxplot
@@ -46,13 +48,15 @@ script3 = False
 
 ## Script 4 Settings
 script4 = True
-script4_dict = {"durations":[90], # Duration in days ("peak" can also be included)
+script4_dict = {"seasonal":False, # Boolean
+               "durations":[90], # Duration in days ("peak" can also be included), single list OR dict based on seasons
                "plot":True,  # Will plot each WY with all durations
                "concat":True} # Create concat table of all durations and locations
 
 ## Script 5 Settings
 script5 = True
-script5_dict = {"idaplot":True,     # Will create initial data analysis plots
+script5_dict = {"seasonal":False,   # Boolean
+                "idaplot":True,     # Will create initial data analysis plots
                 "ppplot":True,      # Will create a plot with all durations plotted with plotting positions (using alpha below)
                 "pdfplot":False,      # Plot probability density function of data
                 "monthplot":False,    # Plot monthly distribution of annual peaks
@@ -174,3 +178,5 @@ if script5:
 
     # Run clone
     subprocess.call(["python", clone5])
+
+print("Complete")

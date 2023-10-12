@@ -15,7 +15,7 @@ This script can be run for all sites simultaneously
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from src.functions import check_dir
+from src.functions import check_dir,get_seasons,save_seasons
 from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur
 from itertools import chain
 
@@ -23,9 +23,9 @@ from itertools import chain
 #os.chdir("")
 
 # Site information and user selections #
-sites = ["06468170","06468250","jamr","06470000"]  # list, site or dam names
-seasons = None#{"spring":[3,4,5,6],"summer":[7,8,9,10]} # None returns all data, otherwise "season name"
-durations = ["peak",1,7,15,30]#{"spring":[1,3,5,7,15],"summer":[1,3,5,7,15]}
+sites = ["06468170"]  # list, site or dam names
+seasonal = True # Boolean
+durations = ["peak",1,7,15,30] # list uses same durations for all seasons, dict will apply specificly to each season included
 wy_division = "WY" # "WY" or "CY"
 plot = False  # Will plot each WY with all durations
 concat = True # Will combine all tables
@@ -45,29 +45,48 @@ for site in sites:
     if not os.path.isdir(indir):
         print("Input data directory not found.")
 
-    # Check seasonality
-    if seasons is None or seasons == [None]:
-        seasons = [None]
-        durations = durations
-    else:
-        # If seasons are identified, make sure the annual is also considered
-        if None not in seasons.keys():
-            seasons[None] = None
-            # also add annual durations
-            all_durs = []
-            for dur in durations.values():
-                all_durs.append(dur)
-            durations[None] = list(set(chain(*all_durs)))
+    # Import seasons
+    season_df = get_seasons(site)
+    seasons = season_df.index.to_list()
 
-    for i,s in enumerate(seasons):
-        if s is None:
+    # Check seasonality
+    if seasonal:
+        # If list, duplicate for each season
+        if isinstance(durations, list):
+            dur_dict = dict()
+            for season in seasons:
+                dur_dict[season] = durations
+                season_df.loc[season, "durations"] = durations
+            durations = dur_dict
+        # If dict, check again season list, only analyze seasons with durations
+        else:
+            for season in seasons:
+                if season in durations.keys():
+                    season_df.loc[season, "durations"] = durations[season]
+                else:
+                    durations.pop(season)
+    else:
+        seasons = [None]
+        if isinstance(durations, dict):
+            durations = durations[0]
+        season_df.loc["all", "durations"] = str(durations)
+
+    # Save seasons
+    save_seasons(site,season_df)
+
+    for i,season in enumerate(seasons):
+        if season is None:
             s=""
             durations_sel = durations.copy()
+            durations_sel.insert(0, "WY")
         else:
-            s=f"_{s}"
-            durations_sel = durations.copy()
-            durations_sel = list(durations_sel.values())[i]
-        durations_sel.insert(0, "WY")
+            if season=="all":
+                s = ""
+                durations_sel = durations[season].copy()
+                durations_sel.insert(0, "WY")
+            else:
+                s=f"_{season}"
+                durations_sel = durations[season].copy()
 
         # Load data
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv",parse_dates=True,index_col=0)

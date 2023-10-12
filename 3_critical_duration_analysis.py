@@ -22,7 +22,6 @@ The user can specify if they want to check the annual pattern (check_annual_patt
 This script should be run individually for each site being analyzed--should be iterative.
 
 """
-import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from src.functions import check_dir
@@ -34,7 +33,8 @@ from src.crit_functions import identify_thresh_events,init_duration_plot,plot_an
 #os.chdir("")
 
 # Site information and user selections
-site = "cc" # site or dam name
+site = "06468170" # site (cannot handle seasonal)
+season = "spring" # False or season name
 event_thresh = 4500 # threshold flow for defining flood events
 min_dur = None      # minimum duration acceptable for analysis (or None)
 min_peak = 30000   # minimum duration acceptable for analysis (or None)
@@ -42,7 +42,7 @@ plot_max = 0        # maximum duration to show in peak vs duration plot (will us
 mean_type = "arithmetic" # "arithmetic", "geometric", "peak-weight"
 
 # Standard Duration
-analyze_standard = False
+analyze_standard = True
 standard_plots = False     # !!! Warning...better to wait until you run the first piece, because that will tell you how many plots this will produce (n = X)
 buffer = 5                 # int, number of days before and after duration to plot
 tangent = False              # boolean, including cumulative flows and tangent line
@@ -53,7 +53,7 @@ volwindow_plots = True     # !!! Warning...better to wait until you run the firs
 res_file = "daily_res.csv"  # .csv filename or None. If file, QD (discharge) and AF (storage) are expected.
 
 # CVHS Duration
-analyze_cvhs = True
+analyze_cvhs = False
 cvhs_plots = True            # include plots...
 hydro_dur = 30               # max duration to analyze
 by = 1
@@ -66,13 +66,20 @@ outdir = check_dir(site,"critical")
 threshdir = check_dir(outdir,"thresh")
 
 # Load data
-data = pd.read_csv(f"data/{site}_site_daily.csv",parse_dates=True,index_col=0)
+
+if season == "all" or season == False:
+    s = ""
+else:
+    s = f"_{season}"
+
+data = pd.read_csv(f"{site}/data/{site}{s}_site_daily.csv",parse_dates=True,index_col=0)
 
 # Determine periods in excess of event threshold
 print(f'Analyzing critical duration for events above {event_thresh} ft^3/s.')
 evs = identify_thresh_events(data,event_thresh)
 
 if analyze_standard:
+    print("Using standard method...")
     # Check thresholds
     if min_peak is None:
         min_peak = 0
@@ -190,3 +197,5 @@ if analyze_cvhs:
 
     plt.legend()
     plt.savefig(f"{cvhsdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_cvhs.jpg")
+
+print("Complete")

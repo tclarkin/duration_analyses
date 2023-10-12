@@ -6,31 +6,31 @@ Peak Data Preparation Script (v1)
 @author: tclarkin (USBR 2021)
 
 This script takes user supplied USGS gage or other peak data in .csv format and compresses into a summary of annual
-peaks for use scripts 4a and 4b only
+peaks for use script 5 only
 
 This script should be run once for each site being analyzed. If input csv files are used, suggest having three columns:
 wy: (yyyy)
 date: (dd-mmm-yyyy)
-"peak"
+peak: no commas
 
 """
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from src.data_functions import import_peaks,season_subset,nwis_import
-from src.functions import check_dir,simple_plot
+from src.functions import check_dir,simple_plot,save_seasons
 
 ### User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170","06468250","06470000"]  # list, site or dam names
+sites = ["06468170"]  # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ["06468170","06468250","06470000"] # .csv file, usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ["06468170"] # .csv file, usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
-# Dictionary of seasons and months {"name":[months],etc.}
-seasons = False#{"spring":[3,4,5,6],"summer":[7,8,9,10]}
+# Dictionary of seasons by months {"name":[months],etc.}, start/stop {"name":[start,stop]}, OR False
+seasons = {"spring":[3,4,5,6]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):
@@ -99,3 +99,8 @@ for site,site_source in zip(sites,site_sources):
                 print(f"Seasonal data saved to {outdir}/{site}_{s}_site_peak.csv")
                 plt.legend()
                 plt.savefig(f"{outdir}/{site}_{s}_site_peak.jpg", bbox_inches='tight', dpi=300)
+
+    # Save list of seasons
+    save_seasons(site, seasons)
+
+print("Complete")

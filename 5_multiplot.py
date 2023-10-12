@@ -23,8 +23,7 @@ from statsmodels.graphics import tsaplots
 
 # Site information and user selections
 sites = ["06468170","06468250","jamr","06470000"]  # list, site or dam names
-seasons = None#["spring","summer"] # None returns all data, otherwise "season name"
-durations = ["peak",1,7,15,30]#{"spring":[1,3,5,7,15],"summer":[1,3,5,7,15]}
+seasonal = True # Boolean
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
@@ -51,6 +50,7 @@ for site in sites:
     if seasons is None or seasons == [None]:
         seasons = [None]
 
+#TODO Durations import!!!
     for s in seasons:
         if s is None:
             s=""

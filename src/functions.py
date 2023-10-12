@@ -63,6 +63,31 @@ def createclone(script_name,dict):
                     clone.write(f"{key} = {setting}\n")
     return f"{clone_dir}/{script_name}"
 
+def save_seasons(site,seasons):
+    """
+
+    :param site: site name
+    :param seasons: either dictionary of seasons or dataframe from existing seasons file
+    :return:
+    """
+    if isinstance(seasons,pd.DataFrame):
+        seasons.to_csv(f"{site}/{site}_seasons.csv")
+        print(f"Season list saved to {site}/{site}_seasons.csv")
+    else:
+        season_df = pd.DataFrame()
+        season_df.loc["all","define"] = str([1,2,3,4,5,6,7,8,9,10,11,12])
+
+        if isinstance(seasons,bool)==False:
+            if all(seasons):
+                for s in seasons.keys():
+                    season_df.loc[s,"define"] = str(seasons[s])
+        season_df.to_csv(f"{site}/{site}_seasons.csv")
+        print(f"Season list saved to {site}/{site}_seasons.csv")
+
+def get_seasons(site):
+    season_df = pd.read_csv(f"{site}/{site}_seasons.csv",index_col=0)
+    return season_df
+
 def check_dir(dir,sub=False):
     """
     Function to check for and create directory
