@@ -158,15 +158,15 @@ for site in sites:
                 var = evs.columns[1]
                 print(f'{dur}...')
 
-                #TODO Need to improve the trends, shifts tests
-
                 # Check for trends and shifts
                 plot_trendsshifts(evs,dur,var)
                 plt.savefig(f"{outdir}/{site}{s}_{dur}_trends&shifts_plot.jpg", bbox_inches="tight", dpi=600)
 
                 # Check for mann whitney
-                mannwhitney(evs,dur,var,10)
+                mannwhitney(evs,dur,var)
                 plt.savefig(f"{outdir}/{site}{s}_{dur}_mannwhitney_plot.jpg", bbox_inches="tight", dpi=600)
+
+                # TODO count change points AND add trends and shifts around confirmed change points...
 
                 # Check for autocorrelation
                 if len(evs.index) < 20:

@@ -45,23 +45,17 @@ def plot_trendsshifts(evs,dur,var):
 
     plt.legend()
 
-def mannwhitney(evs,dur,var,block):
-    if len(evs.index) < 2*block:
-        return
-
+def mannwhitney(evs,dur,var):
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.ylabel(f"{dur} {get_varlabel(var)}")
     plt.xlabel('Year')
-    plt.title(block)
 
     mw = pd.DataFrame()
-    for i in evs.index[::block]:
-        if i > max(evs.index) - 2*block:
-            continue
-        idx = f'{i}-{i + block} vs {i + block+1}-{i + 2*block+1}'
+    for i in evs.index:
+        idx = f'start-{i} vs {i}-end'
         mw.loc[idx,"wy"] = i
-        mx = mannwhitneyu(evs.loc[i:i + block, var], evs.loc[i + block+1:i + 2*block+1, var])
+        mx = mannwhitneyu(evs.loc[:i, var], evs.loc[i:, var])
         mw.loc[idx,"pvalue"] = mx.pvalue
 
     plt.plot(mw.wy,mw.pvalue)
