@@ -120,9 +120,6 @@ def plot_voldurpp(site,site_dur,durations,alpha=0):
     :param alpha: float, alpha value for plotting positions
     :return: figure
     """
-    if not os.path.isdir("plot"):
-        os.mkdir("plot")
-
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")
     plt.xlabel('Exceedance Probability')

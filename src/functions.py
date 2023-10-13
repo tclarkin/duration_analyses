@@ -25,10 +25,13 @@ def getsites(input_file):
         # If we have a list, take the list and make it both the sites (names) and the site_sources
         sites = list()
         for i in input_file:
-            # Site names will be the last name, without extension
-            sites.append(i.split("/")[len(i.split("/")) - 1].split(".")[0])
-        site_sources = sites
-    else:
+            if isinstance(i,list):
+                sites.append(i[0])
+            else:
+                # Site names will be the last name, without extension
+                sites.append(i.split("/")[len(i.split("/")) - 1].split(".")[0])
+        site_sources = input_file
+    elif "csv" in input_file:
         # If we have a single file, use the column names as the sites (names) and create site_source files
         input = pd.read_csv(input_file, header=0, index_col=0)
         sites = list(input.columns)
@@ -39,6 +42,8 @@ def getsites(input_file):
             site_source = f"{outdir}/{i}.csv"
             input[i].to_csv(site_source)
             site_sources.append(site_source)
+    else:
+        sites = site_sources = [input_file]
 
     return sites,site_sources
 
@@ -89,6 +94,9 @@ def get_seasons(site):
     return season_df
 
 def get_list(season_str):
+    print(season_str)
+    if season_str is None or pd.isna(season_str):
+        return None
     season_str_clean = season_str.strip("[").strip("]").replace(" ","")
     season_list = list()
     for s in season_str_clean.split(","):

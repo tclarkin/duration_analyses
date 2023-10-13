@@ -57,9 +57,11 @@ for site in sites:
             dur_dict[season] = get_list(season_df.loc[season,"durations"])
         durations = dur_dict
     else:
-        seasons = None
+        seasons = [None]
         dur_dict = dict()
         durations = get_list(season_df.loc["all","durations"])
+
+    print(durations)
 
     for season in seasons:
         if season is None:
@@ -71,6 +73,9 @@ for site in sites:
                 s=""
             else:
                 s=f"_{season}"
+
+        if durations_season is None:
+            continue
 
         print(season)
 
@@ -100,6 +105,8 @@ for site in sites:
             durations_sel.remove("WY")
 
         for dur in durations_sel:
+            if dur is None:
+                continue
             print(dur)
             if dur == "peak":
                 try:
@@ -190,3 +197,4 @@ for site in sites:
                 plot_voldurmonth(site_dur,durations_sel,stat,eventdate,wy_division)
                 plt.savefig(f"{outdir}/{site}{s}_{eventdate}_month_{stat}_plot.jpg", bbox_inches="tight", dpi=600)
 
+print("Script 5 Complete")

@@ -103,4 +103,4 @@ for site,site_source in zip(sites,site_sources):
     # Save list of seasons
     save_seasons(site, seasons)
 
-print("Complete")
+print("Script 1b Complete")

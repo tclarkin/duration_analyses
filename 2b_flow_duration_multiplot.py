@@ -210,4 +210,4 @@ if summarize:
 
     summary_df.to_csv(f"{outdir}/{site}_all_summaries.csv")
 
-print("Complete")
+print("Script 2b Complete")

@@ -198,4 +198,4 @@ if analyze_cvhs:
     plt.legend()
     plt.savefig(f"{cvhsdir}/{site}_{str(event_thresh)}_p{str(min_peak)}_d{str(min_dur)}_cvhs.jpg")
 
-print("Complete")
+print("Script 3 Complete")

@@ -75,4 +75,4 @@ for site,site_source in zip(sites,site_sources):
     plt.legend()
     plt.savefig(f"{outdir}/{site}_site_daily.jpg",bbox_inches='tight',dpi=600)
 
-print("Complete")
+print("Script 1a Complete")
