@@ -18,7 +18,7 @@ This script can be run for all sites simultaneously
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from src.functions import check_dir,get_seasons
+from src.functions import check_dir,get_seasons,get_list
 from src.flow_functions import annualcombos, monthcombos, allcombos, standard
 from src.flow_functions import analyze_dur, plot_monthly_dur_ep, plot_wytraces, plot_boxplot
 
@@ -26,9 +26,10 @@ from src.flow_functions import analyze_dur, plot_monthly_dur_ep, plot_wytraces, 
 # os.chdir("")
 
 # Site information and user selections
-sites = ["06468170"]  # list, site or dam names
+sites = ["jamr"]  # list, site or dam names
 analyze = ["annual", "monthly","seasonal"]  # list of "annual", "monthly", "seasonal" or "all"
 pcts = standard  # list of fractional exceedance probabilities or standard (no quotes)
+decimal = 1 # number of decimal places to use in data
 
 # Plot water year traces?
 wytrace = True
@@ -59,27 +60,30 @@ for site in sites:
             seasons = season_df.index.to_list()
 
             # Loop through seasons
-            for s in seasons:
+            for season in seasons:
                 # Skip annual
-                if s=="all":
+                if season=="all":
                     continue
-                print(s)
+                print(season)
+                s = f"_{season}"
 
                 # Load data
-                data = pd.read_csv(f"{indir}/{site}_{s}_site_daily.csv", parse_dates=True, index_col=0)
+                data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
                 data = data.dropna()
                 var = data.columns[0]
 
                 # Load combos
-                combos = annualcombos
+                combos = dict()
+                combos[s] = get_list(season_df.loc[season,"define"])
 
                 # Build duration tables and plot
-                durtable, durraw = analyze_dur(data, combos, pcts, var)
-                durraw[0].to_csv(f"{outdir}/{site}_{s}_annual_raw.csv", index=True, header=True)
-                durtable.to_csv(f"{outdir}/{site}_{s}_{a}.csv", index=True, header=True)
-                plt.savefig(f"{outdir}/{site}_{s}_{a}_plot.jpg", bbox_inches='tight', dpi=300)
+                durtable, durraw = analyze_dur(data,combos,pcts,var,decimal)
+                durraw[0].to_csv(f"{outdir}/{site}{s}_annual_raw.csv", index=True, header=True)
+                durtable.to_csv(f"{outdir}/{site}{s}_{a}.csv", index=True, header=True)
+                plt.savefig(f"{outdir}/{site}{s}_{a}_plot.jpg", bbox_inches='tight', dpi=300)
 
         else:
+            s = ""
             monthplot = False
             if a == "annual":
                 combos = annualcombos
@@ -94,7 +98,7 @@ for site in sites:
             var = data.columns[0]
 
             # Build duration tables and plot
-            durtable, durraw = analyze_dur(data, combos, pcts, var)
+            durtable, durraw = analyze_dur(data,combos,pcts,var,decimal)
             durtable.to_csv(f"{outdir}/{site}_{a}.csv", index=True, header=True)
             if a == "annual":
                 durraw[0].to_csv(f"{outdir}/{site}_{a}_raw.csv", index=True, header=True)
@@ -103,18 +107,18 @@ for site in sites:
                 plot_monthly_dur_ep(durtable, combos, var)
                 plt.savefig(f"{outdir}/{site}_{a}_monthly_plot.jpg", bbox_inches='tight', dpi=300)
 
-            # If selected, plot water year traces
-            if wytrace and a == "annual":
-                print("Plotting WY traces")
-                doy_data = plot_wytraces(data, wy_division, quantiles, ax=None)
-                plt.savefig(f"{outdir}/{site}_WY_plot.jpg", bbox_inches="tight", dpi=300)
+        # If selected, plot water year traces
+        if wytrace and (a == "annual" or a == "seasonal"):
+            print("Plotting WY traces")
+            doy_data = plot_wytraces(data,wy_division,quantiles,ax=None)
+            plt.savefig(f"{outdir}/{site}{s}_WY_plot.jpg", bbox_inches="tight", dpi=300)
 
-                doy_data.to_csv(f"{outdir}/{site}_doy.csv")
+            doy_data.to_csv(f"{outdir}/{site}{s}_doy.csv")
 
-            # If selected, plot water year box and whisker plots
-            if boxplot and a == "annual":
-                print("Ploting WY box and whisker")
-                plot_boxplot(data, wy_division)
-                plt.savefig(f"{outdir}/{site}_boxplot.jpg", bbox_inches="tight", dpi=300)
+        # If selected, plot water year box and whisker plots
+        if boxplot and (a == "annual" or a == "seasonal"):
+            print("Ploting WY box and whisker")
+            plot_boxplot(data, wy_division)
+            plt.savefig(f"{outdir}/{site}{s}_boxplot.jpg", bbox_inches="tight", dpi=300)
 
 print("Complete")

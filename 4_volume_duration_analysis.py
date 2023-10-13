@@ -25,8 +25,9 @@ from itertools import chain
 # Site information and user selections #
 sites = ["06468170"]  # list, site or dam names
 seasonal = True # Boolean
-durations = ["peak",1,7,15,30] # list uses same durations for all seasons, dict will apply specificly to each season included
+durations = {"all":["peak",1,7,15,30],"spring":["peak",2,3,4]} # list uses same durations for all seasons, dict will apply specificly to each season included
 wy_division = "WY" # "WY" or "CY"
+decimal = 1 # number of decimal places to use in data
 plot = False  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
@@ -56,15 +57,16 @@ for site in sites:
             dur_dict = dict()
             for season in seasons:
                 dur_dict[season] = durations
-                season_df.loc[season, "durations"] = durations
+                season_df.loc[season, "durations"] = str(durations)
             durations = dur_dict
         # If dict, check again season list, only analyze seasons with durations
         else:
+            dur_dict = dict()
             for season in seasons:
                 if season in durations.keys():
-                    season_df.loc[season, "durations"] = durations[season]
-                else:
-                    durations.pop(season)
+                    dur_dict[season] = durations[season]
+                    season_df.loc[season, "durations"] = str(durations[season])
+            durations = dur_dict
     else:
         seasons = [None]
         if isinstance(durations, dict):
@@ -87,6 +89,7 @@ for site in sites:
             else:
                 s=f"_{season}"
                 durations_sel = durations[season].copy()
+        print(season)
 
         # Load data
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv",parse_dates=True,index_col=0)
@@ -116,7 +119,7 @@ for site in sites:
         for dur in durations_sel:
             # handle volumes
             print(f'Analyzing duration for {dur}')
-            df_dur = analyze_voldur(data,dur)
+            df_dur = analyze_voldur(data,dur,decimal)
             site_dur.append(df_dur)
             df_dur.to_csv(f"{outdir}/{site}{s}_{dur}.csv")
 

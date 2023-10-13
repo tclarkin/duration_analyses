@@ -19,8 +19,8 @@ wy_division = "WY" # "WY" or "CY"
 ## Script 1a Settings
 script1a = True
 script1a_input_file = "input_data/gage_unreg.csv"  # single file with columns for each site OR list of USGS gages and/or site names
-script1a_dict = {"clean":False,    # remove any WYs with less than 300 days of data
-                "zero":'average', # minimum flow value or 'average'
+script1a_dict = {"decimal":1,    # Number of decimal places to use in data
+                "zero":'average', # False, minimum flow value, or 'average'
                 "seasons": {"spring":[45,196]}} # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
 
 ## Script 1b Settings
@@ -116,6 +116,7 @@ if script2a:
     # Add sites, wy_division, and seasons to script2a_dict
     script2a_dict["sites"] = sites
     script2a_dict["wy_division"] = wy_division
+    script2a_dict["decimal"] = script1a_dict["decimal"]
     if isinstance(script1a_dict["seasons"],bool)==False:
         if all(script1a_dict["seasons"]):
             script2a_dict["seasons"] = list(script1a_dict["seasons"].keys())
@@ -149,11 +150,7 @@ if script4:
     # Add sites, wy_division, and seasons to script4_dict
     script4_dict["sites"] = sites
     script4_dict["wy_division"] = wy_division
-    if isinstance(script1a_dict["seasons"],bool)==False:
-        if all(script1a_dict["seasons"]):
-            script4_dict["seasons"] = script1a_dict["seasons"]
-    else:
-        script4_dict["seasons"] = [None]
+    script4_dict["decimal"] = script1a_dict["decimal"]
 
     # Clone script
     clone4 = createclone("4_volume_duration_analysis.py", script4_dict)
@@ -166,12 +163,7 @@ if script5:
     # Add sites, wy_division, durations, and seasons to script4_dict
     script5_dict["sites"] = sites
     script5_dict["wy_division"] = wy_division
-    script5_dict["durations"] = script4_dict["durations"]
-    if isinstance(script1a_dict["seasons"],bool)==False:
-        if all(script1a_dict["seasons"]):
-            script5_dict["seasons"] = list(script1a_dict["seasons"].keys())
-    else:
-        script5_dict["seasons"] = [None]
+    script5_dict["decimal"] = script1a_dict["decimal"]
 
     # Clone script
     clone5 = createclone("5_multiplot.py", script5_dict)

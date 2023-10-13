@@ -321,7 +321,7 @@ def import_hydromet(site,var,region,wy="WY",verbose=False):
 
     return out
 
-def import_daily(site_source,wy_division,clean=False,zero=False):
+def import_daily(site_source,wy_division,decimal,zero=False):
     if isinstance(site_source,list):
         # Load hydromet data
         site = site_source[0]
@@ -346,14 +346,34 @@ def import_daily(site_source,wy_division,clean=False,zero=False):
             var = "flow"
 
     # Clean data, if selected
-    if clean:
+    if zero != False:
         # Remove negative values
-        if zero != "average":
-            site_daily.loc[site_daily[var] < zero, var] = zero
+        if (isinstance(zero,int) and zero!=True) or isinstance(zero,float):
+            idx = site_daily[site_daily[var] < zero].index
+            site_daily.loc[idx, var] = zero
+            site_daily.loc[idx,"clean"] = f"User Input: {zero}"
         else:
-            site_rolling = site_daily.rolling(3, center=True).mean()
-            site_daily.loc[site_daily[var] < 0, var] = site_rolling
+            # Clean using 3-day average
+            idx3 = site_daily[site_daily[var] < 0].index
+            if idx3.__len__()>0:
+                site_rolling3 = site_daily.rolling(3, center=True).mean()
+                site_daily.loc[idx3, var] = site_rolling3
+                site_daily.loc[idx3, "clean"] = "Average: 3-day"
 
+                # If needed, clean using 5-day average
+                idx5 = site_daily[site_daily[var] < 0].index
+                if idx5.__len__()>0:
+                    site_rolling5 = site_daily.rolling(3, center=True).mean()
+                    site_daily.loc[idx5, var] = site_rolling5
+                    site_daily.loc[idx5, "clean"] = "Average: 5-day"
+
+                    # If needed, set remaining values to zero
+                    idxlast = site_daily[site_daily[var] < 0].index
+                    if idxlast.__len__()>0:
+                        site_daily.loc[idxlast, var] = 0
+                        site_daily.loc[idxlast, "clean"] = "Average: set to zero"
+
+    site_daily[var] = site_daily[var].round(decimal)
 
     return site_daily
 

@@ -106,7 +106,7 @@ def calculate_ep(data, combo):
     #    dur_ep["flow"] = [0,0]
     return (dur_ep)
 
-def summarize_ep(dur_ep, pcts):
+def summarize_ep(dur_ep,pcts,decimal):
     """
     Creates table using user defined pcts
     :param durflows: output from flowdur function (sorted variable with exceeded
@@ -118,11 +118,11 @@ def summarize_ep(dur_ep, pcts):
     durtable[var] = np.zeros(len(pcts))
     for p in pcts:
         if p=="Max":
-            durtable.loc[p, var] = round(dur_ep[var].max(),0)
+            durtable.loc[p, var] = round(dur_ep[var].max(),decimal)
         elif p=="Min":
-            durtable.loc[p, var] = round(dur_ep[var].min(),0)
+            durtable.loc[p, var] = round(dur_ep[var].min(),decimal)
         else:
-            durtable.loc[p,var] = round(np.interp(p,dur_ep["exceeded"],dur_ep[var],p), 0)
+            durtable.loc[p,var] = round(np.interp(p,dur_ep["exceeded"],dur_ep[var],p),decimal)
     return (durtable)
 
 def plot_dur_ep():
@@ -184,13 +184,14 @@ def plot_monthly_dur_ep(durtable,combos,var):
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
     plt.legend(title="Ex. Prob.",bbox_to_anchor=(1, 0.5), loc='center left',prop={'size': 10})
 
-def analyze_dur(data,combos,pcts,var):
+def analyze_dur(data,combos,pcts,var,decimal):
     """
     Conducts flow duration analysis
     :param data: df, raw data with at least date, month, flow
     :param combos: list, months being analyzed
     :param pcts: list, decimal exceedance probabilities included
     :param var: str, variable name
+    :param decimal: int, number of decimals to use
     :return: df, table of results
     """
     full_table = pd.DataFrame(index=pcts)
@@ -214,7 +215,7 @@ def analyze_dur(data,combos,pcts,var):
         if dur_ep[var].empty:
             continue
         all_durflows.append(dur_ep)
-        table = summarize_ep(dur_ep,pcts)
+        table = summarize_ep(dur_ep,pcts,decimal)
         full_table.loc[:,key] = table[var]
         if colors is None:
             plt.plot(dur_ep["exceeded"] * 100, dur_ep[var], label=key)

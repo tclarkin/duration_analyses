@@ -14,7 +14,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from src.functions import check_dir
+from src.functions import check_dir,get_seasons,get_list
 from src.plot_functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldurpdf,plot_voldurmonth,mannwhitney
 from statsmodels.graphics import tsaplots
 
@@ -22,12 +22,12 @@ from statsmodels.graphics import tsaplots
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170","06468250","jamr","06470000"]  # list, site or dam names
+sites = ["06468170"]  # list, site or dam names
 seasonal = True # Boolean
 wy_division = "WY" # "WY" or "CY"
+decimal = 1 # number of decimal places to use in data
 idaplot = True      # Will create initial data analysis plots
-ppplot = True       # Will create a plot with all durations plotted with plotting positions (using alpha below)
-alpha = 0           # alpha for plotting positions
+ppplot = True       # Will create a plot with all durations plotted with plotting positions
 pdfplot = True      # Plot probability density function of data
 monthplot = True    # Plot monthly distribution of annual peaks
 eventdate = "start"   # When to plot seasonality: "start", "mid", "end", or "max"
@@ -46,17 +46,33 @@ for site in sites:
     if not os.path.isdir(voldir):
         print("Input volume directory not found.")
 
-    # Check seasonality
-    if seasons is None or seasons == [None]:
-        seasons = [None]
+    # Import seasons
+    season_df = get_seasons(site)
+    seasons = season_df.index.to_list()
 
-#TODO Durations import!!!
-    for s in seasons:
-        if s is None:
+    # Get durations for seasons
+    if seasonal:
+        dur_dict = dict()
+        for season in seasons:
+            dur_dict[season] = get_list(season_df.loc[season,"durations"])
+        durations = dur_dict
+    else:
+        seasons = None
+        dur_dict = dict()
+        durations = get_list(season_df.loc["all","durations"])
+
+    for season in seasons:
+        if season is None:
+            durations_season = durations
             s=""
         else:
-            s=f"_{s}"
-        print(s)
+            durations_season = durations[season]
+            if season=="all":
+                s=""
+            else:
+                s=f"_{season}"
+
+        print(season)
 
         # Begin analysis
         site_dur = list()
@@ -64,23 +80,23 @@ for site in sites:
         site_sum = pd.DataFrame()
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
 
-        if "peak" in durations:
+        if "peak" in durations_season:
             if os.path.isfile(f"{indir}/{site}{s}_site_peak.csv"):
                 peaks = True
-                durations_sel = durations
+                durations_sel = durations_season
                 durations_sel.remove("peak")
                 durations_sel.append("peak")
             else:
                 peaks = False
-                durations_sel = durations
+                durations_sel = durations_season
                 durations_sel.remove("peak")
         else:
             peaks = False
-            durations_sel = durations
+            durations_sel = durations_season
 
-        if "WY" in durations:
+        if "WY" in durations_season:
             print("Removing WY from list of durations.")
-            durations_sel = durations
+            durations_sel = durations_season
             durations_sel.remove("WY")
 
         for dur in durations_sel:
@@ -89,13 +105,13 @@ for site in sites:
                 try:
                     df_dur = pd.read_csv(f"{indir}/{site}{s}_site_peak.csv",index_col=0)
                 except FileNotFoundError:
-                    print(f"{indir}/{site}{s}_site_peak.csv no found...")
+                    print(f"{indir}/{site}{s}_site_peak.csv not found...")
                     continue
             else:
                 try:
                     df_dur = pd.read_csv(f"{voldir}/{site}{s}_{dur}.csv",index_col=0)
                 except FileNotFoundError:
-                    print(f"{voldir}/{site}{s}_{dur}.csv no found...")
+                    print(f"{voldir}/{site}{s}_{dur}.csv not found...")
                     continue
 
             if df_dur.empty:
@@ -160,7 +176,7 @@ for site in sites:
 
         if ppplot:
             print("Plotting with plotting positions")
-            plot_voldurpp(site,site_dur,durations_sel,alpha)
+            plot_voldurpp(site,site_dur,durations_sel,alpha=0)
             plt.savefig(f"{outdir}/{site}{s}_pp_plot.jpg", bbox_inches="tight", dpi=600)
 
         if pdfplot:

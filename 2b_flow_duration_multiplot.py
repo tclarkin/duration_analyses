@@ -19,9 +19,9 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170","06468170"]  # list, site (cannot handle seasonal)
+sites = ["jamr","jamr"]  # list, site (cannot handle seasonal)
 seasonal = [False,"spring"] # False or single item or list matched to sites ("all" for annual)
-labels = ["Grace City","Grace City Spring"]
+labels = ["Jamestown","Jamestown Spring"]
 ylabel = "Flow (ft$^3$/s)"
 colors = ["black","blue","red","green"]
 linestyles = ["solid","dashed","dotted","dashdot"]
@@ -92,7 +92,7 @@ for site in sites:
         s = f"{season}_seasonal"
 
     data = pd.read_csv(f"{site}/flow/{site}_{s}.csv",parse_dates=True,index_col=0)
-    all_data.loc[:,site] = data["Annual"]
+    all_data.loc[:,site] = data.iloc[:,0]
 all_data.to_csv(f"{outdir}/{site}_allplot_combine.csv")
 
 #

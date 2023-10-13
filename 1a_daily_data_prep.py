@@ -30,13 +30,13 @@ from src.data_functions import import_daily,season_subset,summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170"] # list, site or dam names
+sites = ["jamr"] # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ["06468170"] # .csv file or other site info for supported data
+site_sources = [["jamr","in","gp"]] # .csv file or other site info for supported data
 
 # Optional data cleaning (remove sub "zero" values)
-clean = True # remove any WYs with less than 300 days of data
-zero = "average" # minimum flow value or "average"
+decimal = 1 # number of decimal places to use in data
+zero = True # "average" # False, minimum flow value, or "average" (to handle negative values)
 
 # Optional seasonal selection
 # Dictionary of seasons by months {"name":[months],etc.}, start/stop {"name":[start,stop]}, OR False
@@ -49,7 +49,7 @@ for site,site_source in zip(sites,site_sources):
     outdir = check_dir(site,"data")
 
     # Load, plot, and save at-site data
-    site_daily = import_daily(site_source,wy_division,clean,zero)
+    site_daily = import_daily(site_source,wy_division,decimal,zero)
     site_summary = summarize_daily(site_daily)
     simple_plot(site_daily,"Site Daily")
     site_daily.to_csv(f"{outdir}/{site}_site_daily.csv")

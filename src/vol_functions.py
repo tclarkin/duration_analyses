@@ -14,7 +14,7 @@ import datetime as dt
 from src.functions import get_varlabel
 
 ### VOLUME DURATION FUNCTIONS
-def analyze_voldur(data, dur):
+def analyze_voldur(data,dur,decimal):
     """
     This function calculates a rolling mean and then identifies the ann. max. for each WY
     :param data: df, data including at least date, variable
@@ -31,12 +31,13 @@ def analyze_voldur(data, dur):
                 continue
             else:
                 if dur == "WY":
-                    evs.loc[wy, "annual_sum"] = round(data.loc[data["wy"] == wy, var].sum(), 0)
-                    evs.loc[wy, "annual_acft"] = round(data.loc[data["wy"] == wy, var].sum() * 86400 / 43560, 0)
+                    evs.loc[wy, "annual_sum"] = round(data.loc[data["wy"] == wy, var].sum(),decimal)
+                    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","QU","cfs","CFS"]:
+                        evs.loc[wy, "annual_acft"] = round(data.loc[data["wy"] == wy, var].sum() * 86400 / 43560,decimal)
                     evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, var])
                     max_idx = data.loc[data["wy"] == wy, var].idxmax()
                     evs.loc[wy, "max"] = max_idx
-                    evs.loc[wy, f"max_{var}"] = round(data.loc[max_idx, var], 0)
+                    evs.loc[wy, f"max_{var}"] = round(data.loc[max_idx, var],decimal)
     else:
         for wy in WYs:
             dur_data = data.loc[data["wy"]==wy,var].rolling(dur, min_periods=int(np.ceil(dur))).mean()
@@ -47,14 +48,14 @@ def analyze_voldur(data, dur):
             if pd.isna(max_idx):
                 continue
             evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as start of window
-            evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],0)
-            evs.loc[wy,f"volume_acft"] = evs.loc[wy,f"avg_{var}"]*dur * 86400 / 43560
+            evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],decimal)
+            if var in ["flow", "Flow", "discharge", "Discharge", "inflow", "Inflow", "IN", "Q", "QU", "cfs", "CFS"]:
+                evs.loc[wy,f"volume_acft"] = round(evs.loc[wy,f"avg_{var}"]*dur * 86400 / 43560,decimal)
             evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=max([0,int(dur / 2) - 1]))  # place date as middle of window
             evs.loc[wy, "end"] = max_idx  # place date as end of window
             evs.loc[wy, "max"] = data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"],var].idxmax()
             evs.loc[wy,f"max_{var}"] = data.loc[evs.loc[wy,"max"],var]
             evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
-
 
     return (evs)
 
