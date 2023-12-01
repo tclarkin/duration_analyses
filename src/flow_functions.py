@@ -345,18 +345,20 @@ def plot_boxplot(data,wy_division,outlier=True,ax=None,legend=True):
     # Set outlier
     if outlier:
         outsym = "o"
+        flierprops = {"marker":outsym,"markersize":4,"alpha":0.5}
     else:
         outsym = ""
 
     # Prepare plot
     if ax is None:
         fig,ax = plt.subplots(figsize=(6.25, 4))
-    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    #ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 
     plt.grid()
     bp = plt.boxplot(monthly_data,
                      patch_artist=True,
                      flierprops={"marker":outsym,"markersize":4,"alpha":0.5},
+                     showfliers=outlier,
                      medianprops={"color":"black","linewidth":2},
                      whiskerprops={"linestyle":"dashed"},
                      labels=mon_lab)

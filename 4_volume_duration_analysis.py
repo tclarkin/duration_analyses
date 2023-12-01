@@ -22,9 +22,9 @@ from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur
 #os.chdir("")
 
 # Site information and user selections #
-sites = ["06468170"]  # list, site or dam names
-seasonal = True # Boolean
-durations = {"spring_ss":["peak",2,3,4]} # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
+sites = ["06468170","06468250","06470000","JAMR"]  # list, site or dam names
+seasonal = False # Boolean
+durations = {"all":["peak",2,3,4]} # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
 wy_division = "WY" # "WY" or "CY"
 decimal = 1 # number of decimal places to use in data
 plot = False  # Will plot each WY with all durations
@@ -78,8 +78,14 @@ for site in sites:
     else:
         seasons = [None]
         if isinstance(durations, dict):
-            durations_season = durations[0]
-        season_df.loc["all", "durations"] = str(durations)
+            if "all" in durations.keys():
+                durations_season = durations["all"]
+            else:
+                print(f"No durations provided for 'all'. Durations must be provided for 'all' and each season...")
+                quit("Script run ended...")
+        else:
+            durations_season = durations
+        season_df.loc["all", "durations"] = str(durations_season)
 
     # Save seasons
     save_seasons(site,season_df)

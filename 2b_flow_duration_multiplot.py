@@ -19,10 +19,10 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["jamr","jamr"]  # list, site (cannot handle seasonal)
-seasonal = [False,"spring"] # False or single item or list matched to sites ("all" for annual)
-labels = ["Jamestown","Jamestown Spring"]
-ylabel = "Flow (ft$^3$/s)"
+sites = ["precip","temp","snow","jamr"]  # list, site (cannot handle seasonal)
+seasonal = [False,False,False,False] # False or single item or list matched to sites ("all" for annual)
+labels = ["Precipitation","Temperature","Snow Depth","Flow"]
+ylabel = ["Depth (in)","Degrees (F)","Depth (in)","Flow (ft$^3/s$)"]
 colors = ["black","blue","red","green"]
 linestyles = ["solid","dashed","dotted","dashdot"]
 
@@ -30,11 +30,11 @@ linestyles = ["solid","dashed","dotted","dashdot"]
 wytrace = True
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
-sharey = True
+sharey = False
 
 # Plot box plots?
 boxplot = True
-outliers = True
+outliers = False
 
 # Summary table?
 summarize = True

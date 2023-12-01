@@ -26,8 +26,8 @@ from src.flow_functions import analyze_dur, plot_monthly_dur_ep, plot_wytraces, 
 # os.chdir("")
 
 # Site information and user selections
-sites = ["jamr"]  # list, site or dam names
-analyze = ["annual", "monthly","seasonal"]  # list of "annual", "monthly", "seasonal" or "all"
+sites = ["temp"]  # list, site or dam names
+analyze = ["annual", "monthly"]  # list of "annual", "monthly", "seasonal" or "all"
 pcts = standard  # list of fractional exceedance probabilities or standard (no quotes)
 decimal = 1 # number of decimal places to use in data
 

@@ -18,18 +18,18 @@ wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
 script1a = False
-script1a_input_file = ["06468170","06468250","06470000",["jamr","in","gp"]]  # single file with columns for each site OR list of USGS gages and/or site names
+script1a_input_file = ["06468170","06468250","06470000",["JAMR","in","gp"]] # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"decimal":1,    # Number of decimal places to use in data
-                "zero":'average', # False, minimum flow value, or 'average'
-                "seasons": {"spring_ss":[45,196],"spring_mo":[3,4,5,6]}} # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
+                "zero":False, # False, minimum flow value, or 'average'
+                "seasons": False} # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
 
 ## Script 1b Settings
 script1b = False
-script1b_input_file = ["06468170","06468250","06470000"] # single file with columns for each site OR list of USGS gages and/or site names
+script1b_input_file = ["06468170","06468250","06470000","06470000"] # single file with columns for each site OR list of USGS gages and/or site names
 
 ## Script 2a Settings
 script2a = False
-script2a_dict = {"analyze":["annual","monthly","seasonal"], # list of "annual", "monthly", "seasonal" or "all"
+script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasonal" or "all"
                 "wytrace":True, # Boolean to plot wy traces
                 "boxplot":True} # Boolean to plot boxplot
 
@@ -39,7 +39,7 @@ script2b = False
 script2b_dict = {"seasonal":False, # False, season str, or list
                  "wytrace":True, # Boolean to plot wy traces
                  "boxplot":True, # Boolean to plot boxplot
-                 "ylabel":"Flow (ft$^3$/s)", # If str, single ylabel, if list, will assign to each row
+                 "ylabel":"", # If str, single ylabel, if list, will assign to each row
                  "outliers":False, # Boolean to show outliers in boxplot
                  "sharey":True} # Boolean to use shared y axis
 
@@ -48,18 +48,18 @@ script3 = False
 
 ## Script 4 Settings
 script4 = True
-script4_dict = {"seasonal":True, # Boolean
-               "durations":[1,3,5,7,15], # Duration in days ("peak" can also be included), single list OR dict based on seasons
+script4_dict = {"seasonal":False, # Boolean
+               "durations":["peak",1,3,5,7,10,15], # Duration in days ("peak" can also be included), single list OR dict based on seasons
                "plot":False,  # Will plot each WY with all durations
                "concat":True} # Create concat table of all durations and locations
 
 ## Script 5 Settings
-script5 = True
+script5 = False
 script5_dict = {"seasonal":True,   # Boolean
                 "idaplot":True,     # Will create initial data analysis plots
                 "ppplot":True,      # Will create a plot with all durations plotted with plotting positions (using alpha below)
-                "pdfplot":False,      # Plot probability density function of data
-                "monthplot":False,    # Plot monthly distribution of annual peaks
+                "pdfplot":True,      # Plot probability density function of data
+                "monthplot":True,    # Plot monthly distribution of annual peaks
                 "eventdate":"start"   # When to plot seasonality: "start", "mid", "end", or "max"
                 }
 
