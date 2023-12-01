@@ -138,9 +138,11 @@ for site in sites:
         for dur in durations_sel:
             # handle volumes
             print(f'Analyzing duration for {dur}')
-            df_dur = analyze_voldur(data,dur,decimal)
+            df_dur,dur_data = analyze_voldur(data,dur,decimal)
             site_dur.append(df_dur)
             df_dur.to_csv(f"{outdir}/{site}{s}_{dur}.csv")
+            if dur_data is not None:
+                dur_data.to_csv(f"{outdir}/{site}{s}_{dur}_data.csv")
 
             if concat:
                 site_df[pd.MultiIndex.from_product([[dur], list(df_dur.columns)],

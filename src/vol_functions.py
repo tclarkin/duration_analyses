@@ -25,6 +25,7 @@ def analyze_voldur(data,dur,decimal):
     WYs = data["wy"].unique().astype(int)
     evs = pd.DataFrame(index=WYs)
     if dur=="WY":
+        dur_data = None
         print('Analyzing by WY')
         for wy in WYs:
             if sum(pd.isna(data.loc[data["wy"] == wy, var])) > 365*0.1:
@@ -39,16 +40,18 @@ def analyze_voldur(data,dur,decimal):
                     evs.loc[wy, "max"] = max_idx
                     evs.loc[wy, f"max_{var}"] = round(data.loc[max_idx, var],decimal)
     else:
+        # Calculate rolling before parsing years
+        dur_data = data
+        dur_data[var] = dur_data[var].rolling(dur, min_periods=int(np.ceil(dur))).mean()
         for wy in WYs:
-            dur_data = data.loc[data["wy"]==wy,var].rolling(dur, min_periods=int(np.ceil(dur))).mean()
             try:
-                max_idx = dur_data.idxmax()
+                max_idx = dur_data.loc[dur_data["wy"] == wy, var].idxmax()
             except ValueError:
                 continue
             if pd.isna(max_idx):
                 continue
             evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as start of window
-            evs.loc[wy,f"avg_{var}"] = round(dur_data[max_idx],decimal)
+            evs.loc[wy,f"avg_{var}"] = round(dur_data.loc[max_idx,var],decimal)
             if var in ["flow", "Flow", "discharge", "Discharge", "inflow", "Inflow", "IN", "Q", "QU", "cfs", "CFS"]:
                 evs.loc[wy,f"volume_acft"] = round(evs.loc[wy,f"avg_{var}"]*dur * 86400 / 43560,decimal)
             evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=max([0,int(dur / 2) - 1]))  # place date as middle of window
@@ -57,7 +60,18 @@ def analyze_voldur(data,dur,decimal):
             evs.loc[wy,f"max_{var}"] = data.loc[evs.loc[wy,"max"],var]
             evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
 
-    return (evs)
+            # Check start
+            if dur_data.loc[evs.loc[wy, "start"], "wy"] < wy:
+                evs.loc[wy,"warning"] = "Start in previous WY"
+                print(f"{wy} start in previous WY. Check!!!")
+            # Check end
+            if dur_data.loc[evs.loc[wy, "end"], "wy"] > wy:
+                evs.loc[wy,"warning"] = "End in next WY"
+                print(f"{wy} end in next WY. Check!!!")
+
+    # TODO: Seasonal split?
+
+    return evs,dur_data
 
 def init_voldurplot(data,wy):
     """
