@@ -22,10 +22,9 @@ from statsmodels.graphics import tsaplots
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170","06468250","06470000","JAMR"]  # list, site or dam names
+sites = ["JAMR"]  # list, site or dam names #"06468170","06468250","06470000",
 seasonal = False # Boolean
 wy_division = "WY" # "WY" or "CY"
-decimal = 1 # number of decimal places to use in data
 idaplot = True      # Will create initial data analysis plots
 ppplot = True       # Will create a plot with all durations plotted with plotting positions
 pdfplot = True      # Plot probability density function of data

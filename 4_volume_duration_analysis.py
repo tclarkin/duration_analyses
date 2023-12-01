@@ -22,11 +22,10 @@ from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur
 #os.chdir("")
 
 # Site information and user selections #
-sites = ["06468170","06468250","06470000","JAMR"]  # list, site or dam names
+sites = ["JAMR"]  # list, site or dam names
 seasonal = False # Boolean
-durations = {"all":["peak",2,3,4]} # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
+durations = [1,3,5,7,10,15] # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
 wy_division = "WY" # "WY" or "CY"
-decimal = 1 # number of decimal places to use in data
 plot = False  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
@@ -111,6 +110,8 @@ for site in sites:
 
         # Load data
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv",parse_dates=True,index_col=0)
+        var = data.columns[0]
+        decimal = str(data[var].head(1).item()).find('.')
 
         # Create list to store all duration data
         site_dur = list()

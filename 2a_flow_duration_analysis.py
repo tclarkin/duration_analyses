@@ -29,7 +29,6 @@ from src.flow_functions import analyze_dur, plot_monthly_dur_ep, plot_wytraces, 
 sites = ["temp"]  # list, site or dam names
 analyze = ["annual", "monthly"]  # list of "annual", "monthly", "seasonal" or "all"
 pcts = standard  # list of fractional exceedance probabilities or standard (no quotes)
-decimal = 1 # number of decimal places to use in data
 
 # Plot water year traces?
 wytrace = True
@@ -71,6 +70,7 @@ for site in sites:
                 data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
                 data = data.dropna()
                 var = data.columns[0]
+                decimal = str(data[var].head(1).item()).find('.')
 
                 # Load combos
                 combos = dict()

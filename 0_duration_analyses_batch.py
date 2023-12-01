@@ -25,7 +25,7 @@ script1a_dict = {"decimal":1,    # Number of decimal places to use in data
 
 ## Script 1b Settings
 script1b = False
-script1b_input_file = ["06468170","06468250","06470000","06470000"] # single file with columns for each site OR list of USGS gages and/or site names
+script1b_input_file = ["06468170","06468250","06470000",None] # single file with columns for each site OR list of USGS gages and/or site names (None for no gage)
 
 ## Script 2a Settings
 script2a = False
@@ -37,6 +37,7 @@ script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", 
 # No seasonal ability in batch run
 script2b = False
 script2b_dict = {"seasonal":False, # False, season str, or list
+                 "durcurve":True, # Boolean to plot duration curves
                  "wytrace":True, # Boolean to plot wy traces
                  "boxplot":True, # Boolean to plot boxplot
                  "ylabel":"", # If str, single ylabel, if list, will assign to each row

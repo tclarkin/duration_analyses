@@ -26,6 +26,9 @@ ylabel = ["Depth (in)","Degrees (F)","Depth (in)","Flow (ft$^3/s$)"]
 colors = ["black","blue","red","green"]
 linestyles = ["solid","dashed","dotted","dashdot"]
 
+# Plot duration curves
+durcurve = False
+
 # Plot water year traces?
 wytrace = True
 wy_division = "WY" # "WY" or "CY"
@@ -49,53 +52,55 @@ outdir = check_dir("flow_comparison")
 if isinstance(seasonal,list)==False:
     seasonal = [seasonal]*len(sites)
 
-# Initiate plot
-plot_dur_ep()
+# Duration curves
+if durcurve:
+    # Initiate plot
+    plot_dur_ep()
 
-# Loop through sites
-var = None
-for n,site,season,label in zip(range(0,len(sites)),sites,seasonal,labels):
-    print(f"{n} Adding {site} to flow duration multiplot...")
+    # Loop through sites
+    var = None
+    for n,site,season,label in zip(range(0,len(sites)),sites,seasonal,labels):
+        print(f"{n} Adding {site} to flow duration multiplot...")
 
-    if season=="all" or season==False:
-        s = ""
-    else:
-        s = f"_{season}"
-
-    data = pd.read_csv(f"{site}/flow/{site}{s}_annual_raw.csv",parse_dates=True,index_col=0)
-    if var is None and ylabel is None:
-        var = data.columns[1]
-        var_label = get_varlabel(var)
-    elif ylabel is not None:
-        var = data.columns[1]
-        if isinstance(ylabel,list):
-            var_label = ylabel[n]
+        if season=="all" or season==False:
+            s = ""
         else:
-            var_label = ylabel
-    else:
-        if data.columns[1]!=var:
+            s = f"_{season}"
+
+        data = pd.read_csv(f"{site}/flow/{site}{s}_annual_raw.csv",parse_dates=True,index_col=0)
+        if var is None and ylabel is None:
             var = data.columns[1]
-            var_label = f"{var_label} | {get_varlabel(var)}"
-    plt.plot(data.exceeded*100,data[var],color=colors[n],linestyle=linestyles[n],label=label)
-plt.ylabel(var_label)
-plt.legend()
-plt.savefig(f"{outdir}/{site}_all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
+            var_label = get_varlabel(var)
+        elif ylabel is not None:
+            var = data.columns[1]
+            if isinstance(ylabel,list):
+                var_label = ylabel[n]
+            else:
+                var_label = ylabel
+        else:
+            if data.columns[1]!=var:
+                var = data.columns[1]
+                var_label = f"{var_label} | {get_varlabel(var)}"
+        plt.plot(data.exceeded*100,data[var],color=colors[n],linestyle=linestyles[n],label=label)
+    plt.ylabel(var_label)
+    plt.legend()
+    plt.savefig(f"{outdir}/{site}_all_annual_multiplot.jpg",bbox_inches='tight',dpi=300)
 
-# Combined table
-all_data = pd.DataFrame(index=standard)
-for site in sites:
-    print(site)
+    # Combined table
+    all_data = pd.DataFrame(index=standard)
+    for site in sites:
+        print(site)
 
-    if season=="all" or season==False:
-        s = "annual"
-    else:
-        s = f"{season}_seasonal"
+        if season=="all" or season==False:
+            s = "annual"
+        else:
+            s = f"{season}_seasonal"
 
-    data = pd.read_csv(f"{site}/flow/{site}_{s}.csv",parse_dates=True,index_col=0)
-    all_data.loc[:,site] = data.iloc[:,0]
-all_data.to_csv(f"{outdir}/{site}_allplot_combine.csv")
+        data = pd.read_csv(f"{site}/flow/{site}_{s}.csv",parse_dates=True,index_col=0)
+        all_data.loc[:,site] = data.iloc[:,0]
+    all_data.to_csv(f"{outdir}/{site}_allplot_combine.csv")
 
-#
+# WY/Box plot multiple plot initialization
 if wytrace or boxplot:
     # determine number of subplots
     nplot = len(sites)
