@@ -15,38 +15,32 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from src.functions import check_dir,get_seasons,get_list
-from src.plot_functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldurpdf,plot_voldurmonth,mannwhitney,plot_date_trend
+from src.plot_functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldurpdf,plot_voldurmonth,mannwhitney
 from statsmodels.graphics import tsaplots
 
 ### Begin User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ["jamr_zero"]  # list, site or dam names #"06468170","06468250","06470000",
+sites = ["JAMR"]  # list, site or dam names #"06468170","06468250","06470000",
 seasonal = False # Boolean
 wy_division = "WY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
-ppplot = False       # Will create a plot with all durations plotted with plotting positions
-pdfplot = False      # Plot probability density function of data
-monthplot = False    # Plot monthly distribution of annual peaks
+ppplot = True       # Will create a plot with all durations plotted with plotting positions
+pdfplot = True      # Plot probability density function of data
+monthplot = True    # Plot monthly distribution of annual peaks
 eventdate = "start"   # When to plot seasonality: "start", "mid", "end", or "max"
 
 ### Begin Script ###
-# Loop through sites
+# Check for input and output directories
 for site in sites:
-    print(f"Preparing plots for {site}...")
-    outdir = check_dir(f"{site}/plot")
+    sitedir = check_dir(site,"flow")
+outdir = check_dir("plot")
 
-    # Check for output and input directories
-    indir = f"{site}/data"
-    if not os.path.isdir(indir):
-        print("Input data directory not found.")
-    voldir = f"{site}/volume"
-    if not os.path.isdir(voldir):
-        print("Input volume directory not found.")
-
+# Check Seasonal List
+if seasonal:
     # Import seasons
-    season_df = get_seasons(site)
+    season_df = get_seasons(sites[0])
     seasons = season_df.index.to_list()
 
     # Get durations for seasons
@@ -75,6 +69,26 @@ for site in sites:
             continue
 
         print(season)
+else:
+    seasons = [None]
+
+# TODO loop through seasons
+
+# TODO initalize plot
+
+# TODO Loop through sites (x)
+# TODO Loop through durations (y)
+
+for site in sites:
+    print(f"Preparing plots for {site}...")
+
+    # Check for output and input directories
+    indir = f"{site}/data"
+    if not os.path.isdir(indir):
+        print("Input data directory not found.")
+    voldir = f"{site}/volume"
+    if not os.path.isdir(voldir):
+        print("Input volume directory not found.")
 
         # Begin analysis
         site_dur = list()
@@ -128,7 +142,7 @@ for site in sites:
 
                 df_dur[date_used] = pd.to_datetime(df_dur[date_used])
 
-            #df_dur = df_dur.dropna()
+            df_dur = df_dur.dropna()
             site_dur.append(df_dur)
             var = df_dur.columns[1]
 
@@ -146,10 +160,6 @@ for site in sites:
                 # Check for trends and shifts
                 plot_trendsshifts(evs,dur,var)
                 plt.savefig(f"{outdir}/{site}{s}_{dur}_trends&shifts_plot.jpg", bbox_inches="tight", dpi=600)
-
-                # Check for trends and shifts
-                plot_date_trend(evs,dur,wy_division)
-                plt.savefig(f"{outdir}/{site}{s}_{dur}_start_trends&shifts_plot.jpg", bbox_inches="tight", dpi=600)
 
                 # Check for mann whitney
                 mannwhitney(evs,dur,var)

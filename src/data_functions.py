@@ -346,9 +346,11 @@ def import_daily(site_source,wy_division,decimal,zero=False):
             var = "flow"
 
     # Clean data, if selected
-    if zero != False:
+    if type(zero) is bool and zero==False:
+        print("no edits...")
+    else:
         # Remove negative values
-        if (isinstance(zero,int) and zero!=True) or isinstance(zero,float):
+        if isinstance(zero,int) or isinstance(zero,float):
             idx = site_daily[site_daily[var] < zero].index
             site_daily.loc[idx, var] = zero
             site_daily.loc[idx,"clean"] = f"User Input: {zero}"

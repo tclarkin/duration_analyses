@@ -14,19 +14,21 @@ This script can be run for all sites simultaneously
 
 import os
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from src.functions import check_dir,get_seasons,save_seasons
-from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur
+from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur,cfs2af
 
 ### Begin User Input ###
 #os.chdir("")
 
 # Site information and user selections #
-sites = ["JAMR"]  # list, site or dam names
+sites = ["james_river"]  # list, site or dam names
 seasonal = False # Boolean
-durations = [1,3,5,7,10,15] # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
+durations = [1,60] # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
 wy_division = "WY" # "WY" or "CY"
-plot = False  # Will plot each WY with all durations
+plot_vol = True  # Will plot all WY volumes on a single plot
+plot_wy = False  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
 ### Begin Script ###
@@ -115,6 +117,8 @@ for site in sites:
 
         # Create list to store all duration data
         site_dur = list()
+        site_sum = pd.DataFrame()
+
         if concat:
             site_df = pd.DataFrame()
 
@@ -139,23 +143,50 @@ for site in sites:
             # handle volumes
             print(f'Analyzing duration for {dur}')
             df_dur,dur_data = analyze_voldur(data,dur,decimal)
+            dur_var = df_dur.columns[1]
             site_dur.append(df_dur)
             df_dur.to_csv(f"{outdir}/{site}{s}_{dur}.csv")
             if dur_data is not None:
                 dur_data.to_csv(f"{outdir}/{site}{s}_{dur}_data.csv")
 
+            if dur != "WY":
+                site_sum.loc[dur,"N"] = len(df_dur)
+                site_sum.loc[dur, "mean"] = df_dur[dur_var].mean()
+                site_sum.loc[dur, "median"] = df_dur[dur_var].median()
+                site_sum.loc[dur, "sd"] = df_dur[dur_var].std()
+                site_sum.loc[dur, "skew"] = df_dur[dur_var].skew()
+                site_sum.loc[dur, "log_mean"] = np.log10(df_dur[dur_var]).mean()
+                site_sum.loc[dur, "log_median"] = np.log10(df_dur[dur_var]).median()
+                site_sum.loc[dur, "log_sd"] = np.log10(df_dur[dur_var]).std()
+                site_sum.loc[dur, "log_skew"] = np.log10(df_dur[dur_var]).skew()
+
             if concat:
                 site_df[pd.MultiIndex.from_product([[dur], list(df_dur.columns)],
                                                    names=["dur", "col"])] = df_dur
+        site_sum.to_csv(f"{outdir}/{site}{s}_stats_summary.csv")
+
         if concat:
             # Fix index and multiindex, export
             site_df = site_df.sort_index()
             site_df.columns = pd.MultiIndex.from_tuples(site_df.columns, names=("dur", "col"))
             site_df.to_csv(f"{outdir}/{site}{s}_all_durations.csv")
 
-        if plot:
+        if plot_vol:
             print("Plotting WYs")
 
+            if "WY" in durations_sel:
+                cum_data = data.copy()
+                cum_data[var] = cfs2af(cum_data[var].cumsum())
+                init_voldurplot(cum_data)
+                if wy_division=="WY":
+                    wy_start = cum_data.loc[(cum_data.index.month==10) & (cum_data.index.day==1)].index
+                else:
+                    wy_start = cum_data.loc[(cum_data.index.month == 1) & (cum_data.index.day == 1)].index
+                plt.plot(cum_data.loc[wy_start,var],label="Water Year Data")
+                plt.legend()
+                plt.savefig(f"{outdir}/{site}{s}_wy_cumulative_plot.jpg", bbox_inches="tight", dpi=300)
+
+        if plot_wy:
             for wy in df_dur.index:
                 print(f"  {wy}")
 

@@ -45,6 +45,39 @@ def plot_trendsshifts(evs,dur,var):
 
     plt.legend()
 
+def plot_date_trend(evs,dur,WY):
+    """
+    This function produces the plots for all durations using plotting positions
+    :param evs: df, output from analyze_voldur() for duration
+    :param dur: str, duration being plotted
+    :param var: str, parameter to plot (e.g., "avg_{parameter}")
+    :return: figure
+    """
+
+    # Convert dates to DOY
+    dates = pd.DatetimeIndex(evs.start).day_of_year
+
+    # calculate plotting positions
+    fig, ax = plt.subplots(figsize=(6.25, 4))
+    plt.get_cmap("viridis")
+    plt.ylabel("Start Date")
+    plt.xlabel('Year')
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    ax.grid(which='minor', linestyle=':', linewidth='0.1', color='black')
+    plt.scatter(evs.index,dates,label=f"{dur}-day AMS")
+
+    # Theil Slope
+    theil = theilslopes(dates,evs.index)
+    kendall = kendalltau(dates,evs.index)
+    if theil[0]<1:
+        theil_slope = round(theil[0],1)
+    else:
+        theil_slope = round(theil[0],0)
+    plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {theil_slope} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
+
+    plt.legend()
+
+
 def mannwhitney(evs,dur,var):
     fig, ax = plt.subplots(figsize=(6.25, 4))
     plt.get_cmap("viridis")

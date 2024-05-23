@@ -30,17 +30,17 @@ from src.data_functions import import_daily,season_subset,summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["jamr"] # list, site or dam names
+sites = ["jamr_zero"] # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
 site_sources = [["jamr","in","gp"]] # .csv file or other site info for supported data
 
 # Optional data cleaning (remove sub "zero" values)
 decimal = 1 # number of decimal places to use in data
-zero = True # "average" # False, minimum flow value, or "average" (to handle negative values)
+zero = 0 # "average" # False, minimum flow value, or "average" (to handle negative values)
 
 # Optional seasonal selection
 # Dictionary of seasons by months {"name":[months],etc.}, start/stop {"name":[start,stop]}, OR False
-seasons = {"spring":[3,4,5,6]}
+seasons = False#{"spring":[3,4,5,6]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):

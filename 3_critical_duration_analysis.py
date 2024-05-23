@@ -26,7 +26,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from src.functions import check_dir
 from src.data_functions import csv_daily_import
-from src.crit_functions import identify_thresh_events,init_duration_plot,plot_and_calc_durations,plot_thresh_duration,analyze_cvhs_duration
+from src.crit_functions import identify_thresh_events,init_duration_plot,plot_and_calc_durations,plot_thresh_duration,analyze_cvhs_duration,analyze_volwindow_duration
 
 ### Begin User Input ###
 # Set Working Directory

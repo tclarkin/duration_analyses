@@ -26,7 +26,7 @@ from src.flow_functions import analyze_dur, plot_monthly_dur_ep, plot_wytraces, 
 # os.chdir("")
 
 # Site information and user selections
-sites = ["temp"]  # list, site or dam names
+sites = ["jamr_zero"]  # list, site or dam names
 analyze = ["annual", "monthly"]  # list of "annual", "monthly", "seasonal" or "all"
 pcts = standard  # list of fractional exceedance probabilities or standard (no quotes)
 
@@ -68,8 +68,8 @@ for site in sites:
 
                 # Load data
                 data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
-                data = data.dropna()
                 var = data.columns[0]
+                data = data.loc[data[var].dropna().index,:]
                 decimal = str(data[var].head(1).item()).find('.')
 
                 # Load combos
@@ -106,8 +106,9 @@ for site in sites:
                 combos = allcombos
             # Load data
             data = pd.read_csv(f"{indir}/{site}_site_daily.csv", parse_dates=True, index_col=0)
-            data = data.dropna()
             var = data.columns[0]
+            data = data.loc[data[var].dropna().index, :]
+            decimal = str(data[var].head(1).item()).find('.')
 
             # Build duration tables and plot
             durtable, durraw = analyze_dur(data,combos,pcts,var,decimal)

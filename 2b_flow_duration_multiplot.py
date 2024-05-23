@@ -19,21 +19,26 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["precip","temp","snow","jamr"]  # list, site (cannot handle seasonal)
-seasonal = [False,False,False,False] # False or single item or list matched to sites ("all" for annual)
-labels = ["Precipitation","Temperature","Snow Depth","Flow"]
-ylabel = ["Depth (in)","Degrees (F)","Depth (in)","Flow (ft$^3/s$)"]
-colors = ["black","blue","red","green"]
-linestyles = ["solid","dashed","dotted","dashdot"]
+sites = ["jamr_raw","jamr_zero","JAMR","06468250","06468170"]  # list, site (cannot handle seasonal)
+seasonal = [False,False,False,False,False,False] # False or single item or list matched to sites ("all" for annual)
+labels = ["JAMR (raw)","JAMR (zero)","JAMR (avg)","James @ Kensal (06468250)","James @ Grace City (06468170)"]#,"Pipestem @ Pinegree (06469400)","Pipestem @ Buchanan (06469500)"]
+
+#sites = ["pist","06469500","06469400"]  # list, site (cannot handle seasonal)
+#seasonal = [False,False,False,False,False,False] # False or single item or list matched to sites ("all" for annual)
+#labels = ["Pipestem Res","Pipestem @ Pinegree (06469400)","Pipestem @ Buchanan (06469500)"]
+
+ylabel = "Flow (ft$^3$/s)"
+colors = ["black","blue","red","green","orange","purple"]
+linestyles = ["solid","dashed","dotted","dashdot","solid","dashed"]
 
 # Plot duration curves
-durcurve = False
+durcurve = True
 
 # Plot water year traces?
 wytrace = True
 wy_division = "WY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
-sharey = False
+sharey = True
 
 # Plot box plots?
 boxplot = True
@@ -126,7 +131,8 @@ if wytrace:
             s = f"_{season}"
 
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv",parse_dates=True,index_col=0)
-        data = data.dropna()
+        var = data.columns[0]
+        data = data.loc[data[var].dropna().index, :]
         ax = plot_wytraces(data,wy_division,quantiles,ax=ax,legend=False)
         plt.annotate(f"({alphabet[n]}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
@@ -177,7 +183,8 @@ if boxplot:
             s = f"_{season}"
 
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
-        data = data.dropna()
+        var = data.columns[0]
+        data = data.loc[data[var].dropna().index, :]
         plot_boxplot(data,wy_division,outliers,ax=ax,legend=False)
         plt.annotate(f"({alphabet[n]}) {labels[n]} ({data.index.year.min()}-{data.index.year.max()})", xy=(0, 1.01),
                      xycoords=ax.get_xaxis_transform())
@@ -209,7 +216,8 @@ if summarize:
             s = f"_{season}"
 
         data = pd.read_csv(f"{indir}/{site}{s}_site_daily.csv", parse_dates=True, index_col=0)
-        data = data.dropna()
+        var = data.columns[0]
+        data = data.loc[data[var].dropna().index, :]
         data_summary = summarize_daily(data)
         summary_df[site] = data_summary.loc["all",:]
 

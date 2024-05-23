@@ -24,9 +24,9 @@ from src.functions import check_dir,simple_plot,save_seasons
 #os.chdir("")
 
 # Site information and user selections
-sites = ["06468170"]  # list, site or dam names
+sites = ["364343108160000"]  # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = ["06468170"] # .csv file, usgs site numbers (e.g., "09445000") or .csv data files
+site_sources = ["364343108160000"] # .csv file, usgs site numbers (e.g., "09445000") or .csv data files
 
 # Optional seasonal selection
 # Dictionary of seasons by months {"name":[months],etc.}, start/stop {"name":[start,stop]}, OR False

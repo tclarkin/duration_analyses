@@ -14,6 +14,14 @@ import datetime as dt
 from src.functions import get_varlabel
 
 ### VOLUME DURATION FUNCTIONS
+def cfs2af(cfs):
+    af = cfs * 86400 / 43560
+    return af
+
+def af2cfs(af):
+    cfs = af / (86400 / 43560)
+    return cfs
+
 def analyze_voldur(data,dur,decimal):
     """
     This function calculates a rolling mean and then identifies the ann. max. for each WY
@@ -34,11 +42,13 @@ def analyze_voldur(data,dur,decimal):
                 if dur == "WY":
                     evs.loc[wy, "annual_sum"] = round(data.loc[data["wy"] == wy, var].sum(),decimal)
                     if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","QU","cfs","CFS"]:
-                        evs.loc[wy, "annual_acft"] = round(data.loc[data["wy"] == wy, var].sum() * 86400 / 43560,decimal)
+                        evs.loc[wy, "annual_acft"] = round(cfs2af(data.loc[data["wy"] == wy, var].sum()),decimal)
                     evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, var])
                     max_idx = data.loc[data["wy"] == wy, var].idxmax()
                     evs.loc[wy, "max"] = max_idx
                     evs.loc[wy, f"max_{var}"] = round(data.loc[max_idx, var],decimal)
+                    # TODO Add centroid calc
+                    #evs.loc[wy,f"centroid_{var}"] = data.loc[data["wy"] == wy].index.astype('int64')*data.loc[data["wy"] == wy, var]/data.loc[data["wy"] == wy].index.astype('int64').sum
     else:
         # Calculate rolling before parsing years
         dur_data = data
@@ -59,6 +69,9 @@ def analyze_voldur(data,dur,decimal):
             evs.loc[wy, "max"] = data.loc[evs.loc[wy, "start"]:evs.loc[wy, "end"],var].idxmax()
             evs.loc[wy,f"max_{var}"] = data.loc[evs.loc[wy,"max"],var]
             evs.loc[wy,"count"] = len(data.loc[data["wy"] == wy, var])
+            #TODO Add centroid calc
+            #evs.loc[wy, f"centroid_{var}"] = data.loc[evs.loc[wy,"start"]:evs.loc[wy,"end"]].index.astype('int64') * data.loc[evs.loc[wy,"start"]:evs.loc[wy,"end"], var] / \
+            #                                 data.loc[evs.loc[wy,"start"]:evs.loc[wy,"end"]].index.astype('int64').sum
 
             # Check start
             if dur_data.loc[evs.loc[wy, "start"], "wy"] < wy:
@@ -73,7 +86,7 @@ def analyze_voldur(data,dur,decimal):
 
     return evs,dur_data
 
-def init_voldurplot(data,wy):
+def init_voldurplot(data,wy=None):
     """
 
     :param data: df, flow timeseries
@@ -82,11 +95,15 @@ def init_voldurplot(data,wy):
     """
     var = data.columns[0]
     fig, ax = plt.subplots(figsize=(6.25, 4))
-    plt.title(wy)
+    if wy is not None:
+        plt.title(wy)
     plt.ylabel(get_varlabel(var))
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     plt.xticks(rotation=90)
-    dates = data.index[data["wy"]==wy]
+    if wy is not None:
+        dates = data.index[data["wy"]==wy]
+    else:
+        dates = data.index
     inflow = data.loc[dates,var]
     plt.plot(dates, inflow, color='black',label=var)
 
