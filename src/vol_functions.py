@@ -41,7 +41,7 @@ def analyze_voldur(data,dur,decimal):
             else:
                 if dur == "WY":
                     evs.loc[wy, "annual_sum"] = round(data.loc[data["wy"] == wy, var].sum(),decimal)
-                    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","QU","cfs","CFS"]:
+                    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","in","Q","QU","cfs","CFS","qj","QJ","qd","QD"]:
                         evs.loc[wy, "annual_acft"] = round(cfs2af(data.loc[data["wy"] == wy, var].sum()),decimal)
                     evs.loc[wy, "count"] = len(data.loc[data["wy"]==wy, var])
                     max_idx = data.loc[data["wy"] == wy, var].idxmax()
@@ -51,7 +51,7 @@ def analyze_voldur(data,dur,decimal):
                     #evs.loc[wy,f"centroid_{var}"] = data.loc[data["wy"] == wy].index.astype('int64')*data.loc[data["wy"] == wy, var]/data.loc[data["wy"] == wy].index.astype('int64').sum
     else:
         # Calculate rolling before parsing years
-        dur_data = data
+        dur_data = data.copy()
         dur_data[var] = dur_data[var].rolling(dur, min_periods=int(np.ceil(dur))).mean()
         for wy in WYs:
             try:
@@ -62,7 +62,7 @@ def analyze_voldur(data,dur,decimal):
                 continue
             evs.loc[wy,"start"] = max_idx-dt.timedelta(days=int(dur)-1) # place date as start of window
             evs.loc[wy,f"avg_{var}"] = round(dur_data.loc[max_idx,var],decimal)
-            if var in ["flow", "Flow", "discharge", "Discharge", "inflow", "Inflow", "IN", "Q", "QU", "cfs", "CFS"]:
+            if var in ["flow", "Flow", "discharge", "Discharge", "inflow", "Inflow", "IN","in", "Q", "QU", "cfs", "CFS","qj","QJ","qd","QD"]:
                 evs.loc[wy,f"volume_acft"] = round(evs.loc[wy,f"avg_{var}"]*dur * 86400 / 43560,decimal)
             evs.loc[wy, "mid"] = max_idx - dt.timedelta(days=max([0,int(dur / 2) - 1]))  # place date as middle of window
             evs.loc[wy, "end"] = max_idx  # place date as end of window
