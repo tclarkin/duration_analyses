@@ -118,6 +118,7 @@ dmypy.json
 
 # Raw data
 *.csv
+!src/*.csv
 *.jpg
 *.xls
 *.xlsx

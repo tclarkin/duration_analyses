@@ -14,7 +14,7 @@ import datetime as dt
 from requests import get as r_get
 from io import StringIO
 ### DATA PREP FUNCTIONS ###
-def csv_daily_import(filename,wy="WY",single=True):
+def csv_daily_import(filename,single=True):
     """
     Imports data in a .csv files with two columns: date, variable (user specified)
     :param filename: str, filename or file path
@@ -45,17 +45,9 @@ def csv_daily_import(filename,wy="WY",single=True):
     out = pd.DataFrame(index=date_index)
     out = out.merge(data[vars],left_index=True,right_index=True,how="left")
 
-    # Add year, month and wy
-    out["doy"] = pd.DatetimeIndex(out.index).dayofyear
-    out["year"] = pd.DatetimeIndex(out.index).year
-    out["month"] = pd.DatetimeIndex(out.index).month
-    out["wy"] = out["year"]
-    if wy == "WY":
-        out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
-
     return(out)
 
-def nwis_import(site, dtype, start=None, end=None, wy="WY"):
+def nwis_import(site, dtype, start=None, end=None):
     """
     Imports flows from NWIS site
     :param site: str, USGS site number
@@ -116,27 +108,18 @@ def nwis_import(site, dtype, start=None, end=None, wy="WY"):
 
     out.loc[out["flow"]==-999999,"flow"] = np.nan
 
-    # Add year, month and wy
-    out["doy"] = pd.DatetimeIndex(out.index).dayofyear
-    out["year"] = pd.DatetimeIndex(out.index).year
-    out["month"] = pd.DatetimeIndex(out.index).month
-    out["wy"] = out["year"]
-    if wy=="WY":
-        out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
-
     return(out)
 
-
-# Define functions
-def snotel_import(site_triplet,vars=["WTEQ", "SNWD", "PREC", "TAVG"],wy="WY",verbose=False):
+def import_snotel(site,stype,vars=["WTEQ","SNWD","PREC","TAVG"],verbose=False,inc=False):
     """Download NRCS SNOTEL data
 
     Parameters
     ---------
-        site_triplet: three part SNOTEL triplet (e.g., 713_CO_SNTL)
-            https://wcc.sc.egov.usda.gov/nwcc/yearcount?network=sntl&counttype=statelist&state=
+        site_no: site number
+        snotel_sites: df of all sites with other information on sites (https://wcc.sc.egov.usda.gov/nwcc/yearcount?network=sntl&state=&counttype=statelist)
+        start_date: datetime
+        end_date: datetime
         vars: array of variables for import (tested with WTEQ, SNWD, PREC, TAVG..other options may be available)
-        out_dir: str to directory to save .csv...if None, will return df
         verbose: boolean
             True : enable print during function run
 
@@ -145,6 +128,20 @@ def snotel_import(site_triplet,vars=["WTEQ", "SNWD", "PREC", "TAVG"],wy="WY",ver
         dataframe
 
     """
+    print(site)
+    # Get snotel file
+    snotel_sites = pd.read_csv("src/snotel_sites.csv")
+
+    # Get site name, add %20 for spaces
+    if stype=="name":
+        name = site.replace(" ","%20")
+    else:
+        name = snotel_sites.loc[snotel_sites[stype]==site,"name"].item().replace(" ", "%20")
+    print(name)
+    state = snotel_sites.loc[snotel_sites[stype]==site,"state"].item()
+    print(state)
+    print(vars)
+
     # Create dictionary of variables
     snotel_dict = dict()
     ext = "DAILY"
@@ -153,57 +150,65 @@ def snotel_import(site_triplet,vars=["WTEQ", "SNWD", "PREC", "TAVG"],wy="WY",ver
     for var in vars:
         if verbose == True:
             print("Importing {} data".format(var))
-        site_url = "https://www.nrcs.usda.gov/Internet/WCIS/sitedata/" + ext + "/" + var + "/" + site_triplet + ".json"
+        site_url = f"https://nwcc-apps.sc.egov.usda.gov/awdb/site-plots/POR/{var}/{state}/{name}.csv"
+        print(site_url)
         if verbose == True:
             print(site_url)
         failed = True
         tries = 0
+        csv_str = ""
         while failed:
             try:
-                csv_str = r_get(site_url, timeout=1,verify=False).text
+                csv_str = r_get(site_url, timeout=5,verify=True).text
                 failed = False
-            except ConnectionError:
-                raise Exception("Timeout; Data unavailable?")
+            except (ConnectionError, TimeoutError,ReadTimeout,ReadTimeoutError) as error:
+                print(f"{error}")
                 tries += 1
-                print(tries)
-                if tries > 10:
-                    return
+                if tries <= 10:
+                    print(f"After {tries} tries, retrying...")
+                else:
+                    continue
 
             if "not found on this server" in csv_str:
                 print("Site URL incorrect.")
-                return
+                continue
 
         csv_io = StringIO(csv_str)
-        f = pd.read_json(csv_io, orient="index")
+        f = pd.read_csv(csv_io,index_col=0)
 
         # Create index of dates for available data for current site
-        json_index = pd.date_range(f.loc["beginDate"].item(), f.loc["endDate"].item(), freq="D", tz='UTC')
+        df_index = pd.date_range(dt.datetime.strptime(f"{f.index[0]}-{int(f.columns[0])-1}","%m-%d-%Y"),
+                                   dt.datetime.today(),
+                                   freq="D",
+                                   tz='UTC')
         # Create dataframe of available data (includes Feb 29)
-        json_data = pd.DataFrame(f.loc["values"].item())
-        # Cycle through and remove data assigned to February 29th in non-leap years
-        years = json_index.year.unique()
-        for year in years:
-            if (year % 4 == 0) & ((year % 100 != 0) | (year % 400 == 0)):
-                continue
-            else:
-                feb29 = dt.datetime(year=year, month=3, day=1, tzinfo=dt.timezone.utc)
-                try:
-                    feb29idx = json_index.get_loc(feb29)
-                    if feb29idx == 0:
-                        continue
-                    else:
-                        json_data = json_data.drop(feb29idx)
-                        if verbose == True:
-                            print("February 29th data for {} removed.".format(year))
-                except KeyError:
-                    continue
+        snotel_in = pd.DataFrame(index=df_index)
 
         # Concatenate the cleaned data to the date index
-        snotel_in = pd.DataFrame(index=json_index)
-        snotel_in[var] = json_data.values
+        for year in f.columns:
+            try:
+                int(year)
+            except ValueError:
+                continue
+            # Remove missing columns...
+            year_data = f.loc[:,year].dropna()
+
+            # Fix index (will no longer include Feb 29 when missing)
+            year_index = list()
+            for i in year_data.index:
+                if int(i[:2])>=10:
+                    year_index.append(dt.datetime.strptime(f"{i}-{int(year)-1}","%m-%d-%Y"))
+                else:
+                    year_index.append(dt.datetime.strptime(f"{i}-{int(year)}", "%m-%d-%Y"))
+
+            year_data.index = pd.DatetimeIndex(year_index,tz="utc")
+
+            # Set appropriate rows in snotel_in
+            snotel_in.loc[year_data.index,var] = year_data
+
 
         # For precip, calculate incremental precip and remove negative values
-        if var == "PREC":
+        if var == "PREC" and inc==True:
             if verbose == True:
                 print("Calculating incremental Precip.")
             snotel_in["PREC"] = snotel_in[var] - snotel_in[var].shift(1)
@@ -222,28 +227,20 @@ def snotel_import(site_triplet,vars=["WTEQ", "SNWD", "PREC", "TAVG"],wy="WY",ver
             end = snotel_dict[key].index.max()
 
     dates = pd.date_range(begin,end,freq="D",tz='UTC')
-    out = pd.DataFrame(index=dates)
+    data = pd.DataFrame(index=dates)
 
     if verbose == True:
         print("Preparing output")
     for key in snotel_dict.keys():
         # Merge to output dataframe
-        snotel_in = out.merge(snotel_dict[key][key], left_index=True, right_index=True, how="left")
-        out[key] = snotel_in[key]
+        snotel_in = data.merge(snotel_dict[key][key], left_index=True, right_index=True, how="left")
+        data[key] = snotel_in[key]
         if verbose == True:
             print("Added to dataframe")
 
-    # Add year, month and wy
-    out["doy"] = pd.DatetimeIndex(out.index).dayofyear
-    out["year"] = pd.DatetimeIndex(out.index).year
-    out["month"] = pd.DatetimeIndex(out.index).month
-    out["wy"] = out["year"]
-    if wy=="WY":
-        out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
+    return (data)
 
-    return out
-
-def import_hydromet(site,var,region,wy="WY",verbose=False):
+def import_hydromet(site,var,region,verbose=False):
     # Set today's date
     today = dt.datetime.today()
 
@@ -311,38 +308,39 @@ def import_hydromet(site,var,region,wy="WY",verbose=False):
 
     out = out.merge(hydro_in[var], left_index=True, right_index=True, how="left")
 
-    # Add year, month and wy
-    out["doy"] = pd.DatetimeIndex(out.index).dayofyear
-    out["year"] = pd.DatetimeIndex(out.index).year
-    out["month"] = pd.DatetimeIndex(out.index).month
-    out["wy"] = out["year"]
-    if wy == "WY":
-        out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
-
     return out
 
 def import_daily(site_source,wy_division,decimal,zero=False):
     if isinstance(site_source,list):
-        # Load hydromet data
-        site = site_source[0]
-        var = site_source[1]
-        region = site_source[2]
-        site_daily = import_hydromet(site,var,region,wy_division)
-        var = site_daily.columns[0]
+        if site_source[2] in ["sntl","SNTL"]:
+            site = site_source[0]
+            if site.isnumeric():
+                stype = "site_no"
+                site = int(site)
+            else:
+                stype = "name"
+            var = site_source[1]
+            if var not in ["WTEQ","SNWD","PREC","TAVG"]:
+                print("Invalid variable listed. Using WTEQ")
+                var = "WTEQ"
+            site_daily = import_snotel(site,stype,[var])
+        else:
+            # Load hydromet data
+            site = site_source[0]
+            var = site_source[1]
+            region = site_source[2]
+            site_daily = import_hydromet(site,var,region)
+            var = site_daily.columns[0]
     elif ".csv" in site_source:
         # Load from .csv file
-        site_daily = csv_daily_import(site_source, wy=wy_division)
+        site_daily = csv_daily_import(site_source)
         var = site_daily.columns[0]  # infer variable by column name
-    elif "SNTL" in site_source or "sntl" in site_source:
-        var = site_source.split("+")[1]
-        site_source = site_source.split("+")[0]
-        site_daily = snotel_import(site_source,[var])
     else:
         # Load from usgs website
         if len(site_source) != 8:
             print("Must provide valid USGS site number (8-digit string) for at-site data")
         else:
-            site_daily = nwis_import(site=site_source, dtype="dv", wy=wy_division)
+            site_daily = nwis_import(site=site_source, dtype="dv")
             var = "flow"
 
     # Clean data, if selected
@@ -376,6 +374,14 @@ def import_daily(site_source,wy_division,decimal,zero=False):
                         site_daily.loc[idxlast, "clean"] = "Average: set to zero"
 
     site_daily[var] = site_daily[var].round(decimal)
+
+    # Add year, month and wy
+    site_daily["doy"] = pd.DatetimeIndex(site_daily.index).dayofyear
+    site_daily["year"] = pd.DatetimeIndex(site_daily.index).year
+    site_daily["month"] = pd.DatetimeIndex(site_daily.index).month
+    site_daily["wy"] = site_daily["year"]
+    if wy_division == "WY":
+        site_daily.loc[site_daily["month"] >= 10, "wy"] = site_daily.loc[site_daily["month"] >= 10, "year"] + 1
 
     return site_daily
 
@@ -425,19 +431,6 @@ def csv_peak_import(filename):
         print("Dates exceed current date. Please check dates are correct and in dd-mmm-yyyy format.")
         return
     out = data
-
-    if type(data.index) != pd.core.indexes.numeric.Int64Index:
-        # Add year, month and wy
-        out["doy"] = pd.DatetimeIndex(out.index).dayofyear
-        out["year"] = pd.DatetimeIndex(out.index).year
-        out["month"] = pd.DatetimeIndex(out.index).month
-        out["wy"] = out["year"]
-        if wy == "WY":
-            out.loc[out["month"] >= 10, "wy"] = out.loc[out["month"] >= 10, "year"] + 1
-
-        out = out.reset_index(drop=False)
-        out.index = out.wy
-        out = out.drop(["year", "wy"], axis=1)
 
     return(out)
 

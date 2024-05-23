@@ -15,7 +15,7 @@ variable, where variable is "flow", "swe", or "stage" (no spaces): no commas
 Alternatively, it can handle daily data from online sources:
  - usgs: site number (e.g., "09445000"),
  - hydromet: list of site, var, and region (e.g., ["site","var","region"]), and
- - snotel: triplets and params (e.g., 327_CO_SNTL+PRCP)
+ - snotel: list of site, var, and type (e.g., ["{name}" or "{site_no}","WTEQ","SNTL"]
 
 Seasons are either False (use entire year) or specified using a dictionary:
  - months {"name":[months],etc.}, or
@@ -30,9 +30,9 @@ from src.data_functions import import_daily,season_subset,summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["jamr_zero"] # list, site or dam names
+sites = ["sntl_chapman","sntl_ivanhoe"] # list, site or dam names
 wy_division = "WY" # "WY" or "CY"
-site_sources = [["jamr","in","gp"]] # .csv file or other site info for supported data
+site_sources = [["Ivanhoe","wteq","sntl"],["1101","wteq","sntl"]] # .csv file or other site info for supported data
 
 # Optional data cleaning (remove sub "zero" values)
 decimal = 1 # number of decimal places to use in data
