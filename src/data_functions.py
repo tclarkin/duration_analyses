@@ -13,6 +13,7 @@ import numpy as np
 import datetime as dt
 from requests import get as r_get
 from io import StringIO
+
 ### DATA PREP FUNCTIONS ###
 def csv_daily_import(filename,single=True):
     """
@@ -296,7 +297,6 @@ def import_hydromet(site,var,region,verbose=False):
     # Fix variable name
     var = var
     hydro_in.columns = [var]
-
     # Check for start and end dates
     hydro_in_true = hydro_in[hydro_in[var].notna()==True].index
     begin = hydro_in_true.min()
