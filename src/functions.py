@@ -7,17 +7,11 @@ This script contains all of the functions and pre-defined variables used in the 
 
 """
 import os
-import dataretrieval.nwis as nwis
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import probscale
-import datetime as dt
-from scipy.stats import mannwhitneyu
-from scipy.stats import kendalltau
-from scipy.stats.mstats import theilslopes
-from scipy.stats import norm
 
 def getsites(input_file):
     # First, check for the type of input_file provided
@@ -25,7 +19,9 @@ def getsites(input_file):
         # If we have a list, take the list and make it both the sites (names) and the site_sources
         sites = list()
         for i in input_file:
-            if isinstance(i,list):
+            if i is None:
+                sites.append(None)
+            elif isinstance(i,list):
                 sites.append(i[0])
             else:
                 # Site names will be the last name, without extension
@@ -52,8 +48,9 @@ def createclone(script_name,dict):
     with open(script_name,"r") as script:
         script_lines = script.readlines()
     # Create new script
-    clone_dir = check_dir("clones")
-    with open(f"{clone_dir}/{script_name}","w+") as clone:
+    clone_dir = os.getcwd()#check_dir("clones")
+    clone_name = f"{script_name.split('.')[0]}_clone.py"
+    with open(f"{clone_dir}/{clone_name}","w+") as clone:
         # Find beginning of code:
         for line in script_lines:
             clone.write(line)
@@ -66,7 +63,7 @@ def createclone(script_name,dict):
                     else:
                         setting = dict[d]
                     clone.write(f"{key} = {setting}\n")
-    return f"{clone_dir}/{script_name}"
+    return f"{clone_dir}/{clone_name}"
 
 def save_seasons(site,seasons):
     """
@@ -133,12 +130,14 @@ def get_varlabel(var):
     if isinstance(var,str)==False:
         var = var.columns[0]
 
-    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","QU","cfs","CFS"]:
+    if var in ["flow","Flow","discharge","Discharge","inflow","Inflow","IN","Q","QU","cfs","CFS","29","42"]:
         lab = "Flow (ft$^3$/s)"
     elif var in ["peak", "Peak", "peaks", "Peaks","peak discharge","Peak Discharge"]:
         lab = "Peak Flow (ft$^3$/s)"
-    elif var in ["stage","Stage","feet","Feet","FT","ft","pool_elevation","elevation","Elevation","elev","Elev"]:
+    elif var in ["stage","Stage","feet","Feet","FT","ft","pool_elevation","elevation","Elevation","elev","Elev","49"]:
         lab = "Stage (ft)"
+    elif var in ["storage","AF","af","contents","volume","17"]:
+        lab = "Volume (ac-ft)"
     elif var in ["SWE","swe","snowpack","snowdepth","snow","SNWD","WTEQ"]:
         lab = "SWE (in)"
     elif var in ["P","Precip","Rainfall","rainfall","precip","precipitation","Precipitation","PRCP","PREC"]:

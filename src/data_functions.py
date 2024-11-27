@@ -246,11 +246,20 @@ def import_hydromet(site,var,region,verbose=False):
     today = dt.datetime.today()
 
     # Build site url depending on region
-    if region == "CPN" or region == "cpn":
+    if region in ["cpn","CPN","pn","PN"]:
+        reg = "CPN"
         site_url = f"https://www.usbr.gov/pn-bin/daily.pl?station={site}&format=html&year={1900}&month={10}&day={1}&year={today.year}&month={today.month}&day={today.day}&pcode={var}"
 
-    elif region == "GP" or region == "gp":
+    elif region in ["GP","gp","MBART","mbart","MB","mb"]:
+        reg = "MBART"
         site_url = f"https://www.usbr.gov/gp-bin/webarccsv.pl?parameter={site}%20{var}&syer={1900}&smnth={10}&sdy={1}&eyer={today.year}&emnth={today.month}&edy={today.day}&format=2"
+
+    elif region in ["UC","uc","UCB","ucb"]:
+        reg = "UCB"
+        ucb_dict = {"af":"17","storage":"17","in":"29","qu":"29","qd":"42","fb":"49","elev":"49","stage":"49"}
+        if var in ucb_dict.keys():
+            var = ucb_dict[var]
+        site_url = f"https://www.usbr.gov/uc/water/hydrodata/reservoir_data/{site}/csv/{var}.csv"
 
     else:
         return None
@@ -277,16 +286,20 @@ def import_hydromet(site,var,region,verbose=False):
             return
 
     # Fix html info and read csv (GP only)
-    if region=="GP" or region=="gp":
+    if reg=="MBART":
         csv_str = csv_str.split("BEGIN DATA")[1].replace("NO RECORD","NaN")
         csv_str = csv_str.split("END DATA")[0].replace("MISSING","NaN").replace(" ","")
         csv_io = StringIO(csv_str)
         f = pd.read_csv(csv_io,parse_dates=True,index_col=0)
     # Read html (CPN only)
-    else:
+    elif reg=="CPN":
         # Convert to dataframe
         csv_io = StringIO(csv_str)
         f = pd.read_html(csv_io,flavor="lxml",parse_dates=True,index_col=0)
+    elif reg=="UCB":
+        # Convert to dataframe
+        csv_io = StringIO(csv_str)
+        f = pd.read_csv(csv_io,parse_dates=True,index_col=0)
 
     # Fix if list
     if isinstance(f,list):
