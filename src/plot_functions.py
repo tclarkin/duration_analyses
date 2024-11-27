@@ -16,6 +16,7 @@ from scipy.stats import kendalltau
 from scipy.stats.mstats import theilslopes
 from scipy.stats import norm
 from src.functions import get_varlabel
+from statsmodels.graphics import tsaplots
 
 def plot_trendsshifts(evs,dur,var):
     """
@@ -97,6 +98,14 @@ def mannwhitney(evs,dur,var):
     plt.plot([evs.index.min(),evs.index.max()],[0.05]*2,linestyle="dashed",label="0.05 significance")
     plt.legend()
 
+def acf(evs,var):
+    # Drop nans
+    evs = evs[var].dropna()
+    # Create figure
+    fig = tsaplots.plot_acf(evs, lags=20)
+    fig.set_size_inches(6.25, 4)
+    plt.ylabel("Autocorrelation")
+    plt.xlabel("Lag K, in years")
 def plot_normality(evs,dur,var):
     """
     This function produces the plots for all durations using plotting positions
@@ -168,6 +177,8 @@ def plot_voldurpp(site,site_dur,durations,alpha=0):
         dur = durations[d]
         evs = site_dur[d]
         var = evs.columns[1]
+        if d==0:
+            plt.ylabel(get_varlabel(var))
 
         # calculate plotting positions
         if dur=="WY":
@@ -179,7 +190,7 @@ def plot_voldurpp(site,site_dur,durations,alpha=0):
             else:
                 peaks_all = peaks_sorted.merge(evs,left_on="wy",right_index=True,how="outer")
             peaks_all.to_csv(f"{site}/plot/{site}_{dur}_pp.csv")
-            plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[var],label=f"{dur}-day {var}")
+            plt.scatter(peaks_sorted["pp"]*100,peaks_sorted[var],label=f"{dur}-day {get_varlabel(var)}")
 
             if peaks_sorted[var].min() < minp:
                 minp = peaks_sorted[var].min()
