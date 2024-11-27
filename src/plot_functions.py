@@ -84,6 +84,8 @@ def mannwhitney(evs,dur,var):
     plt.ylabel(f"{dur} {get_varlabel(var)}")
     plt.xlabel('Year')
 
+    evs = evs.dropna()
+
     mw = pd.DataFrame()
     for i in evs.index:
         idx = f'start-{i} vs {i}-end'
