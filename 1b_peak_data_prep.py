@@ -24,13 +24,13 @@ from src.functions import check_dir,simple_plot,save_seasons
 #os.chdir("")
 
 # Site information and user selections
-sites = ["364343108160000"]  # list, site or dam names
-wy_division = "WY" # "WY" or "CY"
-site_sources = ["364343108160000"] # .csv file, usgs site numbers (e.g., "09445000") or .csv data files
+sites = ["frio_derby","frio_calliham","frio_tilden","sanmiguel"] # list, site or dam names
+wy_division = "CY" # "WY" or "CY"
+site_sources = ["08205500","08207000","08206600","08206700"] # .csv file or other site info for supported data
 
 # Optional seasonal selection
 # Dictionary of seasons by months {"name":[months],etc.}, start/stop {"name":[start,stop]}, OR False
-seasons = {"spring":[3,4,5,6]}
+seasons = False#{"spring":[3,4,5,6]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):
@@ -41,6 +41,7 @@ for site,site_source in zip(sites,site_sources):
 
     # Load, plot, and save at-site data
     site_peaks,var = import_peaks(site_source)
+    site_peaks.dropna(inplace=True)
     simple_plot(site_peaks,"Site Peaks",marker="o")
     plt.legend()
     plt.savefig(f"{outdir}/{site}_site_peak.jpg",bbox_inches='tight',dpi=300)
@@ -49,7 +50,7 @@ for site,site_source in zip(sites,site_sources):
     data = pd.read_csv(f"{outdir}/{site}_site_daily.csv", parse_dates=True, index_col=0)
     dvar = data.columns[0]
     if data.wy.max() > site_peaks.index.max():
-        for wy in range(site_peaks.index.max()+1,data.wy.max()):
+        for wy in range(int(site_peaks.index.max()+1),data.wy.max()):
             site_peaks.loc[wy,:] = [np.nan]*len(site_peaks.columns)
 
     for wy in site_peaks.index:

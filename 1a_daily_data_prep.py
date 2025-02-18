@@ -30,17 +30,17 @@ from src.data_functions import import_daily,season_subset,summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["sntl_chapman","sntl_ivanhoe"] # list, site or dam names
-wy_division = "WY" # "WY" or "CY"
-site_sources = [["Ivanhoe","wteq","sntl"],["1101","wteq","sntl"]] # .csv file or other site info for supported data
+sites = ["choke_scale"]#,"frio_derby","frio_tilden","sanmiguel","frio_calliham","choke_full"] # list, site or dam names
+wy_division = "CY" # "WY" or "CY"
+site_sources = ["inflow_scale.csv"]#,"08205500","08206600","08206700","08207000","choke_full.csv"] # .csv file or other site info for supported data
 
 # Optional data cleaning (remove sub "zero" values)
-decimal = 1 # number of decimal places to use in data
-zero = 0 # "average" # False, minimum flow value, or "average" (to handle negative values)
+decimal = 2 # number of decimal places to use in data
+zero = False # "average" # False, minimum flow value, or "average" (to handle negative values)
 
 # Optional seasonal selection
 # Dictionary of seasons by months {"name":[months],etc.}, start/stop {"name":[start,stop]}, OR False
-seasons = False#{"spring":[3,4,5,6]}
+seasons = False #{"const":[6,7,8,9,10]}
 
 ### Begin Script ###
 for site,site_source in zip(sites,site_sources):

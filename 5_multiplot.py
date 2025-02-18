@@ -15,20 +15,19 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from src.functions import check_dir,get_seasons,get_list
-from src.plot_functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldurpdf,plot_voldurmonth,mannwhitney,plot_date_trend
-from statsmodels.graphics import tsaplots
+from src.plot_functions import plot_trendsshifts,plot_normality,plot_voldurpp,plot_voldurpdf,plot_voldurmonth,mannwhitney,plot_date_trend,acf
 
 ### Begin User Input ###
 #os.chdir("")
 
 # Site information and user selections
-sites = ["jamr_zero"]  # list, site or dam names #"06468170","06468250","06470000",
+sites = ["choke_scale","frio_derby","frio_tilden","sanmiguel","frio_calliham","choke","choke_full"] # list, site or dam names
 seasonal = False # Boolean
-wy_division = "WY" # "WY" or "CY"
+wy_division = "CY" # "WY" or "CY"
 idaplot = True      # Will create initial data analysis plots
-ppplot = False       # Will create a plot with all durations plotted with plotting positions
-pdfplot = False      # Plot probability density function of data
-monthplot = False    # Plot monthly distribution of annual peaks
+ppplot = True       # Will create a plot with all durations plotted with plotting positions
+pdfplot = True      # Plot probability density function of data
+monthplot = True    # Plot monthly distribution of annual peaks
 eventdate = "start"   # When to plot seasonality: "start", "mid", "end", or "max"
 
 ### Begin Script ###
@@ -64,10 +63,12 @@ for site in sites:
         if season is None:
             durations_season = durations
             s=""
+            durations_season.append("WY")
         else:
             durations_season = durations[season]
             if season=="all":
                 s=""
+                durations_season.append("WY")
             else:
                 s=f"_{season}"
 
@@ -95,7 +96,7 @@ for site in sites:
             peaks = False
             durations_sel = durations_season
 
-        if "WY" in durations_season:
+        if "WY" in durations_season and s!="":
             print("Removing WY from list of durations.")
             durations_sel = durations_season
             durations_sel.remove("WY")
@@ -121,12 +122,15 @@ for site in sites:
                 remove_dur.append(dur)
                 continue
             else:
+                # drop empty rows
+                df_dur.dropna(how="all", inplace=True)
+
                 if eventdate not in list(df_dur.columns):
                     date_used = "date"
-                else:
-                    date_used = eventdate
+                    if dur == "WY":
+                        df_dur[date_used] = df_dur.index
 
-                df_dur[date_used] = pd.to_datetime(df_dur[date_used])
+                    df_dur[eventdate] = pd.to_datetime(df_dur[date_used])
 
             #df_dur = df_dur.dropna()
             site_dur.append(df_dur)
@@ -160,10 +164,7 @@ for site in sites:
                 # Check for autocorrelation
                 if len(evs.index) < 20:
                     continue
-                fig = tsaplots.plot_acf(evs[var], lags=20)
-                fig.set_size_inches(6.25, 4)
-                plt.ylabel("Autocorrelation")
-                plt.xlabel("Lag K, in years")
+                acf(evs,var)
                 plt.savefig(f"{outdir}/{site}{s}_{dur}_acf_plot.jpg", bbox_inches="tight", dpi=600)
 
                 # Check for normality

@@ -23,12 +23,12 @@ from src.vol_functions import analyze_voldur,init_voldurplot,plot_voldur,cfs2af
 #os.chdir("")
 
 # Site information and user selections #
-sites = ["james_river"]  # list, site or dam names
+sites = ["choke_scale","frio_derby","frio_tilden","sanmiguel","frio_calliham","choke_full"] # list, site or dam names
 seasonal = False # Boolean
-durations = [1,60] # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
-wy_division = "WY" # "WY" or "CY"
+durations = [1,3,7,15,30] # list uses same durations for all seasons, dict will apply specificly to each season included, use "all" for annual
+wy_division = "CY" # "WY" or "CY"
 plot_vol = True  # Will plot all WY volumes on a single plot
-plot_wy = False  # Will plot each WY with all durations
+plot_wy = True  # Will plot each WY with all durations
 concat = True # Will combine all tables
 
 ### Begin Script ###

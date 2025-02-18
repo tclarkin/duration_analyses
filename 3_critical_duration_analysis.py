@@ -33,11 +33,11 @@ from src.crit_functions import identify_thresh_events,init_duration_plot,plot_an
 #os.chdir("")
 
 # Site information and user selections
-site = "06468170" # site (cannot handle seasonal)
-season = "spring" # False or season name
-event_thresh = 4500 # threshold flow for defining flood events
+site = "ltr_in" # site (cannot handle seasonal)
+season = "const" # False or season name
+event_thresh = 700 # threshold flow for defining flood events
 min_dur = None      # minimum duration acceptable for analysis (or None)
-min_peak = 30000   # minimum duration acceptable for analysis (or None)
+min_peak = 5000     # minimum duration acceptable for analysis (or None)
 plot_max = 0        # maximum duration to show in peak vs duration plot (will use max if 0)
 mean_type = "arithmetic" # "arithmetic", "geometric", "peak-weight"
 

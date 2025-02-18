@@ -7,6 +7,8 @@ Batch Run of Duration Analyses  (v1)
 ...add description...
 
 """
+import os
+import shutil
 import subprocess
 from src.functions import getsites,createclone
 
@@ -17,31 +19,31 @@ from src.functions import getsites,createclone
 wy_division = "WY" # "WY" or "CY"
 
 ## Script 1a Settings
-script1a = False
-script1a_input_file = ["06468170","06468250","06470000",["JAMR","in","gp"]] # single file with columns for each site OR list of USGS gages and/or site names
+script1a = True
+script1a_input_file = ["13042500","13040000","13041000","13041010",["isli","qu","cpn"]] # single file with columns for each site OR list of USGS gages and/or site names
 script1a_dict = {"decimal":1,    # Number of decimal places to use in data
                 "zero":False, # False, minimum flow value, or 'average'
-                "seasons": False} # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
+                "seasons":False} # False or Dictionary of seasons and months {"name":[months],etc.} or start,stop {"name":[doy,doy]}
 
 ## Script 1b Settings
-script1b = False
-script1b_input_file = ["06468170","06468250","06470000",None] # single file with columns for each site OR list of USGS gages and/or site names (None for no gage)
+script1b = True
+script1b_input_file = ["13042500","13040000","13041000","13041010",None] # single file with columns for each site OR list of USGS gages and/or site names (None for no gage)
 
 ## Script 2a Settings
-script2a = False
+script2a = True
 script2a_dict = {"analyze":["annual","monthly"], # list of "annual", "monthly", "seasonal" or "all"
-                "wytrace":True, # Boolean to plot wy traces
+                "wytrace":False, # Boolean to plot wy traces
                 "boxplot":True} # Boolean to plot boxplot
 
 ## Script 2b Settings
 # No seasonal ability in batch run
-script2b = False
+script2b = True
 script2b_dict = {"seasonal":False, # False, season str, or list
                  "durcurve":True, # Boolean to plot duration curves
                  "wytrace":True, # Boolean to plot wy traces
                  "boxplot":True, # Boolean to plot boxplot
                  "ylabel":"", # If str, single ylabel, if list, will assign to each row
-                 "outliers":False, # Boolean to show outliers in boxplot
+                 "outliers":True, # Boolean to show outliers in boxplot
                  "sharey":True} # Boolean to use shared y axis
 
 ## Script 3 WILL BE SKIPPED
@@ -50,12 +52,12 @@ script3 = False
 ## Script 4 Settings
 script4 = True
 script4_dict = {"seasonal":False, # Boolean
-               "durations":["peak",1,3,5,7,10,15], # Duration in days ("peak" can also be included), single list OR dict based on seasons
-               "plot":False,  # Will plot each WY with all durations
+               "durations":["peak",1,3,5,7,15], # Duration in days ("peak" can also be included), single list OR dict based on seasons
+               "plot":True,  # Will plot each WY with all durations
                "concat":True} # Create concat table of all durations and locations
 
 ## Script 5 Settings
-script5 = False
+script5 = True
 script5_dict = {"seasonal":True,   # Boolean
                 "idaplot":True,     # Will create initial data analysis plots
                 "ppplot":True,      # Will create a plot with all durations plotted with plotting positions (using alpha below)
@@ -80,7 +82,8 @@ if script1a:
     clone1a = createclone("1a_daily_data_prep.py",script1a_dict)
 
     # Run clone
-    subprocess.call(["python",clone1a])
+    subprocess.call(["python",clone1a],cwd=os.getcwd())
+    shutil.move(clone1a,f"clones/{clone1a.split('/')[-1]}")
 
 # Script 1b
 if script1b:
@@ -111,6 +114,7 @@ if script1b:
 
     # Run clone
     subprocess.call(["python",clone1b])
+    shutil.move(clone1b,f"clones/{clone1b.split('/')[-1]}")
 
 # Script 2a
 if script2a:
@@ -129,6 +133,7 @@ if script2a:
 
     # Run clone
     subprocess.call(["python",clone2a])
+    shutil.move(clone2a,f"clones/{clone2a.split('/')[-1]}")
 
 # Script 2b
 if script2b:
@@ -141,6 +146,7 @@ if script2b:
 
     # Run clone
     subprocess.call(["python", clone2b])
+    shutil.move(clone2b,f"clones/{clone2b.split('/')[-1]}")
 
 # Script 3
 if script3:
@@ -158,6 +164,7 @@ if script4:
 
     # Run clone
     subprocess.call(["python", clone4])
+    shutil.move(clone4,f"clones/{clone4.split('/')[-1]}")
 
 # Script 5
 if script5:
@@ -171,5 +178,7 @@ if script5:
 
     # Run clone
     subprocess.call(["python", clone5])
+    shutil.move(clone5,f"clones/{clone5.split('/')[-1]}")
+
 
 print("Script 0 Complete")

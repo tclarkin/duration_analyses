@@ -26,13 +26,13 @@ from src.flow_functions import analyze_dur, plot_monthly_dur_ep, plot_wytraces, 
 # os.chdir("")
 
 # Site information and user selections
-sites = ["jamr_zero"]  # list, site or dam names
+sites = ["choke_scale"]#"frio_derby","frio_tilden","sanmiguel","frio_calliham","choke"] # list, site or dam names
 analyze = ["annual", "monthly"]  # list of "annual", "monthly", "seasonal" or "all"
 pcts = standard  # list of fractional exceedance probabilities or standard (no quotes)
 
 # Plot water year traces?
 wytrace = True
-wy_division = "WY"  # "WY" or "CY"
+wy_division = "CY"  # "WY" or "CY"
 quantiles = [0.05, 0.5, 0.95]  # quantiles to include on plot
 
 # Plot box plots?

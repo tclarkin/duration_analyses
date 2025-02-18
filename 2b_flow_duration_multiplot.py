@@ -19,13 +19,9 @@ from src.data_functions import summarize_daily
 #os.chdir("")
 
 # Site information and user selections
-sites = ["jamr_raw","jamr_zero","JAMR","06468250","06468170"]  # list, site (cannot handle seasonal)
+sites = ["frio_derby","frio_tilden","sanmiguel","frio_calliham","choke","choke_scale"] # list, site or dam names
 seasonal = [False,False,False,False,False,False] # False or single item or list matched to sites ("all" for annual)
-labels = ["JAMR (raw)","JAMR (zero)","JAMR (avg)","James @ Kensal (06468250)","James @ Grace City (06468170)"]#,"Pipestem @ Pinegree (06469400)","Pipestem @ Buchanan (06469500)"]
-
-#sites = ["pist","06469500","06469400"]  # list, site (cannot handle seasonal)
-#seasonal = [False,False,False,False,False,False] # False or single item or list matched to sites ("all" for annual)
-#labels = ["Pipestem Res","Pipestem @ Pinegree (06469400)","Pipestem @ Buchanan (06469500)"]
+labels = ["Frio @ Derby","Frio @ Tilden","San Miguel Ck","Frio @ Caliham","Choke Canyon (avg)","Choke Canyon (scale)"]#,"Pipestem @ Pinegree (06469400)","Pipestem @ Buchanan (06469500)"]
 
 ylabel = "Flow (ft$^3$/s)"
 colors = ["black","blue","red","green","orange","purple"]
@@ -36,7 +32,7 @@ durcurve = True
 
 # Plot water year traces?
 wytrace = True
-wy_division = "WY" # "WY" or "CY"
+wy_division = "CY" # "WY" or "CY"
 quantiles = [0.05,0.5,0.95] # quantiles to include on plot
 sharey = True
 

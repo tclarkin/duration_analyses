@@ -44,7 +44,9 @@ def plot_trendsshifts(evs,dur,var):
         theil_slope = round(theil[0],0)
     plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {theil_slope} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
 
-    plt.legend()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', prop={'size': 10})
 
 def plot_date_trend(evs,dur,WY):
     """
@@ -76,7 +78,9 @@ def plot_date_trend(evs,dur,WY):
         theil_slope = round(theil[0],0)
     plt.plot(evs.index,evs.index*theil[0]+theil[1],"r--",label=f'Theil Slope = {theil_slope} \n (Kendall Tau p-value = {round(kendall.pvalue,3)})')
 
-    plt.legend()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', prop={'size': 10})
 
 
 def mannwhitney(evs,dur,var):
@@ -96,7 +100,10 @@ def mannwhitney(evs,dur,var):
 
     plt.plot(mw.wy,mw.pvalue)
     plt.plot([evs.index.min(),evs.index.max()],[0.05]*2,linestyle="dashed",label="0.05 significance")
-    plt.legend()
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', prop={'size': 10})
 
 def acf(evs,var):
     # Drop nans
@@ -133,7 +140,10 @@ def plot_normality(evs,dur,var):
         ols = np.polyfit(peaks_sorted["norm"],peaks_sorted["log"],deg=1)
         corr = np.corrcoef(peaks_sorted["log"],peaks_sorted["norm"]*ols[0]+ols[1])
         plt.plot(peaks_sorted["norm"],peaks_sorted["norm"]*ols[0]+ols[1],"r--",label=f"OLS fit (R={round(corr[0][1],3)})")
-        plt.legend()
+
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
+        plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', prop={'size': 10})
 
 def calc_pp(peaks,alpha=0):
     """
@@ -165,6 +175,7 @@ def plot_voldurpp(site,site_dur,durations,alpha=0):
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     ax.set_xscale('prob')
     plt.xlim(0.01, 99.99)
+    plt.xticks(rotation=90)
 
     plt.gca().invert_xaxis()
     ax.grid()
@@ -198,7 +209,10 @@ def plot_voldurpp(site,site_dur,durations,alpha=0):
                 maxp = peaks_sorted[var].max()
 
     plt.ylim(minp,maxp)
-    plt.legend()
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', prop={'size': 10},ncol=len(durations)//3)
 
 def plot_voldurpdf(site_dur,durations):
     """
@@ -227,7 +241,10 @@ def plot_voldurpdf(site_dur,durations):
     plt.ylabel('Probability')
     plt.xlabel(f'Log10 {get_varlabel(var)}')
     plt.hist(dat,density=True,label=durations)
-    plt.legend()
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', prop={'size': 10},ncol=len(durations)//3)
 
 def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
     """
@@ -237,8 +254,6 @@ def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
     :param durations: list, durations to plot
     :return: figure
     """
-    if not os.path.isdir("plot"):
-        os.mkdir("plot")
 
     var = site_dur[0].columns[1]
 
@@ -277,6 +292,8 @@ def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
         if wy_division=="WY":
             summary.loc[summary.index >= 10,"plot"] = summary.loc[summary.index >= 10].index - 9
             summary.loc[summary.index < 10,"plot"] = summary.loc[summary.index < 10].index + 3
+        else:
+            summary["plot"] = summary.index
         plt.bar(summary["plot"]+0.1+width*d,summary[var],width=width,label=name)
 
     if wy_division=="WY":
@@ -284,4 +301,8 @@ def plot_voldurmonth(site_dur,durations,stat,eventdate="mid",wy_division="WY"):
     else:
         month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
     plt.xticks([1,2,3,4,5,6,7,8,9,10,11,12],month_names)
-    plt.legend()
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', prop={'size': 10},ncol=len(durations)//3)
+
